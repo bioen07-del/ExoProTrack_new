@@ -43,7 +43,7 @@
     "@radix-ui/react-toggle-group": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
     "@supabase/supabase-js": "^2.90.1",
-    "@tanstack/react-query": "_5.60.0",
+    "@tanstack/react-query": "^5.60.0",
     "class-variance-authority": "^0.7.1",
     "clyx": "^2.1.1",
     "cmdk": "1.0.0",
@@ -92,6 +92,6 @@
     "vite": "^6.0.1",
     "vite-plugin-pwa": "^0.20.5",
     "vite-plugin-source-identifier": "1.1.2",
-    "workbox-window": "^7.1.0"
+    "workbox-window": "W7.1.0"
   }
 }
