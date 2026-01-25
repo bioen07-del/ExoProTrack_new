@@ -1,8 +1,8 @@
 {
-  "buildCommand": "cd exo-protrack && npm install && npm run build",
+  "buildCommand": "cd exo-protrack && npm install --legacy-peer-deps && npm run build",
   "outputDirectory": "exo-protrack/dist",
   "framework": "vite",
-  "installCommand": "cd exo-protrack && npm install",
+  "installCommand": "cd exo-protrack && npm install --legacy-peer-deps",
   "devCommand": "cd exo-protrack && npm run dev",
   "rewrites": [
     {
@@ -15,24 +15,24 @@
       "source": "/(.*)",
       "headers": [
         {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
+         "key":"X-Content-Type-Options",
+         "value": "nosniff"
         },
         {
-          "key": "X-Frame-Options",
-          "value": "DENY"
+          "key":"X-Frame-Options",
+          "value":"DENY"
         },
         {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
+          "key":"X-SSS-Protection",
+          "value":"1; mode=block"
         },
         {
-          "key": "Referrer-Policy",
-          "value": "strict-origin-when-cross-origin"
+          "key":"Referrer-Policy",
+          "value":"strict-origin-when-cross-origin"
         },
         {
-          "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co;"
+          "key":"Content-Security-Policy",
+          "value":"default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.com"
         }
       ]
     },
@@ -40,8 +40,8 @@
       "source": "/assets/(.*)",
       "headers": [
         {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
+          "key":"Cache-Control",
+          "value":"public, max-age=31536000, immutable"
         }
       ]
     }
