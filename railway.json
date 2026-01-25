@@ -1,0 +1,19 @@
+{
+  "$schema": "https://railway.app/schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd exo-protrack && pnpm install && pnpm build",
+    "outputDirectory": "exo-protrack/dist"
+  },
+  "deploy": {
+    "startCommand": "cd exo-protrack && pnpm install -g serve && serve -s dist -l $PORT",
+    "restartPolicy": "always",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 30,
+    "healthcheckInterval": 10
+  },
+  "root": ".",
+  "environment": {
+    "NODE_ENV": "production"
+  }
+}

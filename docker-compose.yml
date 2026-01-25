@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # Frontend application
+  app:
+    build:
+      context: ./exo-protrack
+      dockerfile: Dockerfile
+    container_name: exo-protrack-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - exo-network
+
+  # Development server
+  dev:
+    build:
+      context: ./exo-protrack
+      dockerfile: Dockerfile.dev
+    container_name: exo-protrack-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./exo-protrack:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    command: pnpm dev
+    networks:
+      - exo-network
+
+networks:
+  exo-network:
+    driver: bridge
