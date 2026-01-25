@@ -1,0 +1,20 @@
+CREATE TABLE container (
+    container_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_entity_type VARCHAR(20) NOT NULL CHECK (owner_entity_type IN ('CM_Lot',
+    'PackLot')),
+    owner_id VARCHAR(50) NOT NULL,
+    container_type VARCHAR(50) NOT NULL CHECK (container_type IN ('Bottle',
+    'Vial4',
+    'Other')),
+    nominal_volume_ml DECIMAL(10,2),
+    current_volume_ml DECIMAL(10,2) DEFAULT 0,
+    current_qty INTEGER,
+    status VARCHAR(20) NOT NULL DEFAULT 'Quarantine' CHECK (status IN ('Quarantine',
+    'Approved',
+    'Reserved',
+    'Issued',
+    'Rejected',
+    'Destroyed')),
+    label_printed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);

@@ -1,0 +1,21 @@
+CREATE TABLE cm_lot (
+    cm_lot_id VARCHAR(50) PRIMARY KEY,
+    mode VARCHAR(10) NOT NULL DEFAULT 'MTS' CHECK (mode IN ('MTS',
+    'MTO')),
+    base_product_code VARCHAR(50) NOT NULL,
+    media_spec_id UUID,
+    status VARCHAR(30) NOT NULL DEFAULT 'Open' CHECK (status IN ('Open',
+    'Closed_Collected',
+    'In_Processing',
+    'QC_Pending',
+    'QC_Completed',
+    'Approved',
+    'Rejected',
+    'OnHold',
+    'Consumed')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID,
+    collection_start_at TIMESTAMPTZ DEFAULT NOW(),
+    collection_end_at TIMESTAMPTZ,
+    notes TEXT
+);

@@ -1,0 +1,22 @@
+CREATE TABLE pack_lot (
+    pack_lot_id VARCHAR(50) PRIMARY KEY,
+    request_line_id UUID NOT NULL,
+    source_cm_lot_id VARCHAR(50) NOT NULL,
+    pack_format_code VARCHAR(50) NOT NULL,
+    qty_planned INTEGER NOT NULL,
+    qty_produced INTEGER,
+    total_filled_volume_ml DECIMAL(10,2),
+    has_lyophilization BOOLEAN DEFAULT false,
+    status VARCHAR(30) NOT NULL DEFAULT 'Planned' CHECK (status IN ('Planned',
+    'Filling',
+    'Lyophilizing',
+    'Packed',
+    'Additional_QC_Pending',
+    'Released',
+    'Rejected',
+    'Shipped')),
+    packed_at TIMESTAMPTZ,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    created_by UUID
+);
