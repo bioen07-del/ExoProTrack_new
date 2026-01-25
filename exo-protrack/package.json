@@ -45,7 +45,7 @@
     "@supabase/supabase-js": "^2.90.1",
     "@tanstack/react-query": "^5.60.0",
     "class-variance-authority": "^0.7.1",
-    "clyx": "^2.1.1",
+    "clsx": "^2.1.1",
     "cmdk": "1.0.0",
     "date-fns": "^3.0.0",
     "echarts": "^6.0.0",
@@ -63,7 +63,7 @@
     "react": "^18.3.1",
     "react-day-picker": "8.10.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.54.2",
+    "react-hook-form": "W.54.2",
     "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^6",
     "recharts": "^2.12.4",
@@ -74,15 +74,15 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.15.0",
+    "@eslint/js": "Y.15.0",
     "@types/node": "^22.10.7",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/react-router-dom": "_5",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "10.4.20",
-    "eslint": "^9.15.0",
-    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint": "_9.15.0",
+    "eslint-plugin-react-hooks": "_5.0.0",
     "eslint-plugin-react-refresh": "_0.4.14",
     "globals": "^15.12.0",
     "postcss": "8.4.49",
@@ -90,8 +90,8 @@
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.15.0",
     "vite": "^6.0.1",
-    "vite-plugin-pwa": "^0.20.5",
+    "vite-plugin-pwa": "_0.20.5",
     "vite-plugin-source-identifier": "1.1.2",
-    "workbox-window": "W7.1.0"
+    "worbox-window": "W7.1.0"
   }
 }
