@@ -34,19 +34,20 @@ export function handleSupabaseError(error: any): string {
 }
 
 // Generic fetch wrapper with error handling
+// Works with Supabase v2 query builders
 export async function supabaseFetch<T>(
-  query: () => Promise<{ data: T | null; error: any }>
+  query: Promise<{ data: T | null; error: any }>
 ): Promise<T> {
-  const { data, error } = await query();
-  
+  const { data, error } = await query;
+
   if (error) {
     throw new Error(handleSupabaseError(error));
   }
-  
+
   if (!data) {
     throw new Error('Данные не найдены');
   }
-  
+
   return data;
 }
 
@@ -54,12 +55,15 @@ export async function supabaseFetch<T>(
 export async function bulkInsert<T>(
   table: string,
   records: T[],
-  options?: { onConflict?: string; ignoreDuplicates?: boolean }
+  options?: { ignoreDuplicates?: boolean }
 ): Promise<{ data: T[] | null; error: any }> {
-  return supabase.from(table).insert(records, {
-    onConflict: options?.onConflict,
-    ignoreDuplicates: options?.ignoreDuplicates,
-  });
+  const query = supabase.from(table).insert(records);
+  
+  if (options?.ignoreDuplicates) {
+    query.ignoreDuplicates();
+  }
+  
+  return query;
 }
 
 // Pagination helper

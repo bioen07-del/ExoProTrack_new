@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence, useMediaQuery } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useMediaQuery } from '../../hooks/use-media-query';
 import {
   LayoutDashboard,
   FlaskConical,
