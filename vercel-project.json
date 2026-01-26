@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "exo-protrack/dist/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=0, must-revalidate",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "X-XSS-Protection": "1; mode=block"
+      },
+      "dest": "/exo-protrack/dist/index.html"
+    },
+    {
+      "src": "/assets/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "dest": "/exo-protrack/dist/assets/$1"
+    }
+  ],
+  "env": {
+    "VITE_SUPABASE_URL": "@supabase_url",
+    "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key"
+  },
+  "github": {
+    "enabled": true,
+    "autoAlias": true,
+    "silent": false
+  },
+  "projectSettings": {
+    "framework": "vite",
+    "installCommand": "cd exo-protrack && pnpm install",
+    "buildCommand": "cd exo-protrack && pnpm build",
+    "devCommand": "cd exo-protrack && pnpm dev",
+    "outputDirectory": "exo-protrack/dist"
+  },
+  "regions": ["iad1"],
+  "alias": ["exoprotrack.app"]
+}
