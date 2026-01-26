@@ -1,0 +1,87 @@
+name: Initialize Supabase Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'init'
+        type: choice
+        options:
+          - init
+          - seed_test_users
+          - reset
+
+jobs:
+  init-database:
+    name: Initialize Database
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Initialize Supabase Database
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          echo "Initializing Supabase database..."
+          
+          # Create user role type
+          node -e "
+          const https = require('https');
+          
+          const sql = \`
+          CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
+          
+          DO \\\$\\\$ BEGIN
+              CREATE TYPE user_role AS ENUM ('Production', 'QC', 'QA', 'Admin', 'Manager');
+          EXCEPTION WHEN duplicate_object THEN null;
+          END \\\$\\\$;
+          
+          CREATE TABLE IF NOT EXISTS app_user (
+              user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+              auth_user_id UUID UNIQUE,
+              email VARCHAR(255) NOT NULL UNIQUE,
+              full_name VARCHAR(255),
+              role user_role NOT NULL DEFAULT 'Production',
+              is_active BOOLEAN DEFAULT TRUE,
+              created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+          
+          ALTER TABLE app_user ENABLE ROW LEVEL SECURITY;
+          CREATE POLICY \"Allow public read\" ON app_user FOR SELECT USING (true);
+          \`;
+          
+          const data = JSON.stringify({ query: sql });
+          
+          const req = https.request('${'$'}}{{ secrets.SUPABASE_URL }}/rest/v1/rpc/exec_sql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': '${'$'}}{{ secrets.SUPABASE_SERVICE_KEY }}',
+              'Authorization': 'Bearer ${'$'}}{{ secrets.SUPABASE_SERVICE_KEY }}'
+            }
+          }, (res) => {
+            let body = '';
+            res.on('data', chunk => body += chunk);
+            res.on('end', () => {
+              console.log('Status:', res.statusCode);
+              console.log('Response:', body);
+            });
+          });
+          
+          req.on('error', e => console.error('Error:', e.message));
+          req.write(data);
+          req.end();
+          "
+          
+          echo "SQL executed via Supabase RPC"

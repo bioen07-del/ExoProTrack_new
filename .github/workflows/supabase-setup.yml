@@ -1,0 +1,69 @@
+name: Supabase Database Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup-database:
+    name: Setup Database
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Create SQL File
+        run: |
+          cat > init.sql << 'EOF'
+          -- Enable UUID extension
+          CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+          
+          -- Create user role type
+          DO $$ BEGIN
+              CREATE TYPE user_role AS ENUM ('Production', 'QC', 'QA', 'Admin', 'Manager');
+          EXCEPTION WHEN duplicate_object THEN null;
+          END $$;
+          
+          -- Create app_user table
+          CREATE TABLE IF NOT EXISTS app_user (
+              user_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+              auth_user_id UUID UNIQUE,
+              email VARCHAR(255) NOT NULL UNIQUE,
+              full_name VARCHAR(255),
+              role user_role NOT NULL DEFAULT 'Production',
+              is_active BOOLEAN DEFAULT TRUE,
+              created_at TIMESTAMPTZ DEFAULT NOW()
+          );
+          
+          -- Enable RLS
+          ALTER TABLE app_user ENABLE ROW LEVEL SECURITY;
+          CREATE POLICY "Allow public read" ON app_user FOR SELECT USING (true);
+          
+          -- Create test users
+          INSERT INTO app_user (email, full_name, role, is_active)
+          VALUES 
+              ('admin@exoprotrack.test', 'Admin User', 'Admin', TRUE),
+              ('production@exoprotrack.test', 'Production User', 'Production', TRUE),
+              ('qc@exoprotrack.test', 'QC User', 'QC', TRUE),
+              ('qa@exoprotrack.test', 'QA User', 'QA', TRUE),
+              ('manager@exoprotrack.test', 'Manager User', 'Manager', TRUE)
+          ON CONFLICT (email) DO UPDATE SET role = EXCLUDED.role;
+          EOF
+
+      - name: Execute SQL via Supabase CLI
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          # Install Supabase CLI
+          npm install -g supabase
+            
+          # Link to project
+          supabase link --project-ref bxffrqcnzvnwwekvpurt --host api.supabase.co
+          
+          # Execute SQL
+          supabase db query < init.sql
