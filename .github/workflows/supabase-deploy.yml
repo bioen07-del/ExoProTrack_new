@@ -1,0 +1,111 @@
+name: Supabase Database Migration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/schema.sql'
+  workflow_dispatch:
+    inputs:
+      reset:
+        description: 'Reset database (DANGEROUS)'
+        required: false
+        default: 'false'
+
+jobs:
+  migrate:
+    name: Apply Database Migrations
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+          token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Get Supabase Project ID
+        id: get-project
+        run: |
+          echo "PROJECT_ID=${{ secrets.SUPABASE_PROJECT_ID }}" >> $GITHUB_OUTPUT
+        env:
+          SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+      - name: Run Database Migrations
+        id: migrate
+        run: |
+          echo "Linking to project: ${{ secrets.SUPABASE_PROJECT_ID }}"
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --host api.supabase.co
+          
+          echo "Applying migrations..."
+          supabase db push
+          
+          echo "✅ Migrations applied successfully"
+
+      - name: Show migration status
+        run: |
+          supabase db diff --linked --file status
+          echo ""
+          echo "Database migration completed!"
+
+  deploy-edge-functions:
+    name: Deploy Edge Functions
+    runs-on: ubuntu-latest
+    needs: migrate
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+          token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Deploy Edge Functions
+        run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+          
+          # Deploy all functions
+          for dir in supabase/functions/*/; do
+            if [ -f "$dir/index.ts" ]; then
+              func_name=$(basename "$dir")
+              echo "Deploying function: $func_name"
+              supabase functions deploy "$func_name" --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+            fi
+          done
+          
+          echo "✅ Edge functions deployed"
+
+  create-test-users:
+    name: Create Test Users
+    runs-on: ubuntu-latest
+    needs: deploy-edge-functions
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+          token: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      - name: Create Test Users
+        run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }}
+          
+          # Invoke the create-test-users function
+          response=$(supabase functions invoke create-test-users --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} --no-verify-jwt)
+          
+          echo "Function response:"
+          echo "$response"
+          
+          echo "✅ Test users created (or already exist)"
