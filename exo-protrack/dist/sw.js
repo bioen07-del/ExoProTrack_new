@@ -1,7 +1,3 @@
-/// <reference lib="webworker" />
-
-declare const self: ServiceWorkerGlobalScope;
-
 const CACHE_NAME = 'exo-protrack-v3';
 const STATIC_CACHE = 'exo-static-v3';
 const API_CACHE = 'exo-api-v3';
@@ -51,7 +47,7 @@ self.addEventListener('fetch', (event) => {
 
   // Статические ресурсы - CacheFirst
   if (request.method === 'GET') {
-    event.respondWith(cacheFirst(request, STATIC_CACHE));
+    event.respondWith(cacheFirst(event, request, STATIC_CACHE));
     return;
   }
 
@@ -60,7 +56,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Стратегия: Cache First
-async function cacheFirst(request: Request, cacheName: string): Promise<Response> {
+async function cacheFirst(event, request, cacheName) {
   const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   
@@ -88,7 +84,7 @@ async function cacheFirst(request: Request, cacheName: string): Promise<Response
 }
 
 // Стратегия: Network First с кэшированием
-async function networkFirstWithCache(request: Request, cacheName: string): Promise<Response> {
+async function networkFirstWithCache(request, cacheName) {
   const cache = await caches.open(cacheName);
   
   try {
@@ -117,7 +113,7 @@ async function networkFirstWithCache(request: Request, cacheName: string): Promi
 }
 
 // Стратегия: Только сеть
-async function networkOnly(request: Request): Promise<Response> {
+async function networkOnly(request) {
   try {
     return await fetch(request);
   } catch (error) {
@@ -137,10 +133,10 @@ self.addEventListener('push', (event) => {
 
   const data = event.data.json();
   
-  const options: NotificationOptions = {
+  const options = {
     body: data.message || 'Новое уведомление',
-    icon: '/icons/icon-192.png',
-    badge: '/icons/badge-72.png',
+    icon: '/favicon.svg',
+    badge: '/favicon.svg',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/',
@@ -190,7 +186,7 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-async function syncPendingData(): Promise<void> {
+async function syncPendingData() {
   // Синхронизация отложенных данных
   const cache = await caches.open('pending-sync');
   const requests = await cache.keys();
@@ -198,7 +194,7 @@ async function syncPendingData(): Promise<void> {
   for (const request of requests) {
     try {
       const cachedRequest = await cache.match(request);
-      const body = await cachedRequest.text();
+      if (!cachedRequest) continue;
       
       await fetch(request);
       await cache.delete(request);
