@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/providers/ThemeProvider';
 import { useNotifications } from '@/services/notification-service';
+import { useAuth } from '@/context/AuthContext';
 
 // Navigation items
 const NAV_ITEMS = [
@@ -110,6 +111,7 @@ const MobileMenu = ({
   userName,
   userRole,
   location,
+  onLogout,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -117,6 +119,7 @@ const MobileMenu = ({
   userName?: string;
   userRole?: string;
   location: { pathname: string };
+  onLogout: () => void;
 }) => (
   <AnimatePresence>
     {isOpen && (
@@ -193,8 +196,8 @@ const MobileMenu = ({
             <div className="p-4 border-t">
               <button
                 onClick={() => {
-                  // Handle logout - TODO: implement logout logic
-                  console.log('Logout clicked');
+                  onLogout();
+                  onClose();
                 }}
                 className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-muted text-destructive"
               >
@@ -219,6 +222,7 @@ const DesktopSidebar = ({
   theme,
   toggleTheme,
   location,
+  onLogout,
 }: {
   isOpen: boolean;
   navItems: typeof NAV_ITEMS;
@@ -229,6 +233,7 @@ const DesktopSidebar = ({
   theme: string;
   toggleTheme: () => void;
   location: { pathname: string };
+  onLogout: () => void;
 }) => (
   <aside
     className={cn(
@@ -327,10 +332,7 @@ const DesktopSidebar = ({
                 <span>{theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}</span>
               </button>
               <button
-                onClick={() => {
-                  // Handle logout - TODO: implement logout logic
-                  console.log('Logout clicked');
-                }}
+                onClick={onLogout}
                 className="flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:bg-muted text-destructive transition-colors"
               >
                 <LogOut className="w-4 h-4" />
@@ -477,6 +479,7 @@ const OfflineIndicator = () => {
 export function Layout({ children, userRole, userName, userEmail }: LayoutProps) {
   const location = useLocation();
   const { theme, setTheme } = useTheme();
+  const { logout } = useAuth();
   const isMobile = useMediaQuery('(max-width: 640px)');
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -484,6 +487,16 @@ export function Layout({ children, userRole, userName, userEmail }: LayoutProps)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { unreadCount } = useNotifications(userEmail);
+
+  // Handle logout
+  const handleLogout = useCallback(async () => {
+    try {
+      await logout();
+      // Navigation will be handled by AuthContext state change
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  }, [logout]);
 
   // Memoized filtered navigation items
   const filteredNavItems = useMemo(
@@ -540,6 +553,7 @@ export function Layout({ children, userRole, userName, userEmail }: LayoutProps)
         userName={userName}
         userRole={userRole}
         location={location}
+        onLogout={handleLogout}
       />
 
       {!isMobile && (
@@ -553,6 +567,7 @@ export function Layout({ children, userRole, userName, userEmail }: LayoutProps)
           theme={theme}
           toggleTheme={toggleTheme}
           location={location}
+          onLogout={handleLogout}
         />
       )}
 

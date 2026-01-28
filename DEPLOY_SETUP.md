@@ -1,5 +1,14 @@
 # EXO ProTrack Deployment Guide
 
+**Версия: 3.5.0 | Обновлено: 28.01.2026**
+
+## Изменения в v3.5.0
+
+- Code splitting для оптимизации загрузки
+- PWA v1.2.0 с улучшенным кешированием
+- Vendor chunks для лучшего кеширования браузером
+- Исправлены уязвимости безопасности
+
 ## Quick Deploy
 
 ### 1. Supabase Setup
@@ -128,3 +137,45 @@ curl -X POST https://your-project.functions.supabase.co/create-test-users
 - **Vercel Dashboard**: Check deployment status and logs
 - **Supabase Dashboard**: Monitor database usage and auth
 - **Application**: Check browser console for errors
+
+---
+
+### 8. Performance Optimization (v3.5.0+)
+
+Приложение использует следующие оптимизации:
+
+**Code Splitting:**
+- Каждая страница загружается отдельно (lazy loading)
+- Vendor библиотеки разделены на чанки:
+  - `vendor-react` - React, React DOM, Router
+  - `vendor-ui` - Radix UI компоненты
+  - `vendor-query` - TanStack Query
+  - `vendor-charts` - Recharts, ECharts
+  - `vendor-pdf` - jsPDF
+  - `vendor-supabase` - Supabase SDK
+
+**PWA Caching:**
+- Service Worker кеширует статику
+- NetworkFirst стратегия для Supabase API
+- Offline режим для базового функционала
+
+**Browser Caching:**
+```
+/assets/* → Cache-Control: public, max-age=31536000, immutable
+```
+
+---
+
+### 9. Troubleshooting
+
+**Ошибка: "Failed to fetch"**
+- Проверьте CORS настройки в Supabase
+- Убедитесь что URL и ключ правильные
+
+**Ошибка: "RLS policy violation"**
+- Проверьте RLS политики в Supabase
+- Убедитесь что пользователь авторизован
+
+**Белый экран после деплоя**
+- Проверьте Console на ошибки
+- Убедитесь что переменные окружения установлены
