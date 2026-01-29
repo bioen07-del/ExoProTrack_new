@@ -1,0 +1,7 @@
+{
+  "private": true,
+  "dependencies": {
+    "postgres": "^3.4.5",
+    "@vercel/node": "^3.0.0"
+  }
+}
