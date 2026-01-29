@@ -12,7 +12,7 @@
       "destination": "/workbox-:hash.js"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ],
