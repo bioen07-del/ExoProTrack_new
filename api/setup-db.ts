@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import postgres from 'postgres';
 
 const DB_HOST = process.env.SUPABASE_DB_HOST || 'db.bxffrqcnzvnwwekvpurt.supabase.co';
 const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD || '6S7VG%Nw!i3E7Bk';
@@ -7,13 +6,7 @@ const DB_NAME = 'postgres';
 const DB_USER = 'postgres';
 const DB_PORT = 5432;
 
-interface SetupStep {
-  name: string;
-  sql: string;
-}
-
-const SETUP_STEPS: SetupStep[] = [
-  // ==================== 1. CREATE MISSING TABLES ====================
+const SETUP_STEPS = [
   {
     name: 'create_sds_component',
     sql: `CREATE TABLE IF NOT EXISTS public.sds_component (
@@ -84,7 +77,7 @@ const SETUP_STEPS: SetupStep[] = [
       description TEXT,
       phenol_red_flag BOOLEAN DEFAULT false,
       is_active BOOLEAN DEFAULT true,
-      sds_component_id UUID REFERENCES public.sds_component(sds_component_id),
+      sds_component_id UUID,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
   },
@@ -99,7 +92,7 @@ const SETUP_STEPS: SetupStep[] = [
       default_concentration NUMERIC,
       unit TEXT,
       is_active BOOLEAN DEFAULT true,
-      sds_component_id UUID REFERENCES public.sds_component(sds_component_id),
+      sds_component_id UUID,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
   },
@@ -110,7 +103,7 @@ const SETUP_STEPS: SetupStep[] = [
       name TEXT,
       description TEXT,
       base_medium_code TEXT,
-      base_media_id UUID REFERENCES public.base_media(base_media_id),
+      base_media_id UUID,
       serum_class TEXT NOT NULL DEFAULT 'FBS',
       phenol_red_flag BOOLEAN DEFAULT false,
       notes TEXT,
@@ -121,8 +114,8 @@ const SETUP_STEPS: SetupStep[] = [
     name: 'create_media_spec_additives',
     sql: `CREATE TABLE IF NOT EXISTS public.media_spec_additives (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      media_spec_id UUID REFERENCES public.media_compatibility_spec(media_spec_id),
-      additive_id UUID REFERENCES public.media_additive(additive_id),
+      media_spec_id UUID,
+      additive_id UUID,
       concentration NUMERIC,
       created_at TIMESTAMPTZ DEFAULT NOW()
     )`,
@@ -160,7 +153,7 @@ const SETUP_STEPS: SetupStep[] = [
       result_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       entity_type TEXT NOT NULL,
       entity_id TEXT NOT NULL,
-      infection_type_id UUID REFERENCES public.infection_type(infection_type_id),
+      infection_type_id UUID,
       test_date DATE NOT NULL,
       result TEXT NOT NULL,
       notes TEXT,
@@ -214,7 +207,7 @@ const SETUP_STEPS: SetupStep[] = [
     name: 'create_sds_media',
     sql: `CREATE TABLE IF NOT EXISTS public.sds_media (
       sds_media_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      media_spec_id UUID REFERENCES public.media_compatibility_spec(media_spec_id),
+      media_spec_id UUID,
       sds_data JSONB,
       custom_overrides JSONB,
       revision_date TEXT,
@@ -222,19 +215,27 @@ const SETUP_STEPS: SetupStep[] = [
       updated_at TIMESTAMPTZ DEFAULT NOW()
     )`,
   },
-
-  // ==================== 2. FK CONSTRAINT ====================
   {
-    name: 'add_fk_sds_component_media_spec',
+    name: 'add_fk_constraints',
     sql: `DO $$ BEGIN
-      ALTER TABLE public.sds_component
-        ADD CONSTRAINT sds_component_media_spec_id_fkey
-        FOREIGN KEY (media_spec_id) REFERENCES public.media_compatibility_spec(media_spec_id);
-    EXCEPTION WHEN duplicate_object THEN NULL;
+      ALTER TABLE public.base_media ADD CONSTRAINT base_media_sds_component_fkey FOREIGN KEY (sds_component_id) REFERENCES public.sds_component(sds_component_id);
+    EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_table THEN NULL;
     END $$`,
   },
-
-  // ==================== 3. RLS POLICIES FOR ALL TABLES ====================
+  {
+    name: 'add_fk_constraints_2',
+    sql: `DO $$ BEGIN
+      ALTER TABLE public.media_additive ADD CONSTRAINT media_additive_sds_component_fkey FOREIGN KEY (sds_component_id) REFERENCES public.sds_component(sds_component_id);
+    EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_table THEN NULL;
+    END $$`,
+  },
+  {
+    name: 'add_fk_constraints_3',
+    sql: `DO $$ BEGIN
+      ALTER TABLE public.sds_component ADD CONSTRAINT sds_component_media_spec_fkey FOREIGN KEY (media_spec_id) REFERENCES public.media_compatibility_spec(media_spec_id);
+    EXCEPTION WHEN duplicate_object THEN NULL; WHEN undefined_table THEN NULL;
+    END $$`,
+  },
   {
     name: 'setup_rls_all_tables',
     sql: `DO $$
@@ -245,28 +246,15 @@ const SETUP_STEPS: SetupStep[] = [
         SELECT table_name FROM information_schema.tables
         WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
       LOOP
-        -- Enable RLS
         EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', tbl);
-
-        -- Drop old policies
         EXECUTE format('DROP POLICY IF EXISTS "Allow authenticated select" ON public.%I', tbl);
         EXECUTE format('DROP POLICY IF EXISTS "Allow authenticated insert" ON public.%I', tbl);
         EXECUTE format('DROP POLICY IF EXISTS "Allow authenticated update" ON public.%I', tbl);
         EXECUTE format('DROP POLICY IF EXISTS "Allow authenticated delete" ON public.%I', tbl);
-
-        -- SELECT
         EXECUTE format('CREATE POLICY "Allow authenticated select" ON public.%I FOR SELECT TO authenticated USING (true)', tbl);
-
-        -- INSERT
         EXECUTE format('CREATE POLICY "Allow authenticated insert" ON public.%I FOR INSERT TO authenticated WITH CHECK (true)', tbl);
-
-        -- UPDATE
         EXECUTE format('CREATE POLICY "Allow authenticated update" ON public.%I FOR UPDATE TO authenticated USING (true) WITH CHECK (true)', tbl);
-
-        -- DELETE
         EXECUTE format('CREATE POLICY "Allow authenticated delete" ON public.%I FOR DELETE TO authenticated USING (true)', tbl);
-
-        -- Grant permissions
         EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON public.%I TO authenticated', tbl);
         EXECUTE format('GRANT ALL ON public.%I TO service_role', tbl);
       END LOOP;
@@ -275,110 +263,115 @@ const SETUP_STEPS: SetupStep[] = [
 ];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Simple protection
   if (req.query.key !== 'exoprotrack2026') {
     return res.status(403).json({ error: 'Forbidden. Use ?key=exoprotrack2026' });
   }
 
-  const action = (req.query.action as string) || 'setup';
+  // Dynamic import to catch module resolution errors
+  let Client: any;
+  try {
+    const pg = await import('pg');
+    Client = pg.default?.Client || pg.Client;
+  } catch (importErr: any) {
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to import pg module',
+      detail: importErr?.message || String(importErr),
+    });
+  }
 
-  const sql = postgres({
+  const client = new Client({
     host: DB_HOST,
     port: DB_PORT,
     database: DB_NAME,
-    username: DB_USER,
+    user: DB_USER,
     password: DB_PASSWORD,
-    ssl: 'require',
-    connect_timeout: 15,
-    idle_timeout: 10,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 10000,
+    query_timeout: 30000,
   });
 
   const results: Array<{ step: string; status: string; error?: string }> = [];
 
   try {
+    await client.connect();
+    results.push({ step: 'connect', status: 'ok' });
+  } catch (connErr: any) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection failed',
+      detail: connErr?.message || String(connErr),
+      host: DB_HOST,
+      port: DB_PORT,
+    });
+  }
+
+  try {
+    const action = (req.query.action as string) || 'setup';
+
     if (action === 'check') {
-      // Just check what tables exist
-      const tables = await sql`
-        SELECT table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-        ORDER BY table_name
-      `;
-
-      const rlsInfo = await sql`
-        SELECT schemaname, tablename, rowsecurity
-        FROM pg_tables
-        WHERE schemaname = 'public'
-        ORDER BY tablename
-      `;
-
-      const policies = await sql`
-        SELECT schemaname, tablename, policyname
-        FROM pg_policies
-        WHERE schemaname = 'public'
-        ORDER BY tablename, policyname
-      `;
+      const tablesRes = await client.query(
+        `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`
+      );
+      const rlsRes = await client.query(
+        `SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename`
+      );
+      const polRes = await client.query(
+        `SELECT tablename, policyname FROM pg_policies WHERE schemaname = 'public' ORDER BY tablename, policyname`
+      );
 
       return res.status(200).json({
         action: 'check',
-        tables: tables.map((t) => t.table_name),
-        table_count: tables.length,
-        rls: rlsInfo.map((r) => ({
-          table: r.tablename,
-          rls_enabled: r.rowsecurity,
-        })),
-        policies: policies.map((p) => ({
-          table: p.tablename,
-          policy: p.policyname,
-        })),
+        tables: tablesRes.rows.map((r: any) => r.table_name),
+        table_count: tablesRes.rows.length,
+        rls: rlsRes.rows.map((r: any) => ({ table: r.tablename, enabled: r.rowsecurity })),
+        policies_count: polRes.rows.length,
+        policies: polRes.rows.map((r: any) => ({ table: r.tablename, policy: r.policyname })),
       });
     }
 
     // Execute setup steps
     for (const step of SETUP_STEPS) {
       try {
-        await sql.unsafe(step.sql);
+        await client.query(step.sql);
         results.push({ step: step.name, status: 'ok' });
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        results.push({ step: step.name, status: 'error', error: msg });
+      } catch (e: any) {
+        results.push({ step: step.name, status: 'error', error: e?.message || String(e) });
       }
     }
 
-    // Verify: list all tables
-    const tables = await sql`
-      SELECT table_name
-      FROM information_schema.tables
-      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-      ORDER BY table_name
-    `;
-
-    // Verify: count RLS policies
-    const policyCount = await sql`
-      SELECT COUNT(*) as cnt FROM pg_policies WHERE schemaname = 'public'
-    `;
+    // Verify
+    const tablesRes = await client.query(
+      `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name`
+    );
+    const polCount = await client.query(
+      `SELECT COUNT(*) as cnt FROM pg_policies WHERE schemaname = 'public'`
+    );
 
     const errors = results.filter((r) => r.status === 'error');
 
     return res.status(200).json({
       success: errors.length === 0,
       action: 'setup',
-      tables: tables.map((t) => t.table_name),
-      table_count: tables.length,
-      policy_count: Number(policyCount[0]?.cnt || 0),
+      tables: tablesRes.rows.map((r: any) => r.table_name),
+      table_count: tablesRes.rows.length,
+      policy_count: Number(polCount.rows[0]?.cnt || 0),
       steps_total: results.length,
       steps_ok: results.filter((r) => r.status === 'ok').length,
       steps_error: errors.length,
       results,
     });
-  } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
+  } catch (e: any) {
     return res.status(500).json({
       success: false,
-      error: msg,
+      error: e?.message || String(e),
       results,
     });
   } finally {
-    await sql.end();
+    try {
+      await client.end();
+    } catch (_) {
+      // ignore close errors
+    }
   }
 }
