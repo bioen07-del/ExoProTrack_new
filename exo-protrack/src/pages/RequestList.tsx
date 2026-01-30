@@ -555,14 +555,14 @@ export default function RequestList() {
                     <Package size={18} />
                     Спецификация продукта
                     {(productSpec as any).frozen_spec && (
-                      <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded">✓ frozen</span>
+                      <span className="text-xs text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded">✓ frozen</span>
                     )}
                   </h4>
 
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {/* Среда - из frozen_spec.media */}
-                    <div className="p-3 bg-teal-50 rounded-lg border border-teal-200">
-                      <div className="flex items-center gap-1 text-teal-700 font-medium text-sm mb-1">
+                    <div className="p-3 teal-box rounded-lg">
+                      <div className="flex items-center gap-1 font-medium text-sm mb-1">
                         <Beaker size={14} />
                         СРЕДА
                       </div>
@@ -576,7 +576,7 @@ export default function RequestList() {
                               <p>{media.serum_class || '—'}</p>
                               <p>{media.base_media?.phenol_red ? '🔴 PR+' : '⚪ PR-'} | Glu {media.l_glutamine_mm || 0}mM</p>
                               {media.additives?.length > 0 && (
-                                <p className="text-xs text-teal-600">
+                                <p className="text-xs text-teal-600 dark:text-teal-400">
                                   + {media.additives.map((a: any) => `${a.name || a.code} ${a.concentration || ''}${a.unit || ''}`).join(', ')}
                                 </p>
                               )}
@@ -593,13 +593,13 @@ export default function RequestList() {
                             </div>
                           );
                         }
-                        return <span className="text-amber-600 text-sm">Не указана</span>;
+                        return <span className="text-amber-600 dark:text-amber-400 text-sm">Не указана</span>;
                       })()}
                     </div>
 
                     {/* Фасовка - из frozen_spec.pack_format */}
-                    <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center gap-1 text-blue-700 font-medium text-sm mb-1">
+                    <div className="p-3 info-box rounded-lg">
+                      <div className="flex items-center gap-1 font-medium text-sm mb-1">
                         <Package size={14} />
                         ФАСОВКА
                       </div>
@@ -623,14 +623,14 @@ export default function RequestList() {
                               </>
                             );
                           }
-                          return <span className="text-amber-600">Выберите</span>;
+                          return <span className="text-amber-600 dark:text-amber-400">Выберите</span>;
                         })()}
                       </div>
                     </div>
 
                     {/* Процессинг - из frozen_spec.processing */}
-                    <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <div className="flex items-center gap-1 text-purple-700 font-medium text-sm mb-1">
+                    <div className="p-3 purple-box rounded-lg">
+                      <div className="flex items-center gap-1 font-medium text-sm mb-1">
                         <Cog size={14} />
                         ПРОЦЕССИНГ
                       </div>
@@ -652,8 +652,8 @@ export default function RequestList() {
                     </div>
 
                     {/* QC - из frozen_spec.qc */}
-                    <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-200">
-                      <div className="flex items-center gap-1 text-emerald-700 font-medium text-sm mb-1">
+                    <div className="p-3 success-box rounded-lg">
+                      <div className="flex items-center gap-1 font-medium text-sm mb-1">
                         <ClipboardCheck size={14} />
                         QC
                       </div>
@@ -684,15 +684,15 @@ export default function RequestList() {
 
             {/* CM Availability Check */}
             {productSpec && (
-              <div className={`p-4 rounded-lg border ${hasMatchingCmLots ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+              <div className={`p-4 rounded-lg ${hasMatchingCmLots ? 'success-box' : 'warning-box'}`}>
                 <div className="flex items-start gap-2">
                   {hasMatchingCmLots ? (
-                    <CheckCircle className="text-green-600 mt-0.5" size={20} />
+                    <CheckCircle className="text-green-600 dark:text-green-400 mt-0.5" size={20} />
                   ) : (
-                    <AlertTriangle className="text-amber-600 mt-0.5" size={20} />
+                    <AlertTriangle className="text-amber-600 dark:text-amber-400 mt-0.5" size={20} />
                   )}
                   <div className="flex-1">
-                    <h4 className={`font-medium ${hasMatchingCmLots ? 'text-green-800' : 'text-amber-800'}`}>
+                    <h4 className="font-medium">
                       {hasMatchingCmLots ? 'Есть CM на складе' : 'Нет готового CM на складе'}
                     </h4>
                     {hasMatchingCmLots ? (
@@ -714,14 +714,14 @@ export default function RequestList() {
                           })}
                         </select>
                         {volumeShortage && (
-                          <p className="text-amber-600 text-sm mt-1">
+                          <p className="text-amber-600 dark:text-amber-400 text-sm mt-1">
                             ⚠️ Недостаточно объёма ({selectedCmLot?.available_ml.toFixed(0)} мл).
                             Рекомендуется зарезервировать доступное и создать новую заявку на остаток.
                           </p>
                         )}
                       </div>
                     ) : (
-                      <p className="text-sm text-amber-700 mt-1">
+                      <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
                         Заявка будет направлена в производство (MTO)
                       </p>
                     )}
@@ -733,9 +733,9 @@ export default function RequestList() {
             {/* Extra Requirements */}
             {productSpec && (
               <>
-                <div className={`p-4 rounded-lg border ${formData.reserved_cm_lot_id ? 'bg-muted border-border opacity-60' : 'bg-blue-50 border-blue-200'}`}>
+                <div className={`p-4 rounded-lg border ${formData.reserved_cm_lot_id ? 'bg-muted border-border opacity-60' : 'info-box'}`}>
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className={`font-medium ${formData.reserved_cm_lot_id ? 'text-muted-foreground' : 'text-blue-800'}`}>
+                    <h4 className={`font-medium ${formData.reserved_cm_lot_id ? 'text-muted-foreground' : 'text-foreground'}`}>
                       Доп. требования к СЫРЬЮ
                       {formData.reserved_cm_lot_id && (
                         <span className="ml-2 text-xs font-normal text-muted-foreground">(сырьё уже готово)</span>
@@ -758,7 +758,7 @@ export default function RequestList() {
                     ) : (
                       <>
                         {formData.extra_raw_qc.map(req => (
-                          <span key={req.code} className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded text-sm">
+                          <span key={req.code} className="flex items-center gap-1 px-2 py-1 tag-blue rounded text-sm">
                             {req.name}
                             <Button variant="ghost" size="icon-sm" className="h-5 w-5" onClick={() => removeExtraRequirement('qc_raw', req.code)}>
                               <X size={14} />
@@ -766,7 +766,7 @@ export default function RequestList() {
                           </span>
                         ))}
                         {formData.extra_raw_process.map(req => (
-                          <span key={req.code} className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                          <span key={req.code} className="flex items-center gap-1 px-2 py-1 tag-purple rounded text-sm">
                             {req.name}
                             <Button variant="ghost" size="icon-sm" className="h-5 w-5" onClick={() => removeExtraRequirement('process_raw', req.code)}>
                               <X size={14} />
@@ -781,9 +781,9 @@ export default function RequestList() {
                   </div>
                 </div>
 
-                <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+                <div className="p-4 success-box rounded-lg">
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="font-medium text-emerald-800">Доп. требования к ПРОДУКТУ</h4>
+                    <h4 className="font-medium">Доп. требования к ПРОДУКТУ</h4>
                     <div className="flex gap-2">
                       <Button type="button" size="sm" variant="success" onClick={() => setShowQcProductModal(true)}>
                         + QC
@@ -798,7 +798,7 @@ export default function RequestList() {
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {formData.extra_product_qc.map(req => (
-                      <span key={req.code} className="flex items-center gap-1 px-2 py-1 bg-emerald-100 text-emerald-800 rounded text-sm">
+                      <span key={req.code} className="flex items-center gap-1 px-2 py-1 tag-emerald rounded text-sm">
                         QC: {req.name}
                         <Button variant="ghost" size="icon-sm" className="h-5 w-5" onClick={() => removeExtraRequirement('qc_product', req.code)}>
                           <X size={14} />
@@ -806,7 +806,7 @@ export default function RequestList() {
                       </span>
                     ))}
                     {formData.extra_pre_process.map(req => (
-                      <span key={req.code} className="flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded text-sm">
+                      <span key={req.code} className="flex items-center gap-1 px-2 py-1 tag-purple rounded text-sm">
                         Проц: {req.name}
                         <Button variant="ghost" size="icon-sm" className="h-5 w-5" onClick={() => removeExtraRequirement('pre_process', req.code)}>
                           <X size={14} />
@@ -814,7 +814,7 @@ export default function RequestList() {
                       </span>
                     ))}
                     {formData.extra_post_process.map(req => (
-                      <span key={req.code} className="flex items-center gap-1 px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-sm">
+                      <span key={req.code} className="flex items-center gap-1 px-2 py-1 tag-indigo rounded text-sm">
                         Пост: {req.name}
                         <Button variant="ghost" size="icon-sm" className="h-5 w-5" onClick={() => removeExtraRequirement('post_process', req.code)}>
                           <X size={14} />
@@ -851,11 +851,11 @@ export default function RequestList() {
 
             {/* Quantity + Volume Calculation */}
             {productSpec && (
-              <div className="p-4 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg border-2 border-blue-400">
+              <div className="p-4 bg-primary/10 dark:bg-primary/5 rounded-lg border-2 border-primary">
                 <div className="flex justify-between items-center mb-2">
-                  <label className="text-lg font-bold text-blue-800">КОЛИЧЕСТВО</label>
+                  <label className="text-lg font-bold text-foreground">КОЛИЧЕСТВО</label>
                   {selectedCmLot && unitVolume > 0 && (
-                    <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded">
+                    <span className="text-sm tag-green px-2 py-1 rounded">
                       Макс. доступно: {Math.floor(selectedCmLot.available_ml / unitVolume)} шт
                     </span>
                   )}
@@ -867,14 +867,14 @@ export default function RequestList() {
                     max={selectedCmLot && unitVolume > 0 ? Math.floor(selectedCmLot.available_ml / unitVolume) : undefined}
                     value={formData.qty_units}
                     onChange={(e) => setFormData({ ...formData, qty_units: Number(e.target.value) })}
-                    className="w-32 px-4 py-3 border-2 border-blue-500 rounded-lg text-2xl font-bold text-center bg-background text-foreground"
+                    className="w-32 px-4 py-3 border-2 border-primary rounded-lg text-2xl font-bold text-center bg-background text-foreground"
                     required
                   />
                   <div className="text-lg">
                     <span className="text-muted-foreground">×</span>{' '}
                     <span className="font-semibold">{unitVolume} мл</span>{' '}
                     <span className="text-muted-foreground">=</span>{' '}
-                    <span className="font-bold text-blue-800">{requiredVolume.toLocaleString()} мл</span>
+                    <span className="font-bold text-foreground">{requiredVolume.toLocaleString()} мл</span>
                   </div>
                 </div>
               </div>
@@ -892,12 +892,12 @@ export default function RequestList() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-red-600">Срок исполнения *</label>
+                  <label className="block text-sm font-medium mb-1 text-destructive">Срок исполнения *</label>
                   <input
                     type="date"
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:border-red-500 bg-background text-foreground"
+                    className="w-full px-3 py-2 border-2 border-destructive rounded-lg focus:border-destructive bg-background text-foreground"
                     required
                   />
                 </div>
@@ -936,7 +936,7 @@ export default function RequestList() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Количество:</span>
-              <strong className="text-xl text-blue-600">{formData.qty_units} ед. = {requiredVolume.toLocaleString()} мл</strong>
+              <strong className="text-xl text-primary">{formData.qty_units} ед. = {requiredVolume.toLocaleString()} мл</strong>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Упаковка:</span>
@@ -944,7 +944,7 @@ export default function RequestList() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Срок:</span>
-              <strong className="text-red-600">{formData.due_date ? new Date(formData.due_date).toLocaleDateString('ru-RU') : ''}</strong>
+              <strong className="text-destructive">{formData.due_date ? new Date(formData.due_date).toLocaleDateString('ru-RU') : ''}</strong>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Тип:</span>
@@ -956,8 +956,8 @@ export default function RequestList() {
 
           {/* Media Spec */}
           {mediaSpec && (
-            <div className="p-3 bg-teal-50 rounded-lg text-sm">
-              <span className="font-medium text-teal-800">Среда:</span>{' '}
+            <div className="p-3 bg-teal-50 dark:bg-teal-950/30 rounded-lg text-sm">
+              <span className="font-medium text-teal-700 dark:text-teal-300">Среда:</span>{' '}
               {mediaSpec.base_medium_code} | {mediaSpec.serum_class} |
               {mediaSpec.phenol_red_flag ? ' 🔴 PR+' : ' ⚪ PR-'} | Glu {(mediaSpec as any).l_glutamine_mm || 0}mM
             </div>
@@ -965,22 +965,22 @@ export default function RequestList() {
 
           {/* Reserved CM */}
           {formData.reserved_cm_lot_id && (
-            <div className="p-3 bg-green-50 rounded-lg text-sm">
-              <span className="font-medium text-green-800">Резерв CM:</span>{' '}
+            <div className="p-3 bg-green-50 dark:bg-green-950/30 rounded-lg text-sm">
+              <span className="font-medium text-foreground">Резерв CM:</span>{' '}
               {formData.reserved_cm_lot_id}
             </div>
           )}
 
           {/* Extra Requirements */}
           {(formData.extra_raw_qc.length > 0 || formData.extra_raw_process.length > 0) && (
-            <div className="p-3 bg-blue-50 rounded-lg text-sm">
-              <span className="font-medium text-blue-800">Доп. требования к сырью:</span>{' '}
+            <div className="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg text-sm">
+              <span className="font-medium text-foreground">Доп. требования к сырью:</span>{' '}
               {[...formData.extra_raw_qc, ...formData.extra_raw_process].map(r => r.name).join(', ')}
             </div>
           )}
           {(formData.extra_product_qc.length > 0 || formData.extra_pre_process.length > 0 || formData.extra_post_process.length > 0) && (
-            <div className="p-3 bg-emerald-50 rounded-lg text-sm">
-              <span className="font-medium text-emerald-800">Доп. требования к продукту:</span>{' '}
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg text-sm">
+              <span className="font-medium text-foreground">Доп. требования к продукту:</span>{' '}
               {[...formData.extra_product_qc, ...formData.extra_pre_process, ...formData.extra_post_process].map(r => r.name).join(', ')}
             </div>
           )}
@@ -1005,7 +1005,7 @@ export default function RequestList() {
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {qcTestTypes.map(test => (
               <button key={test.code} onClick={() => { addExtraRequirement('qc_raw', test.code, test.name); setShowQcRawModal(false); }}
-                className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded border border-border text-foreground">
+                className="w-full text-left px-3 py-2 hover:bg-blue-50 dark:hover:bg-blue-950/30 rounded border border-border text-foreground">
                 {test.name}
               </button>
             ))}
@@ -1021,7 +1021,7 @@ export default function RequestList() {
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {qcTestTypes.map(test => (
               <button key={test.code} onClick={() => { addExtraRequirement('qc_product', test.code, test.name); setShowQcProductModal(false); }}
-                className="w-full text-left px-3 py-2 hover:bg-emerald-50 rounded border border-border text-foreground">
+                className="w-full text-left px-3 py-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded border border-border text-foreground">
                 {test.name}
               </button>
             ))}
@@ -1037,7 +1037,7 @@ export default function RequestList() {
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {processMethods.map(method => (
               <button key={method.method_id} onClick={() => { addExtraRequirement('process_raw', method.method_id, method.name); setShowProcessRawModal(false); }}
-                className="w-full text-left px-3 py-2 hover:bg-purple-50 rounded border border-border text-foreground">
+                className="w-full text-left px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 rounded border border-border text-foreground">
                 {method.name}
               </button>
             ))}
@@ -1053,7 +1053,7 @@ export default function RequestList() {
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {processMethods.filter((m: any) => m.stage === 'pre_filling').map(method => (
               <button key={method.method_id} onClick={() => { addExtraRequirement('pre_process', method.method_id, method.name); setShowProcessProductModal(false); }}
-                className="w-full text-left px-3 py-2 hover:bg-purple-50 rounded border border-border text-foreground">
+                className="w-full text-left px-3 py-2 hover:bg-purple-50 dark:hover:bg-purple-950/30 rounded border border-border text-foreground">
                 {method.name}
               </button>
             ))}
@@ -1069,7 +1069,7 @@ export default function RequestList() {
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {processMethods.filter((m: any) => m.stage === 'post_filling').map(method => (
               <button key={method.method_id} onClick={() => { addExtraRequirement('post_process', method.method_id, method.name); setShowPostProcessProductModal(false); }}
-                className="w-full text-left px-3 py-2 hover:bg-indigo-50 rounded border border-border text-foreground">
+                className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded border border-border text-foreground">
                 {method.name}
               </button>
             ))}
@@ -1165,9 +1165,9 @@ export default function RequestList() {
               const daysLeft = hoursLeft !== null ? Math.ceil(hoursLeft / 24) : null;
 
               return (
-                <tr key={req.request_id} className={`hover:bg-muted/50 ${isOverdue ? 'bg-red-50' : isUrgent24h ? 'bg-red-50' : isUrgent72h ? 'bg-amber-50' : ''}`}>
+                <tr key={req.request_id} className={`hover:bg-muted/50 ${isOverdue ? 'bg-red-50 dark:bg-red-950/20' : isUrgent24h ? 'bg-red-50 dark:bg-red-950/20' : isUrgent72h ? 'bg-amber-50 dark:bg-amber-950/20' : ''}`}>
                   <td className="px-4 py-3">
-                    <Link to={`/requests/${req.request_id}`} className="font-mono text-blue-600 hover:underline">
+                    <Link to={`/requests/${req.request_id}`} className="font-mono text-primary hover:underline">
                       {req.request_id}
                     </Link>
                   </td>
@@ -1178,7 +1178,7 @@ export default function RequestList() {
                     {req.due_date ? new Date(req.due_date).toLocaleDateString('ru-RU') : '-'}
                   </td>
                   <td className={`px-4 py-3 text-sm text-right font-bold ${
-                    isOverdue || isUrgent24h ? 'text-red-600' : isUrgent72h ? 'text-amber-600' : 'text-green-600'
+                    isOverdue || isUrgent24h ? 'text-destructive' : isUrgent72h ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'
                   }`}>
                     {daysLeft !== null ? `${daysLeft} дн.` : '-'}
                   </td>
@@ -1189,7 +1189,7 @@ export default function RequestList() {
                   </td>
                   <td className="px-4 py-3 text-sm">
                     {req.reserved_cm_lot_id ? (
-                      <Link to={`/cm/${req.reserved_cm_lot_id}`} className="font-mono text-blue-600 hover:underline">
+                      <Link to={`/cm/${req.reserved_cm_lot_id}`} className="font-mono text-primary hover:underline">
                         {req.reserved_cm_lot_id}
                       </Link>
                     ) : '-'}
@@ -1206,7 +1206,7 @@ export default function RequestList() {
                   </td>
                   {hasRole(['Admin']) && (
                     <td className="px-4 py-3 text-center">
-                      <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteRequest(req.request_id)} className="text-red-400 hover:text-red-600">
+                      <Button variant="ghost" size="icon-sm" onClick={() => handleDeleteRequest(req.request_id)} className="text-red-400 hover:text-destructive">
                         <Trash2 size={16} />
                       </Button>
                     </td>

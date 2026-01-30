@@ -64,23 +64,23 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Planned: 'bg-slate-100 text-foreground',
-  Processing: 'bg-purple-100 text-purple-800',
-  PreFill_QC_Pending: 'bg-yellow-100 text-yellow-800',
-  PreFill_QC_Completed: 'bg-emerald-100 text-emerald-800',
-  PreFill_QA_Pending: 'bg-orange-100 text-orange-800',
-  Filling: 'bg-blue-100 text-blue-800',
-  Filled: 'bg-cyan-100 text-cyan-800',
-  PostProcessing: 'bg-violet-100 text-violet-800',
-  PostFill_QC_Pending: 'bg-amber-100 text-amber-800',
-  PostFill_QC_Completed: 'bg-teal-100 text-teal-800',
-  PostFill_QA_Pending: 'bg-rose-100 text-rose-800',
-  QC_Pending: 'bg-yellow-100 text-yellow-800',
-  QC_Completed: 'bg-emerald-100 text-emerald-800',
-  QA_Pending: 'bg-orange-100 text-orange-800',
-  Released: 'bg-green-100 text-green-800',
-  Shipped: 'bg-indigo-100 text-indigo-800',
-  Rejected: 'bg-red-100 text-red-800',
+  Planned: 'tag-slate',
+  Processing: 'tag-purple',
+  PreFill_QC_Pending: 'tag-yellow',
+  PreFill_QC_Completed: 'tag-emerald',
+  PreFill_QA_Pending: 'tag-orange',
+  Filling: 'tag-blue',
+  Filled: 'tag-cyan',
+  PostProcessing: 'tag-violet',
+  PostFill_QC_Pending: 'tag-amber',
+  PostFill_QC_Completed: 'tag-teal',
+  PostFill_QA_Pending: 'tag-rose',
+  QC_Pending: 'tag-yellow',
+  QC_Completed: 'tag-emerald',
+  QA_Pending: 'tag-orange',
+  Released: 'tag-green',
+  Shipped: 'tag-indigo',
+  Rejected: 'tag-red',
 };
 
 // Dynamic BP step generator based on product requirements
@@ -880,7 +880,7 @@ export default function PackLotDetail() {
   }
 
   if (!packLot) {
-    return <div className="text-center py-8 text-red-500">Продукт не найден</div>;
+    return <div className="text-center py-8 text-destructive">Продукт не найден</div>;
   }
 
   const bpProgress = getBpProgress(packLot.status, hasPreProcessing, hasPreFillQc, hasPostProcessing, hasPostFillQc);
@@ -901,15 +901,15 @@ export default function PackLotDetail() {
               return (
                 <React.Fragment key={step.key}>
                   <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
-                    isCompleted ? 'bg-green-100 text-green-800' :
-                    isCurrent ? 'bg-blue-100 text-blue-800' :
+                    isCompleted ? 'tag-green' :
+                    isCurrent ? 'tag-blue' :
                     'bg-muted text-muted-foreground'
                   }`}>
                     {isCompleted ? <CheckCircle size={16} /> : isCurrent ? <Clock size={16} /> : <span className="w-4" />}
                     {step.label}
                   </div>
                   {idx < bpProgress.steps.length - 1 && (
-                    <div className={`flex-1 h-0.5 ${isCompleted ? 'bg-green-400' : 'bg-muted'}`} />
+                    <div className={`flex-1 h-0.5 ${isCompleted ? 'bg-success' : 'bg-muted'}`} />
                   )}
                 </React.Fragment>
               );
@@ -917,14 +917,14 @@ export default function PackLotDetail() {
           </div>
           <div className="mt-3 flex items-center gap-2">
             <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-blue-500 transition-all" style={{ width: `${bpProgress.progress}%` }} />
+              <div className="h-full bg-primary transition-all" style={{ width: `${bpProgress.progress}%` }} />
             </div>
             <span className="font-medium text-sm">{bpProgress.progress}%</span>
           </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* QR Code */}
           <Card className="flex flex-col items-center">
             <CardContent className="p-6 flex flex-col items-center">
@@ -957,14 +957,14 @@ export default function PackLotDetail() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Источник CM</p>
-                <Link to={`/cm/${packLot.source_cm_lot_id}`} className="text-blue-600 hover:underline font-mono">
+                <Link to={`/cm/${packLot.source_cm_lot_id}`} className="text-primary hover:underline font-mono">
                   {packLot.source_cm_lot_id}
                 </Link>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Заявка</p>
                 {request ? (
-                  <Link to={`/requests/${request.request_id}`} className="text-blue-600 hover:underline">
+                  <Link to={`/requests/${request.request_id}`} className="text-primary hover:underline">
                     {request.request_id}
                   </Link>
                 ) : '-'}
@@ -979,10 +979,10 @@ export default function PackLotDetail() {
           <Card>
             <CardContent className="p-6">
             <h3 className="font-semibold text-foreground mb-4">Требования к продукту</h3>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {hasPreProcessing && (
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <h4 className="font-medium text-purple-800 text-sm mb-2">Процессинг до розлива ({preFillMethods.length})</h4>
+                <div className="p-3 purple-box rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Процессинг до розлива ({preFillMethods.length})</h4>
                   <div className="space-y-1">
                     {preFillMethods.map((m: any, i: number) => (
                       <div key={i} className="text-xs bg-card p-1.5 rounded">{m.name || m.method_id}</div>
@@ -991,8 +991,8 @@ export default function PackLotDetail() {
                 </div>
               )}
               {hasPostProcessing && (
-                <div className="p-3 bg-indigo-50 rounded-lg">
-                  <h4 className="font-medium text-indigo-800 text-sm mb-2">Постпроцессинг ({postFillMethods.length})</h4>
+                <div className="p-3 purple-box rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">Постпроцессинг ({postFillMethods.length})</h4>
                   <div className="space-y-1">
                     {postFillMethods.map((m: any, i: number) => (
                       <div key={i} className="text-xs bg-card p-1.5 rounded">{m.name || m.method_id}</div>
@@ -1001,8 +1001,8 @@ export default function PackLotDetail() {
                 </div>
               )}
               {hasQc && (
-                <div className="p-3 bg-emerald-50 rounded-lg">
-                  <h4 className="font-medium text-emerald-800 text-sm mb-2">QC Продукта ({productQcTests.length})</h4>
+                <div className="p-3 teal-box rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">QC Продукта ({productQcTests.length})</h4>
                   <div className="space-y-1">
                     {productQcTests.map((t: any, i: number) => (
                       <div key={i} className="text-xs bg-card p-1.5 rounded">{t.name || t.code}</div>
@@ -1011,8 +1011,8 @@ export default function PackLotDetail() {
                 </div>
               )}
               {hasQa && (
-                <div className="p-3 bg-amber-50 rounded-lg">
-                  <h4 className="font-medium text-amber-800 text-sm mb-2">QA</h4>
+                <div className="p-3 warning-box rounded-lg">
+                  <h4 className="font-medium text-sm mb-2">QA</h4>
                   <p className="text-xs text-muted-foreground">Требуется финальное одобрение QA</p>
                 </div>
               )}
@@ -1054,10 +1054,10 @@ export default function PackLotDetail() {
                   max={packLot.qty_planned}
                   value={qtyProduced}
                   onChange={(e) => setQtyProduced(Number(e.target.value))}
-                  className="px-4 py-3 h-auto border-2 border-blue-500 text-2xl font-bold text-center"
+                  className="px-4 py-3 h-auto border-2 border-primary text-2xl font-bold text-center"
                 />
                 {qtyProduced < packLot.qty_planned && (
-                  <p className="text-amber-600 text-sm mt-1 flex items-center gap-1">
+                  <p className="text-warning text-sm mt-1 flex items-center gap-1">
                     <AlertTriangle size={14} />
                     Частичный розлив: {packLot.qty_planned - qtyProduced} шт не будет произведено
                   </p>
@@ -1068,7 +1068,7 @@ export default function PackLotDetail() {
             {isCompleted && (
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Произведено</p>
-                <p className="text-3xl font-bold text-green-600">{packLot.qty_produced} шт</p>
+                <p className="text-3xl font-bold text-success">{packLot.qty_produced} шт</p>
                 <p className="text-sm text-muted-foreground">Израсходовано: {packLot.total_filled_volume_ml?.toFixed(1)} мл</p>
               </div>
             )}
@@ -1088,7 +1088,7 @@ export default function PackLotDetail() {
               </Button>
             )}
             {isCompleted && (
-              <div className="flex items-center gap-2 text-green-600">
+              <div className="flex items-center gap-2 text-success">
                 <CheckCircle size={20} />
                 <span>Розлив завершен {packLot.filling_completed_at && new Date(packLot.filling_completed_at).toLocaleString('ru-RU')}</span>
               </div>
@@ -1103,7 +1103,7 @@ export default function PackLotDetail() {
             <CardContent className="p-4">
             <h4 className="font-medium text-foreground mb-2">Источник сырья</h4>
             <div className="flex justify-between items-center">
-              <Link to={`/cm/${sourceCmLot.cm_lot_id}`} className="text-blue-600 hover:underline font-mono">
+              <Link to={`/cm/${sourceCmLot.cm_lot_id}`} className="text-primary hover:underline font-mono">
                 {sourceCmLot.cm_lot_id}
               </Link>
               <StatusBadge status={sourceCmLot.status} />
@@ -1230,12 +1230,12 @@ export default function PackLotDetail() {
               
               return (
                 <div key={step.processing_step_id} className={`p-4 rounded-lg border ${
-                  isCompleted ? 'bg-green-50 border-green-200' : 'bg-card border-border'
+                  isCompleted ? 'success-box' : 'bg-card border-border'
                 }`}>
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                        isCompleted ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
+                        isCompleted ? 'bg-success text-white' : 'bg-muted text-muted-foreground'
                       }`}>
                         {idx + 1}
                       </span>
@@ -1248,11 +1248,11 @@ export default function PackLotDetail() {
                         )}
                       </div>
                     </div>
-                    {isCompleted && <CheckCircle size={24} className="text-green-600" />}
+                    {isCompleted && <CheckCircle size={24} className="text-success" />}
                   </div>
                   
                   {isCompleted ? (
-                    <div className="grid grid-cols-3 gap-4 text-sm bg-green-100 p-3 rounded">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm success-box p-3 rounded">
                       <div><span className="text-muted-foreground">Вход:</span> {step.qty_input || '-'} {stepUnit}</div>
                       <div><span className="text-muted-foreground">Выход:</span> {step.qty_output || '-'} {stepUnit}</div>
                       <div><span className="text-muted-foreground">Примечания:</span> {step.notes || '-'}</div>
@@ -1296,9 +1296,9 @@ export default function PackLotDetail() {
                         />
                       </div>
                       {requiresTimeTracking && (
-                        <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="grid grid-cols-2 gap-4 p-3 info-box rounded-lg">
                           <div>
-                            <label className="block text-sm font-medium mb-1 text-blue-800">Начало процедуры</label>
+                            <label className="block text-sm font-medium mb-1">Начало процедуры</label>
                             <Input
                               type="datetime-local"
                               value={form.started_at || ''}
@@ -1306,7 +1306,7 @@ export default function PackLotDetail() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium mb-1 text-blue-800">Окончание процедуры</label>
+                            <label className="block text-sm font-medium mb-1">Окончание процедуры</label>
                             <Input
                               type="datetime-local"
                               value={form.ended_at || ''}
@@ -1314,7 +1314,7 @@ export default function PackLotDetail() {
                             />
                           </div>
                           {form.started_at && form.ended_at && (
-                            <div className="col-span-2 text-sm text-blue-700">
+                            <div className="col-span-2 text-sm text-primary">
                               Затраченное время: {Math.round((new Date(form.ended_at).getTime() - new Date(form.started_at).getTime()) / 60000)} мин
                             </div>
                           )}
@@ -1323,7 +1323,7 @@ export default function PackLotDetail() {
                       <Button
                         onClick={() => submitProcessingStep(step.processing_step_id)}
                         variant="default"
-                        className="bg-purple-600 hover:bg-purple-700"
+                        className=""
                       >
                         Завершить этап
                       </Button>
@@ -1336,8 +1336,8 @@ export default function PackLotDetail() {
           
           {/* Start processing button when no steps exist yet */}
           {currentSteps.length === 0 && packLot.status === 'Planned' && hasPreProcessing && hasRole(['Production', 'Admin']) && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-              <p className="text-blue-800 mb-3">Для начала процессинга нажмите кнопку ниже</p>
+            <div className="mt-6 p-4 info-box rounded-lg text-center">
+              <p className="mb-3">Для начала процессинга нажмите кнопку ниже</p>
               <Button
                 onClick={advanceWorkflow}
                 variant="default"
@@ -1455,10 +1455,10 @@ export default function PackLotDetail() {
     return (
       <div className="space-y-4">
         {/* Header */}
-        <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+        <div className="flex justify-between items-center p-4 info-box rounded-lg">
           <h3 className="text-lg font-semibold">QC Продукта — Контроль качества</h3>
           {allTestsCompleted && (
-            <span className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-full font-medium">
+            <span className="flex items-center gap-2 px-4 py-2 bg-success text-white rounded-full font-medium">
               <CheckCircle size={18} /> Все тесты выполнены
             </span>
           )}
@@ -1466,8 +1466,8 @@ export default function PackLotDetail() {
         
         {/* Send to QC button */}
         {canSendToQc && (
-          <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg text-center">
-            <p className="text-blue-800 mb-4">Для начала контроля качества необходимо передать задачу в QC отдел</p>
+          <div className="p-6 info-box rounded-lg text-center">
+            <p className="mb-4">Для начала контроля качества необходимо передать задачу в QC отдел</p>
             <Button
               onClick={sendToQc}
               variant="default"
@@ -1481,7 +1481,7 @@ export default function PackLotDetail() {
         )}
         
         {!qcRequest && isQcPending && (
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+          <div className="p-4 warning-box rounded-lg">
             ⚠️ QC запрос не найден. Обновите страницу.
           </div>
         )}
@@ -1498,10 +1498,10 @@ export default function PackLotDetail() {
               const form = qcFormData[testCode] || {};
               
               return (
-                <div key={testCode} className={`p-4 rounded-lg border-2 ${existingResult ? 'bg-green-50 border-green-300' : 'bg-card border-border'}`}>
+                <div key={testCode} className={`p-4 rounded-lg border-2 ${existingResult ? 'success-box' : 'bg-card border-border'}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
+                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-success text-white' : 'bg-muted text-muted-foreground'}`}>
                         {idx + 1}
                       </span>
                       <div>
@@ -1510,7 +1510,7 @@ export default function PackLotDetail() {
                       </div>
                     </div>
                     {existingResult && (
-                      <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${existingResult.pass_fail === 'Pass' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                      <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${existingResult.pass_fail === 'Pass' ? 'tag-green' : 'tag-red'}`}>
                         {existingResult.pass_fail === 'Pass' ? <CheckCircle size={16} /> : <XCircle size={16} />}
                         {existingResult.pass_fail}
                       </span>
@@ -1519,7 +1519,7 @@ export default function PackLotDetail() {
                   
                   {/* Reference values and hints */}
                   <div className="mb-3 p-3 bg-muted rounded text-sm">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div>
                         <span className="text-muted-foreground">Референс:</span>
                         <span className="ml-2 font-medium">
@@ -1536,7 +1536,7 @@ export default function PackLotDetail() {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Метод:</span>
-                        <span className="ml-2 font-medium text-blue-600">{test.method || '-'}</span>
+                        <span className="ml-2 font-medium text-primary">{test.method || '-'}</span>
                       </div>
                     </div>
                     {test.description && (
@@ -1545,12 +1545,12 @@ export default function PackLotDetail() {
                   </div>
                   
                   {existingResult ? (
-                    <div className="grid grid-cols-3 gap-4 text-sm bg-green-100 p-3 rounded">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm success-box p-3 rounded">
                       <div><span className="text-muted-foreground">Результат:</span> <span className="font-mono">{existingResult.result_value || '-'}</span> {test.unit || ''}</div>
                       <div><span className="text-muted-foreground">Дата:</span> {existingResult.tested_at ? new Date(existingResult.tested_at).toLocaleDateString('ru-RU') : '-'}</div>
                       <div>
                         {existingResult.report_ref && (
-                          <a href={existingResult.report_ref} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                          <a href={existingResult.report_ref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                             📄 Протокол
                           </a>
                         )}
@@ -1558,7 +1558,7 @@ export default function PackLotDetail() {
                     </div>
                   ) : canAddResult && isQcPending ? (
                     <div className="space-y-3">
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium mb-1">Результат {test.unit ? `(${test.unit})` : ''}</label>
                           <Input
@@ -1602,10 +1602,10 @@ export default function PackLotDetail() {
         )}
         
         {allTestsCompleted && isQcPending && canAddResult && (
-          <div className="p-4 bg-green-100 border border-green-300 rounded-lg text-center">
-            <CheckCircle size={32} className="mx-auto text-green-600 mb-2" />
-            <p className="font-medium text-green-800">Все тесты QC пройдены!</p>
-            <p className="text-sm text-green-600 mb-4">Продукт готов к решению QA</p>
+          <div className="p-4 success-box rounded-lg text-center">
+            <CheckCircle size={32} className="mx-auto text-success mb-2" />
+            <p className="font-medium text-success">Все тесты QC пройдены!</p>
+            <p className="text-sm text-success mb-4">Продукт готов к решению QA</p>
             <Button
               onClick={async () => {
                 if (!qcRequest) return;
@@ -1646,9 +1646,9 @@ export default function PackLotDetail() {
         )}
         
         {allTestsCompleted && !isQcPending && (
-          <div className="p-4 bg-green-100 border border-green-300 rounded-lg text-center">
-            <CheckCircle size={32} className="mx-auto text-green-600 mb-2" />
-            <p className="font-medium text-green-800">QC завершен</p>
+          <div className="p-4 success-box rounded-lg text-center">
+            <CheckCircle size={32} className="mx-auto text-success mb-2" />
+            <p className="font-medium text-success">QC завершен</p>
           </div>
         )}
       </div>
@@ -1666,7 +1666,7 @@ export default function PackLotDetail() {
           <h3 className="font-semibold text-foreground mb-4">QA Решение</h3>
           
           {/* Summary */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
             <div className="p-3 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground">Произведено</p>
               <p className="text-xl font-bold">{packLot.qty_produced} шт</p>
@@ -1686,8 +1686,8 @@ export default function PackLotDetail() {
           </div>
           
           {canDecide && (
-            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-              <h4 className="font-medium text-amber-800 mb-3">Принять решение</h4>
+            <div className="p-4 warning-box rounded-lg">
+              <h4 className="font-medium mb-3">Принять решение</h4>
               <textarea
                 placeholder="Комментарий QA (опционально)"
                 className="w-full rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm mb-3"
@@ -1724,8 +1724,8 @@ export default function PackLotDetail() {
           
           {latestDecision && (
             <div className={`mt-4 p-4 rounded-lg ${
-              latestDecision.decision === 'Approved' ? 'bg-green-50' :
-              latestDecision.decision === 'Rejected' ? 'bg-red-50' : 'bg-orange-50'
+              latestDecision.decision === 'Approved' ? 'success-box' :
+              latestDecision.decision === 'Rejected' ? 'error-box' : 'warning-box'
             }`}>
               <p className="font-medium">
                 Решение: {latestDecision.decision === 'Approved' ? 'Одобрено ✓' : 
@@ -1970,9 +1970,9 @@ export default function PackLotDetail() {
           <CardContent className="p-6">
           <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><FileText size={20} />Сертификаты и документы</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
+            <div className="p-4 border rounded-lg hover:border-success hover:bg-success/10 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-green-100 rounded-lg"><ClipboardCheck className="text-green-600" size={24} /></div>
+                <div className="p-2 tag-green rounded-lg"><ClipboardCheck className="text-success" size={24} /></div>
                 <div className="flex-1">
                   <h4 className="font-medium">Certificate of Analysis (COA)</h4>
                   <p className="text-sm text-muted-foreground mt-1">Сертификат анализа с результатами QC и решением QA</p>
@@ -1980,9 +1980,9 @@ export default function PackLotDetail() {
                 </div>
               </div>
             </div>
-            <div className="p-4 border rounded-lg hover:border-amber-300 hover:bg-amber-50 transition-colors">
+            <div className="p-4 border rounded-lg hover:border-warning hover:bg-warning/10 transition-colors">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg"><ShieldCheck className="text-amber-600" size={24} /></div>
+                <div className="p-2 tag-amber rounded-lg"><ShieldCheck size={24} /></div>
                 <div className="flex-1">
                   <h4 className="font-medium">Safety Data Sheet (SDS)</h4>
                   <p className="text-sm text-muted-foreground mt-1">Паспорт безопасности материала</p>
@@ -2075,19 +2075,19 @@ export default function PackLotDetail() {
         <Card>
           <CardContent className="p-6">
           <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Snowflake size={20} className="text-blue-600" />
+            <Snowflake size={20} className="text-primary" />
             Лиофилизация
-            {isCompleted && <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-sm rounded">Выполнено</span>}
+            {isCompleted && <span className="ml-2 px-2 py-1 tag-green text-sm rounded">Выполнено</span>}
           </h3>
 
           {/* Step definitions from reference */}
           {stepDefinitions.length > 0 && (
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-800 mb-3">Этапы процесса (из справочника)</h4>
+            <div className="mb-6 p-4 info-box rounded-lg">
+              <h4 className="font-medium mb-3">Этапы процесса (из справочника)</h4>
               <div className="space-y-2">
                 {stepDefinitions.map((step: any, idx: number) => (
                   <div key={idx} className="flex gap-3 text-sm">
-                    <span className="w-6 h-6 flex-shrink-0 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center font-medium">
+                    <span className="w-6 h-6 flex-shrink-0 rounded-full bg-primary/20 text-primary flex items-center justify-center font-medium">
                       {step.step_number}
                     </span>
                     <div>
@@ -2104,8 +2104,8 @@ export default function PackLotDetail() {
 
           {/* Completed result */}
           {isCompleted && lyoStep && (
-            <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-              <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="p-4 success-box rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                 <div><span className="text-muted-foreground">Вход:</span> {lyoStep.qty_input || '-'} шт</div>
                 <div><span className="text-muted-foreground">Выход:</span> {lyoStep.qty_output || '-'} шт</div>
                 <div><span className="text-muted-foreground">Примечания:</span> {lyoStep.notes || '-'}</div>
@@ -2144,9 +2144,9 @@ export default function PackLotDetail() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="grid grid-cols-2 gap-4 p-3 info-box rounded-lg">
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-blue-800">Начало процедуры</label>
+                  <label className="block text-sm font-medium mb-1">Начало процедуры</label>
                   <Input
                     type="datetime-local"
                     value={lyoFormData.started_at || ''}
@@ -2154,7 +2154,7 @@ export default function PackLotDetail() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-blue-800">Окончание процедуры</label>
+                  <label className="block text-sm font-medium mb-1">Окончание процедуры</label>
                   <Input
                     type="datetime-local"
                     value={lyoFormData.ended_at || ''}
@@ -2162,7 +2162,7 @@ export default function PackLotDetail() {
                   />
                 </div>
                 {lyoFormData.started_at && lyoFormData.ended_at && (
-                  <div className="col-span-2 text-sm text-blue-700">
+                  <div className="col-span-2 text-sm text-primary">
                     Затраченное время: {Math.round((new Date(lyoFormData.ended_at).getTime() - new Date(lyoFormData.started_at).getTime()) / 60000)} мин
                   </div>
                 )}
@@ -2191,7 +2191,7 @@ export default function PackLotDetail() {
 
           {/* No step yet */}
           {!lyoStep && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+            <div className="p-4 warning-box rounded-lg">
               Этап лиофилизации ещё не создан. Он будет доступен после перехода к постпроцессингу.
             </div>
           )}
@@ -2236,18 +2236,18 @@ export default function PackLotDetail() {
     return (
       <div className="space-y-6">
         {/* Summary */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-600">Произведено</p>
-            <p className="text-2xl font-bold text-blue-800">{packLot?.qty_produced || 0}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="p-4 info-box rounded-lg">
+            <p className="text-sm text-primary">Произведено</p>
+            <p className="text-2xl font-bold">{packLot?.qty_produced || 0}</p>
           </div>
-          <div className="p-4 bg-green-50 rounded-lg">
-            <p className="text-sm text-green-600">Отгружено</p>
-            <p className="text-2xl font-bold text-green-800">{totalShipped}</p>
+          <div className="p-4 success-box rounded-lg">
+            <p className="text-sm text-success">Отгружено</p>
+            <p className="text-2xl font-bold text-success">{totalShipped}</p>
           </div>
-          <div className="p-4 bg-orange-50 rounded-lg">
-            <p className="text-sm text-orange-600">На складе</p>
-            <p className="text-2xl font-bold text-orange-800">{qtyAvailable}</p>
+          <div className="p-4 warning-box rounded-lg">
+            <p className="text-sm text-warning">На складе</p>
+            <p className="text-2xl font-bold">{qtyAvailable}</p>
           </div>
         </div>
 
@@ -2362,7 +2362,7 @@ export default function PackLotDetail() {
           <p className="text-muted-foreground">
             {(requestLine as any)?.finished_product_code || 'Продукт'} | 
             {packFormat?.name || packLot.pack_format_code} | 
-            CM: <Link to={`/cm/${packLot.source_cm_lot_id}`} className="text-blue-600 hover:underline">{packLot.source_cm_lot_id}</Link>
+            CM: <Link to={`/cm/${packLot.source_cm_lot_id}`} className="text-primary hover:underline">{packLot.source_cm_lot_id}</Link>
           </p>
         </div>
 
@@ -2384,9 +2384,9 @@ export default function PackLotDetail() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                     isActive
-                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      ? 'border-primary text-primary bg-primary/10'
                       : isCurrent
-                      ? 'border-green-500 text-green-700 bg-green-50'
+                      ? 'border-success text-success bg-success/10'
                       : isAvailable
                       ? 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                       : 'border-transparent text-muted-foreground hover:text-muted-foreground'
@@ -2394,7 +2394,7 @@ export default function PackLotDetail() {
                 >
                   <Icon size={18} />
                   {tab.label}
-                  {isCurrent && <span className="ml-1 text-xs text-green-600">●</span>}
+                  {isCurrent && <span className="ml-1 text-xs text-success">●</span>}
                 </button>
               );
             })}
@@ -2416,7 +2416,7 @@ export default function PackLotDetail() {
 
       {/* New Request Created Banner */}
       {newRequestCreated && (
-        <div className="fixed bottom-4 right-4 z-50 bg-green-600 text-white rounded-lg shadow-lg p-4 max-w-sm animate-pulse">
+        <div className="fixed bottom-4 right-4 z-50 bg-success text-white rounded-lg shadow-lg p-4 max-w-sm animate-pulse">
           <div className="flex items-center gap-3">
             <CheckCircle size={24} />
             <div>
@@ -2429,7 +2429,7 @@ export default function PackLotDetail() {
           <div className="flex gap-2 mt-3">
             <Link
               to={`/requests/${newRequestCreated.id}`}
-              className="flex-1 px-3 py-2 bg-card text-green-700 rounded text-center text-sm font-medium hover:bg-green-50"
+              className="flex-1 px-3 py-2 bg-card text-success rounded text-center text-sm font-medium hover:bg-success/10"
             >
               Перейти к заявке
             </Link>
@@ -2437,7 +2437,7 @@ export default function PackLotDetail() {
               onClick={() => setNewRequestCreated(null)}
               variant="ghost"
               size="sm"
-              className="bg-green-700 hover:bg-green-800 text-white"
+              className="bg-success/80 hover:bg-success text-white"
             >
               Закрыть
             </Button>
@@ -2450,16 +2450,16 @@ export default function PackLotDetail() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
-              <AlertTriangle className="text-amber-500" size={24} />
+              <AlertTriangle className="text-warning" size={24} />
               Частичный розлив
             </DialogTitle>
           </DialogHeader>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm text-amber-800">
+          <div className="warning-box rounded-lg p-4">
+            <p className="text-sm">
               Произведено <strong>{qtyProduced}</strong> из <strong>{packLot?.qty_planned}</strong> запланированных единиц.
             </p>
-            <p className="text-sm text-amber-700 mt-1">
+            <p className="text-sm text-warning mt-1">
               Недопроизведено: <strong>{(packLot?.qty_planned || 0) - qtyProduced}</strong> шт
             </p>
           </div>
@@ -2469,9 +2469,9 @@ export default function PackLotDetail() {
           <div className="space-y-3">
             <button
               onClick={() => handlePartialFillOption('newRequest')}
-              className="w-full p-4 text-left border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
+              className="w-full p-4 text-left border-2 border-primary/30 rounded-lg hover:border-primary hover:bg-primary/10 transition-all"
             >
-              <p className="font-medium text-blue-800">Создать доп. заявку</p>
+              <p className="font-medium text-primary">Создать доп. заявку</p>
               <p className="text-sm text-muted-foreground mt-1">
                 Текущая заявка → "Частично выполнена", новая заявка на {(packLot?.qty_planned || 0) - qtyProduced} шт
               </p>

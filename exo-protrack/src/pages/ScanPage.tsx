@@ -51,7 +51,7 @@ export default function ScanPage() {
       <h1 className="text-xl font-bold mb-4">Сканирование QR кода</h1>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+        <div className="mb-4 p-3 error-box rounded-lg text-sm">
           {error}
         </div>
       )}

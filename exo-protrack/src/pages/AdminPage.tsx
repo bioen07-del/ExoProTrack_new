@@ -867,7 +867,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код типа клеток (например, MSC, Fibroblast)">
                   <Input value={formData.cell_type_code || ''} onChange={e => setFormData({...formData, cell_type_code: e.target.value})} />
                 </FormField>
@@ -946,7 +946,7 @@ export default function AdminPage() {
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-6">
               {/* Основные поля */}
-              <div className="grid grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <FormField label="Код продукта" required tooltip="Уникальный код для идентификации продукта">
                   <Input
                     value={formData.product_code || ''}
@@ -1003,7 +1003,7 @@ export default function AdminPage() {
               </div>
               
               {/* Дополнительные поля */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <FormField label="Формат упаковки по умолчанию" tooltip="Если выбран - фиксируется на всех циклах">
                   <select value={formData.default_pack_format_code || ''} onChange={e => setFormData({...formData, default_pack_format_code: e.target.value || null})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="">Не выбран (менеджер выбирает)</option>
@@ -1021,7 +1021,7 @@ export default function AdminPage() {
               </div>
               
               {/* Группа 1: Сырьё (QC первичный + Процессинг сырья) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* QC первичный - из справочника */}
               <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
                 <h4 className="font-medium text-blue-800 mb-3 flex items-center gap-2">
@@ -1060,7 +1060,7 @@ export default function AdminPage() {
                               <span className="font-medium">{test.name}</span>
                               <span className="text-xs text-muted-foreground">({test.code})</span>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1 grid grid-cols-4 gap-2">
+                            <div className="text-xs text-muted-foreground mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                               <span>Ед.: <strong>{test.unit || '-'}</strong></span>
                               <span>Мин: <strong>{test.norm_min || '-'}</strong></span>
                               <span>Макс: <strong>{test.norm_max || '-'}</strong></span>
@@ -1080,7 +1080,7 @@ export default function AdminPage() {
                   Процессинг сырья
                   <Tooltip text="Методы обработки сырья в порядке выполнения до основного процессинга" />
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-purple-700 mb-2">Доступные методы:</p>
                     <div className="space-y-1">
@@ -1161,14 +1161,14 @@ export default function AdminPage() {
               </div>
 
               {/* Группа 2: Продукт (Постпроцессинг + QC продукта) */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Постпроцессинг - с порядком и drag-drop */}
               <div className="p-4 border border-amber-200 rounded-lg bg-amber-50">
                 <h4 className="font-medium text-amber-800 mb-3 flex items-center gap-2">
                   Методы постпроцессинга
                   <Tooltip text="Методы обработки CM в порядке выполнения. Перетаскивайте для изменения порядка" />
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Доступные методы */}
                   <div>
                     <p className="text-sm text-amber-700 mb-2">Доступные методы:</p>
@@ -1288,7 +1288,7 @@ export default function AdminPage() {
                               <span className="font-medium">{test.name}</span>
                               <span className="text-xs text-muted-foreground">({test.code})</span>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1 grid grid-cols-4 gap-2">
+                            <div className="text-xs text-muted-foreground mt-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                               <span>Ед.: <strong>{test.unit || '-'}</strong></span>
                               <span>Мин: <strong>{test.norm_min || '-'}</strong></span>
                               <span>Макс: <strong>{test.norm_max || '-'}</strong></span>
@@ -1424,7 +1424,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код формата (например, V4, V10, B250)">
                   <Input value={formData.pack_format_code || ''} onChange={e => setFormData({...formData, pack_format_code: e.target.value})} />
                 </FormField>
@@ -1519,7 +1519,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код среды (DMEM-HG, RPMI, etc.)">
                   <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
@@ -1599,7 +1599,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-              <div className="grid grid-cols-6 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код добавки">
                   <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
@@ -1702,7 +1702,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-4">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <FormField label="Базовая среда" required tooltip="Выберите базовую культуральную среду">
                   <select 
                     value={formData.base_media_id || ''} 
@@ -1925,7 +1925,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код метода">
                   <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
@@ -1956,7 +1956,7 @@ export default function AdminPage() {
               {formData.method_type === 'Modification' && (
                 <div className="border-t pt-4 mt-4 space-y-4">
                   <h4 className="font-medium text-foreground">Настройки модификации</h4>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     <FormField label="Применимость" required tooltip="Где применяется метод">
                       <select value={formData.applicability || 'both'} onChange={e => setFormData({...formData, applicability: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                         <option value="product">Продукт</option>
@@ -2057,7 +2057,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код теста (например, Sterility, LAL)">
                   <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
@@ -2071,7 +2071,7 @@ export default function AdminPage() {
                   <Input value={formData.method || ''} onChange={e => setFormData({...formData, method: e.target.value})} />
                 </FormField>
               </div>
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <FormField label="Норма мин" tooltip="Минимальное допустимое значение (число)">
                   <Input type="number" step="any" value={formData.norm_min || ''} onChange={e => setFormData({...formData, norm_min: e.target.value})} />
                 </FormField>
@@ -2134,7 +2134,7 @@ export default function AdminPage() {
           </div>
           {showAddForm && (
             <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
-              <div className="grid grid-cols-4 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код инфекции (например, HBsAg, HIV)">
                   <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
@@ -2196,7 +2196,7 @@ export default function AdminPage() {
             <DialogTitle>SDS: {sdsModal.entityName}</DialogTitle>
           </DialogHeader>
             <div className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormField label="Название компонента">
                   <Input value={sdsModal.sdsData.component_name || sdsModal.entityName} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, component_name: e.target.value}})} />
                 </FormField>
@@ -2212,7 +2212,7 @@ export default function AdminPage() {
               </div>
               <div className="border-t pt-3">
                 <p className="text-sm font-medium text-foreground mb-2">Секции SDS</p>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <FormField label="2. Классификация опасности">
                     <textarea value={sdsModal.sdsData.hazard_classification || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, hazard_classification: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg text-sm" rows={2} />
                   </FormField>

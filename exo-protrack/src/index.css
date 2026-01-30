@@ -86,7 +86,8 @@
     --info-foreground: 210 40% 98%;
   }
 
-  /* Тёмная тема */
+  /* Тёмная тема — Modern Dark с улучшенными контрастами */
+  .dark,
   .theme-dark,
   [data-theme="dark"] {
     /* Radius */
@@ -97,73 +98,73 @@
     --radius-xl: 1rem;
     --radius-full: 9999px;
 
-    /* Основные цвета */
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Основные цвета — slate-toned dark */
+    --background: 222 47% 8%;
+    --foreground: 210 40% 93%;
 
-    /* Карточки и поверхности */
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    /* Карточки и поверхности — приподнятые */
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 93%;
+    --popover: 222 47% 13%;
+    --popover-foreground: 210 40% 93%;
 
-    /* Основной цвет - чуть ярче для темной темы */
-    --primary: 150 65% 45%;
-    --primary-foreground: 144.9 80.4% 10%;
+    /* Основной цвет — яркий emerald */
+    --primary: 152 60% 48%;
+    --primary-foreground: 0 0% 100%;
 
-    /* Вторичный цвет */
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* Вторичный цвет — subtle slate */
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 40% 93%;
 
-    /* Акцентный цвет */
-    --accent: 38 92% 50%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    /* Акцентный цвет — toned amber */
+    --accent: 38 85% 55%;
+    --accent-foreground: 38 90% 12%;
 
     /* Destructive */
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
 
-    /* Muted */
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* Muted — более видимые тона */
+    --muted: 215 25% 16%;
+    --muted-foreground: 215 20% 60%;
 
-    /* Границы и ввод */
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 150 65% 45%;
+    /* Границы и ввод — более контрастные */
+    --border: 215 25% 22%;
+    --input: 215 25% 22%;
+    --ring: 152 60% 48%;
 
     /* Sidebar цвета */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 150 65% 45%;
+    --sidebar-background: 222 47% 7%;
+    --sidebar-foreground: 210 30% 88%;
+    --sidebar-primary: 152 60% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 222 35% 14%;
+    --sidebar-accent-foreground: 210 30% 88%;
+    --sidebar-border: 215 25% 18%;
+    --sidebar-ring: 152 60% 48%;
 
-    /* Chart цвета */
-    --chart-1: 150 65% 45%;
-    --chart-2: 217.2 32.6% 17.5%;
-    --chart-3: 38 92% 50%;
-    --chart-4: 0 62.8% 30.6%;
-    --chart-5: 217.2 91.2% 59.8%;
+    /* Chart цвета — яркие для тёмного фона */
+    --chart-1: 152 60% 48%;
+    --chart-2: 210 80% 60%;
+    --chart-3: 38 85% 55%;
+    --chart-4: 0 72% 55%;
+    --chart-5: 270 70% 65%;
 
     /* Success colors */
-    --success: 142 70% 45%;
-    --success-foreground: 144.9 80.4% 10%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
 
     /* Warning colors */
     --warning: 38 92% 50%;
-    --warning-foreground: 222.2 47.4% 11.2%;
+    --warning-foreground: 38 95% 10%;
 
     /* Error colors */
-    --error: 0 63% 31%;
-    --error-foreground: 210 40% 98%;
+    --error: 0 72% 51%;
+    --error-foreground: 0 0% 100%;
 
     /* Info colors */
     --info: 199 89% 48%;
-    --info-foreground: 210 40% 98%;
+    --info-foreground: 0 0% 100%;
   }
 }
 
@@ -181,6 +182,25 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Нативные формы — наследуют тему */
+  input,
+  textarea,
+  select {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--background));
+  }
+
+  select option {
+    color: hsl(var(--foreground));
+    background-color: hsl(var(--card));
+  }
+
+  /* Placeholder для нативных элементов */
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground));
   }
 
   /* Улучшенный скроллбар */
@@ -210,6 +230,122 @@
   /* Selection */
   ::selection {
     @apply bg-primary/20 text-primary-foreground;
+  }
+
+  /* ===== Dark-safe color boxes (informational panels) ===== */
+  /* Эти классы автоматически адаптируются к тёмной теме */
+
+  /* Blue info box */
+  .info-box {
+    @apply bg-blue-50 border border-blue-200 text-blue-800
+           dark:bg-blue-950/30 dark:border-blue-800/50 dark:text-blue-300;
+  }
+
+  /* Green/success info box */
+  .success-box {
+    @apply bg-green-50 border border-green-200 text-green-800
+           dark:bg-green-950/30 dark:border-green-800/50 dark:text-green-300;
+  }
+
+  /* Amber/warning info box */
+  .warning-box {
+    @apply bg-amber-50 border border-amber-200 text-amber-800
+           dark:bg-amber-950/30 dark:border-amber-700/50 dark:text-amber-300;
+  }
+
+  /* Red/error info box */
+  .error-box {
+    @apply bg-red-50 border border-red-200 text-red-800
+           dark:bg-red-950/30 dark:border-red-800/50 dark:text-red-300;
+  }
+
+  /* Teal info box */
+  .teal-box {
+    @apply bg-teal-50 border border-teal-200 text-teal-800
+           dark:bg-teal-950/30 dark:border-teal-800/50 dark:text-teal-300;
+  }
+
+  /* Purple info box */
+  .purple-box {
+    @apply bg-purple-50 border border-purple-200 text-purple-800
+           dark:bg-purple-950/30 dark:border-purple-800/50 dark:text-purple-300;
+  }
+
+  /* Slate/neutral info box */
+  .neutral-box {
+    @apply bg-slate-50 border border-slate-200 text-slate-700
+           dark:bg-slate-800/30 dark:border-slate-700/50 dark:text-slate-300;
+  }
+
+  /* ===== Dark-safe color tags (small badges/pills) ===== */
+  .tag-blue {
+    @apply bg-blue-100 text-blue-800
+           dark:bg-blue-900/40 dark:text-blue-300;
+  }
+
+  .tag-green {
+    @apply bg-green-100 text-green-800
+           dark:bg-green-900/40 dark:text-green-300;
+  }
+
+  .tag-emerald {
+    @apply bg-emerald-100 text-emerald-800
+           dark:bg-emerald-900/40 dark:text-emerald-300;
+  }
+
+  .tag-amber {
+    @apply bg-amber-100 text-amber-800
+           dark:bg-amber-900/40 dark:text-amber-300;
+  }
+
+  .tag-red {
+    @apply bg-red-100 text-red-800
+           dark:bg-red-900/40 dark:text-red-300;
+  }
+
+  .tag-purple {
+    @apply bg-purple-100 text-purple-800
+           dark:bg-purple-900/40 dark:text-purple-300;
+  }
+
+  .tag-indigo {
+    @apply bg-indigo-100 text-indigo-800
+           dark:bg-indigo-900/40 dark:text-indigo-300;
+  }
+
+  .tag-teal {
+    @apply bg-teal-100 text-teal-800
+           dark:bg-teal-900/40 dark:text-teal-300;
+  }
+
+  .tag-yellow {
+    @apply bg-yellow-100 text-yellow-800
+           dark:bg-yellow-900/40 dark:text-yellow-300;
+  }
+
+  .tag-orange {
+    @apply bg-orange-100 text-orange-800
+           dark:bg-orange-900/40 dark:text-orange-300;
+  }
+
+  .tag-slate {
+    @apply bg-slate-100 text-slate-800
+           dark:bg-slate-800/40 dark:text-slate-300;
+  }
+
+  .tag-cyan {
+    @apply bg-cyan-100 text-cyan-800
+           dark:bg-cyan-900/40 dark:text-cyan-300;
+  }
+
+  .tag-violet {
+    @apply bg-violet-100 text-violet-800
+           dark:bg-violet-900/40 dark:text-violet-300;
+  }
+
+  .tag-rose {
+    @apply bg-rose-100 text-rose-800
+           dark:bg-rose-900/40 dark:text-rose-300;
   }
 
   /* Улучшенная типографика для чтения */
@@ -547,11 +683,13 @@
 
   /* Glass effect */
   .glass {
-    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg;
+    background-color: hsl(var(--background) / 0.8);
+    @apply backdrop-blur-lg;
   }
 
   .glass-subtle {
-    @apply bg-white/60 dark:bg-gray-900/60 backdrop-blur-md;
+    background-color: hsl(var(--background) / 0.6);
+    @apply backdrop-blur-md;
   }
 
   /* Gradient backgrounds */
@@ -661,7 +799,26 @@ body,
    Mobile Optimizations
    ========================================================================== */
 
+/* Глобальная защита от горизонтального скролла */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 @media (max-width: 640px) {
+  /* Все контейнеры ограничены шириной экрана */
+  main, .main-content, [role="main"] {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Таблицы на мобильных — скролл внутри контейнера */
+  .table-container,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
   .mobile-full {
     width: 100vw;
     margin-left: calc(-50vw + 50%);

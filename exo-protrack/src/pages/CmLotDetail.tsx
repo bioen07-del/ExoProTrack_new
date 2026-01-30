@@ -56,14 +56,14 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Open: 'bg-blue-100 text-blue-800',
-  Closed_Collected: 'bg-purple-100 text-purple-800',
-  In_Processing: 'bg-amber-100 text-amber-800',
-  QC_Pending: 'bg-yellow-100 text-yellow-800',
-  QC_Completed: 'bg-green-100 text-green-800',
-  Approved: 'bg-emerald-100 text-emerald-800',
-  Rejected: 'bg-red-100 text-red-800',
-  OnHold: 'bg-orange-100 text-orange-800',
+  Open: 'tag-blue',
+  Closed_Collected: 'tag-purple',
+  In_Processing: 'tag-amber',
+  QC_Pending: 'tag-yellow',
+  QC_Completed: 'tag-green',
+  Approved: 'tag-emerald',
+  Rejected: 'tag-red',
+  OnHold: 'tag-orange',
 };
 
 export default function CmLotDetail() {
@@ -379,7 +379,7 @@ export default function CmLotDetail() {
   }
 
   if (!lot) {
-    return <div className="text-center py-8 text-red-500">CM Лот не найден</div>;
+    return <div className="text-center py-8 text-destructive">CM Лот не найден</div>;
   }
 
   return (
@@ -430,11 +430,11 @@ export default function CmLotDetail() {
                 <button
                   onClick={() => setActiveTab(step.tab)}
                   className={`flex flex-col items-center cursor-pointer transition-transform hover:scale-105 ${
-                    isCompleted ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-muted-foreground/40'
+                    isCompleted ? 'text-success' : isCurrent ? 'text-primary' : 'text-muted-foreground/40'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    isCompleted ? 'bg-green-100' : isCurrent ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-muted'
+                    isCompleted ? 'bg-success/20' : isCurrent ? 'bg-primary/20 ring-2 ring-primary' : 'bg-muted'
                   }`}>
                     <Icon size={20} />
                   </div>
@@ -442,7 +442,7 @@ export default function CmLotDetail() {
                 </button>
                 {idx < arr.length - 1 && (
                   <div className={`flex-1 h-1 mx-2 rounded ${
-                    isCompleted ? 'bg-green-400' : 'bg-muted'
+                    isCompleted ? 'bg-success' : 'bg-muted'
                   }`} />
                 )}
               </React.Fragment>
@@ -481,9 +481,9 @@ export default function CmLotDetail() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600 bg-blue-50 dark:bg-blue-950/30'
+                      ? 'border-primary text-primary bg-primary/10'
                       : isNextStep
-                      ? 'border-amber-300 text-amber-500 bg-amber-50/50 dark:bg-amber-950/20'
+                      ? 'border-amber-400 text-amber-500 bg-amber-500/10 dark:text-amber-400'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -578,11 +578,11 @@ export default function CmLotDetail() {
                     return (
                       <tr key={res.result_id}>
                         <td className="px-4 py-2">
-                          <Link to={`/culture/${res.entity_id}`} className="font-mono text-sm text-blue-600 hover:underline">{res.entity_id}</Link>
+                          <Link to={`/culture/${res.entity_id}`} className="font-mono text-sm text-primary hover:underline">{res.entity_id}</Link>
                         </td>
                         <td className="px-4 py-2">{infType?.name || res.infection_type_id}</td>
                         <td className="px-4 py-2 text-center">
-                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${res.result === 'negative' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${res.result === 'negative' ? 'tag-green' : 'tag-red'}`}>
                             {res.result === 'negative' ? 'Отрицательный' : 'Положительный'}
                           </span>
                         </td>
@@ -682,7 +682,7 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
   };
   
   return (
-    <div className="grid grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {/* QR Code */}
       <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
         <QRCodeSVG value={lot.cm_lot_id} size={120} />
@@ -690,8 +690,8 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
       </div>
 
       {/* Status & Info */}
-      <div className="col-span-2 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      <div className="sm:col-span-1 lg:col-span-2 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Продукт</p>
             <p className="font-medium text-foreground">{lot.base_product_code}</p>
@@ -708,7 +708,7 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
               <p className="font-medium text-muted-foreground">Не определена</p>
             )}
             {mediaSpec && (
-              <span className={`text-xs px-1.5 py-0.5 rounded ${mediaSpec.phenol_red_flag ? 'bg-pink-100 text-pink-700' : 'bg-muted text-muted-foreground'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded ${mediaSpec.phenol_red_flag ? 'tag-red' : 'bg-muted text-muted-foreground'}`}>
                 Феноловый красный: {mediaSpec.phenol_red_flag ? 'Да' : 'Нет'}
               </span>
             )}
@@ -722,20 +722,20 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
         </div>
 
         {/* Volume Info */}
-        <div className="p-4 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-600 mb-2">Объем контейнера</p>
+        <div className="p-4 info-box rounded-lg">
+          <p className="text-sm text-primary mb-2">Объем контейнера</p>
           <div className="flex items-end gap-4">
             <div>
-              <p className="text-3xl font-bold text-blue-900">
+              <p className="text-3xl font-bold text-foreground">
                 {container?.current_volume_ml?.toFixed(1) || 0}
               </p>
-              <p className="text-sm text-blue-600">
+              <p className="text-sm text-primary">
                 из {container?.nominal_volume_ml || 0} мл
               </p>
             </div>
-            <div className="flex-1 h-4 bg-blue-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-600 rounded-full"
+            <div className="flex-1 h-4 bg-primary/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary rounded-full"
                 style={{ width: `${Math.min(100, ((container?.current_volume_ml || 0) / (container?.nominal_volume_ml || 1)) * 100)}%` }}
               />
             </div>
@@ -752,9 +752,9 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
                 <div key={test} className="flex items-center gap-2">
                   {result ? (
                     result.pass_fail === 'Pass' ? (
-                      <CheckCircle className="text-green-500" size={18} />
+                      <CheckCircle className="text-success" size={18} />
                     ) : result.pass_fail === 'Fail' ? (
-                      <XCircle className="text-red-500" size={18} />
+                      <XCircle className="text-destructive" size={18} />
                     ) : (
                       <Clock className="text-gray-400" size={18} />
                     )
@@ -771,8 +771,8 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
         {/* QA Decision */}
         {latestDecision && (
           <div className={`p-4 rounded-lg ${
-            latestDecision.decision === 'Approved' ? 'bg-emerald-50' :
-            latestDecision.decision === 'Rejected' ? 'bg-red-50' : 'bg-orange-50'
+            latestDecision.decision === 'Approved' ? 'success-box' :
+            latestDecision.decision === 'Rejected' ? 'error-box' : 'warning-box'
           }`}>
             <p className="text-sm mb-1">Решение QA</p>
             <p className="font-bold">
@@ -788,28 +788,28 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
         )}
 
         {/* Резервации и остаток */}
-        <div className="p-4 bg-purple-50 rounded-lg">
-          <p className="text-sm text-purple-600 mb-2">Резервации и остаток</p>
-          <div className="grid grid-cols-2 gap-4">
+        <div className="p-4 purple-box rounded-lg">
+          <p className="text-sm text-muted-foreground mb-2">Резервации и остаток</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-2xl font-bold text-purple-900">{reserved_ml.toFixed(1)} мл</p>
-              <p className="text-sm text-purple-600">Зарезервировано</p>
+              <p className="text-2xl font-bold text-foreground">{reserved_ml.toFixed(1)} мл</p>
+              <p className="text-sm text-muted-foreground">Зарезервировано</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-emerald-700">{available_ml.toFixed(1)} мл</p>
-              <p className="text-sm text-emerald-600">Доступно</p>
+              <p className="text-2xl font-bold text-success">{available_ml.toFixed(1)} мл</p>
+              <p className="text-sm text-success">Доступно</p>
             </div>
           </div>
           {reservations.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-purple-200">
-              <p className="text-xs font-medium text-purple-700 mb-2">Активные резервации:</p>
+            <div className="mt-3 pt-3 border-t border-border">
+              <p className="text-xs font-medium text-muted-foreground mb-2">Активные резервации:</p>
               {reservations.map(r => {
                 const line = requestLines.find(l => l.request_line_id === r.request_line_id);
                 const prod = finishedProducts.find(p => p.product_code === line?.finished_product_code);
                 return (
                   <div key={r.reservation_id} className="flex justify-between items-center text-sm py-1">
                     <div>
-                      <Link to={`/requests/${line?.request?.request_id}`} className="text-blue-600 hover:underline">
+                      <Link to={`/requests/${line?.request?.request_id}`} className="text-primary hover:underline">
                         {line?.request?.request_id || 'Заявка'}
                       </Link>
                       <span className="text-muted-foreground ml-2">
@@ -818,7 +818,7 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
                       <span className="text-muted-foreground/70 ml-1">({r.reserved_volume_ml?.toFixed(1)} мл)</span>
                     </div>
                     {line?.request?.due_date && (
-                      <span className="text-xs text-purple-600">
+                      <span className="text-xs text-muted-foreground">
                         до {new Date(line.request.due_date).toLocaleDateString('ru-RU')}
                       </span>
                     )}
@@ -833,7 +833,7 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
         {collections.length > 0 && (
           <div className="p-4 bg-muted rounded-lg">
             <p className="text-sm text-muted-foreground mb-3 font-medium">Метрики сбора</p>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Количество сборов:</span>
                 <span className="font-medium">{collectionsCount}</span>
@@ -868,7 +868,7 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
 
         {/* Требования к продукту - используем frozenSpec если есть */}
         {productSpecs && (
-          <div className="col-span-3 mt-4">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-3 mt-4">
             <ProductRequirementsCard 
               productCode={lot.base_product_code} 
               frozenSpec={(lot as any).frozen_spec}
@@ -1070,33 +1070,33 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
     <div className="space-y-4">
       {/* Статистика сборов */}
       {collections.length > 0 && (
-        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h4 className="text-sm font-medium text-blue-800 mb-3">Статистика сборов</h4>
-          <div className="grid grid-cols-5 gap-4 text-sm">
+        <div className="p-4 info-box rounded-lg">
+          <h4 className="text-sm font-medium text-foreground mb-3">Статистика сборов</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 text-sm">
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-700">{collections.length}</p>
-              <p className="text-xs text-blue-600">Сборов</p>
+              <p className="text-2xl font-bold text-primary">{collections.length}</p>
+              <p className="text-xs text-primary">Сборов</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-700">{culturesUsed}</p>
-              <p className="text-xs text-blue-600">Культур</p>
+              <p className="text-2xl font-bold text-primary">{culturesUsed}</p>
+              <p className="text-xs text-primary">Культур</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-700">{totalVolume.toFixed(0)}</p>
-              <p className="text-xs text-blue-600">Общий объем (мл)</p>
+              <p className="text-2xl font-bold text-primary">{totalVolume.toFixed(0)}</p>
+              <p className="text-xs text-primary">Общий объем (мл)</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-700">{avgVolume.toFixed(1)}</p>
-              <p className="text-xs text-blue-600">Ср. объем/сбор</p>
+              <p className="text-2xl font-bold text-primary">{avgVolume.toFixed(1)}</p>
+              <p className="text-xs text-primary">Ср. объем/сбор</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl font-bold text-blue-700">{avgPassage.toFixed(1)}</p>
-              <p className="text-xs text-blue-600">Ср. пассаж</p>
+              <p className="text-2xl font-bold text-primary">{avgPassage.toFixed(1)}</p>
+              <p className="text-xs text-primary">Ср. пассаж</p>
             </div>
           </div>
           {Object.keys(morphCounts).length > 0 && (
-            <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2 flex-wrap">
-              <span className="text-xs text-blue-600">Морфология:</span>
+            <div className="mt-3 pt-3 border-t border-border flex gap-2 flex-wrap">
+              <span className="text-xs text-primary">Морфология:</span>
               {Object.entries(morphCounts).map(([m, c]) => (
                 <span key={m} className="px-2 py-0.5 bg-card rounded text-xs">{m}: {c}</span>
               ))}
@@ -1190,7 +1190,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
           {/* Group 1: Culture & Volume */}
           <div className="p-4 border border-border rounded-lg bg-card">
             <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Культура и объем</h4>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Культура *<Tip text="Выберите культуру клеток для сбора CM" /></label>
                 <div className="flex gap-2">
@@ -1219,11 +1219,11 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
                 {formData.culture_id && (
                   <div className="mt-2 p-2 rounded text-xs">
                     {cultureInfections.length === 0 ? (
-                      <span className="text-orange-600">⚠️ Нет данных инфекционного скрининга</span>
+                      <span className="text-warning">⚠️ Нет данных инфекционного скрининга</span>
                     ) : cultureInfections.some(i => i.result === 'positive') ? (
-                      <span className="text-red-600">🔴 Есть положительные результаты!</span>
+                      <span className="text-destructive">🔴 Есть положительные результаты!</span>
                     ) : (
-                      <span className="text-green-600">✅ Все тесты отрицательные ({cultureInfections.length})</span>
+                      <span className="text-success">✅ Все тесты отрицательные ({cultureInfections.length})</span>
                     )}
                   </div>
                 )}
@@ -1247,7 +1247,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
           {/* Group 2: Passage & Morphology */}
           <div className="p-4 border border-border rounded-lg bg-card">
             <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Пассаж и морфология</h4>
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Пассаж *<Tip text="Номер пассажа клеточной культуры" /></label>
                 <Input
@@ -1295,7 +1295,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
           {/* Group 3: Dates (Enrichment) */}
           <div className="p-4 border border-border rounded-lg bg-card">
             <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Даты обогащения</h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Начало обогащения</label>
                 <Input
@@ -1318,7 +1318,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
           {/* Group 4: Media */}
           <div className="p-4 border border-border rounded-lg bg-card">
             <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Среда</h4>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Спецификация среды *</label>
                 <select
@@ -1335,9 +1335,9 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
                       </option>
                   ))}
                 </select>
-                {lot.media_spec_id && <p className="text-xs text-amber-600 mt-1">Зафиксировано по первому сбору</p>}
+                {lot.media_spec_id && <p className="text-xs text-warning mt-1">Зафиксировано по первому сбору</p>}
                 {formData.media_spec_id && (
-                  <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="mt-3 p-3 info-box rounded-lg">
                     <MediaFormulaDisplay mediaSpecId={formData.media_spec_id} />
                   </div>
                 )}
@@ -1533,15 +1533,15 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
   return (
     <div className="space-y-4">
       {/* Заголовок с текущим объемом */}
-      <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+      <div className="flex justify-between items-center p-4 info-box rounded-lg">
         <h3 className="text-lg font-semibold">Процессинг сырья</h3>
-        <span className="px-4 py-2 bg-blue-600 text-white rounded-full font-medium">
+        <span className="px-4 py-2 bg-primary text-primary-foreground rounded-full font-medium">
           Текущий объем: {currentVolume.toFixed(1)} мл
         </span>
       </div>
 
       {allRequiredSteps.length === 0 ? (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+        <div className="p-4 warning-box rounded-lg">
           Нет требований к процессингу в спецификации продукта
         </div>
       ) : (
@@ -1553,10 +1553,10 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
             const form = stepForms[key] || {};
 
             return (
-              <div key={key} className={`p-4 rounded-lg border-2 ${completed ? 'bg-green-50 border-green-300 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border-border'}`}>
+              <div key={key} className={`p-4 rounded-lg border-2 ${completed ? 'success-box' : 'bg-card border-border'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${completed ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${completed ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'}`}>
                       {idx + 1}
                     </span>
                     <div>
@@ -1565,14 +1565,14 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
                     </div>
                   </div>
                   {completed && (
-                    <span className="flex items-center gap-1 text-green-600 font-medium">
+                    <span className="flex items-center gap-1 text-success font-medium">
                       <CheckCircle size={20} /> Выполнено
                     </span>
                   )}
                 </div>
 
                 {completed ? (
-                  <div className="grid grid-cols-4 gap-4 text-sm bg-green-100 p-3 rounded">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm success-box p-3 rounded">
                     <div><span className="text-muted-foreground">Вход:</span> {stepData?.input_volume_ml?.toFixed(1) || '-'} мл</div>
                     <div><span className="text-muted-foreground">Выход:</span> {stepData?.output_volume_ml?.toFixed(1) || '-'} мл</div>
                     <div><span className="text-muted-foreground">Начало:</span> {stepData?.started_at ? new Date(stepData.started_at).toLocaleString('ru-RU') : '-'}</div>
@@ -1580,7 +1580,7 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
                   </div>
                 ) : canEdit ? (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Входной объем (мл) <span className="text-muted-foreground">(макс: {currentVolume.toFixed(1)})</span></label>
                         <Input
@@ -1598,7 +1598,7 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Начало</label>
                         <Input
@@ -1633,10 +1633,10 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
       )}
 
       {allCompleted && allRequiredSteps.length > 0 && (
-        <div className="p-4 bg-green-100 border border-green-300 rounded-lg text-center">
-          <CheckCircle size={32} className="mx-auto text-green-600 mb-2" />
-          <p className="font-medium text-green-800">Все шаги процессинга выполнены!</p>
-          <p className="text-sm text-green-600">Можно переходить к следующему этапу БП</p>
+        <div className="p-4 success-box rounded-lg text-center">
+          <CheckCircle size={32} className="mx-auto text-success mb-2" />
+          <p className="font-medium">Все шаги процессинга выполнены!</p>
+          <p className="text-sm text-success">Можно переходить к следующему этапу БП</p>
         </div>
       )}
     </div>
@@ -1737,17 +1737,17 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
   return (
     <div className="space-y-4">
       {/* Заголовок */}
-      <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+      <div className="flex justify-between items-center p-4 info-box rounded-lg">
         <h3 className="text-lg font-semibold">QC Сырья — Контроль качества</h3>
         {allTestsCompleted && (
-          <span className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-full font-medium">
+          <span className="flex items-center gap-2 px-4 py-2 bg-success text-success-foreground rounded-full font-medium">
             <CheckCircle size={18} /> Все тесты выполнены
           </span>
         )}
       </div>
 
       {!activeRequest && qcRequests.length === 0 && lot.status === 'QC_Pending' && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+        <div className="p-4 warning-box rounded-lg">
           ⚠️ QC запрос не найден. Обновите страницу.
         </div>
       )}
@@ -1764,10 +1764,10 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
             const isSaving = saving === test.code;
 
             return (
-              <div key={test.code} className={`p-4 rounded-lg border-2 ${existingResult ? 'bg-green-50 border-green-300 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border-border'}`}>
+              <div key={test.code} className={`p-4 rounded-lg border-2 ${existingResult ? 'success-box' : 'bg-card border-border'}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'}`}>
                       {idx + 1}
                     </span>
                     <div>
@@ -1776,7 +1776,7 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                     </div>
                   </div>
                   {existingResult && (
-                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${existingResult.pass_fail === 'Pass' ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                    <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${existingResult.pass_fail === 'Pass' ? 'tag-green' : 'tag-red'}`}>
                       {existingResult.pass_fail === 'Pass' ? <CheckCircle size={16} /> : <XCircle size={16} />}
                       {existingResult.pass_fail}
                     </span>
@@ -1785,7 +1785,7 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
 
                 {/* Референсы и подсказки */}
                 <div className="mb-3 p-3 bg-muted rounded text-sm">
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                       <span className="text-muted-foreground">Референс:</span>
                       <span className="ml-2 font-medium">
@@ -1802,7 +1802,7 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                     </div>
                     <div>
                       <span className="text-muted-foreground">Метод:</span>
-                      <span className="ml-2 font-medium text-blue-600">{test.method || '-'}</span>
+                      <span className="ml-2 font-medium text-primary">{test.method || '-'}</span>
                     </div>
                   </div>
                   {test.description && (
@@ -1811,12 +1811,12 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                 </div>
 
                 {existingResult ? (
-                  <div className="grid grid-cols-3 gap-4 text-sm bg-green-100 p-3 rounded">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm success-box p-3 rounded">
                     <div><span className="text-muted-foreground">Результат:</span> <span className="font-mono">{existingResult.result_value || '-'}</span> {test.unit || ''}</div>
                     <div><span className="text-muted-foreground">Дата:</span> {existingResult.tested_at ? new Date(existingResult.tested_at).toLocaleDateString('ru-RU') : '-'}</div>
                     <div>
                       {existingResult.report_ref && (
-                        <a href={existingResult.report_ref} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        <a href={existingResult.report_ref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                           📄 Протокол
                         </a>
                       )}
@@ -1824,7 +1824,7 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                   </div>
                 ) : canAddResult ? (
                   <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Результат {test.unit ? `(${test.unit})` : ''}</label>
                         <Input
@@ -1876,10 +1876,10 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
       )}
 
       {allTestsCompleted && (
-        <div className="p-4 bg-green-100 border border-green-300 rounded-lg text-center">
-          <CheckCircle size={32} className="mx-auto text-green-600 mb-2" />
-          <p className="font-medium text-green-800">Все тесты QC пройдены!</p>
-          <p className="text-sm text-green-600">Материал готов к решению QA</p>
+        <div className="p-4 success-box rounded-lg text-center">
+          <CheckCircle size={32} className="mx-auto text-success mb-2" />
+          <p className="font-medium">Все тесты QC пройдены!</p>
+          <p className="text-sm text-success">Материал готов к решению QA</p>
         </div>
       )}
     </div>
@@ -1981,11 +1981,11 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
             return (
               <div key={test.code} className="flex items-center gap-2">
                 {result?.pass_fail === 'Pass' ? (
-                  <CheckCircle className="text-green-500" size={18} />
+                  <CheckCircle className="text-success" size={18} />
                 ) : result?.pass_fail === 'Fail' ? (
-                  <XCircle className="text-red-500" size={18} />
+                  <XCircle className="text-destructive" size={18} />
                 ) : (
-                  <AlertTriangle className="text-amber-500" size={18} />
+                  <AlertTriangle className="text-warning" size={18} />
                 )}
                 <span>{test.name || test.code}: {result?.pass_fail || 'Нет данных'}</span>
               </div>
@@ -1993,7 +1993,7 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
           })}
         </div>
         {!hasAllQc && (
-          <p className="mt-2 text-amber-600 text-sm flex items-center gap-1">
+          <p className="mt-2 text-warning text-sm flex items-center gap-1">
             <AlertTriangle size={16} />
             QC не полный. При одобрении требуется обоснование.
           </p>
@@ -2008,9 +2008,9 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
               Принять решение QA
             </Button>
           ) : (
-            <form onSubmit={handleDecision} className="p-4 bg-emerald-50 rounded-lg space-y-4">
+            <form onSubmit={handleDecision} className="p-4 success-box rounded-lg space-y-4">
               <h4 className="font-medium">Решение QA</h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Решение *</label>
                   <select
@@ -2032,9 +2032,9 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
                     required
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="col-span-1 sm:col-span-2">
                   <label className="block text-sm font-medium mb-1">
-                    Обоснование {needsReason && <span className="text-red-500">*</span>}
+                    Обоснование {needsReason && <span className="text-destructive">*</span>}
                   </label>
                   <textarea
                     value={formData.reason}
@@ -2067,8 +2067,8 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
           <div className="space-y-2">
             {qaDecisions.map((d: CmQaReleaseDecision) => (
               <div key={d.decision_id} className={`p-3 rounded-lg ${
-                d.decision === 'Approved' ? 'bg-emerald-50' :
-                d.decision === 'Rejected' ? 'bg-red-50' : 'bg-orange-50'
+                d.decision === 'Approved' ? 'success-box' :
+                d.decision === 'Rejected' ? 'error-box' : 'warning-box'
               }`}>
                 <div className="flex justify-between">
                   <span className="font-medium">
@@ -2364,20 +2364,20 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
   return (
     <div className="space-y-6">
       {/* Workflow Info */}
-      <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border border-orange-200">
-        <h4 className="font-semibold text-orange-800 mb-2 flex items-center gap-2">
+      <div className="p-4 warning-box rounded-lg">
+        <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
           <Package size={20} />
           Постпроцессинг
         </h4>
-        <p className="text-sm text-orange-700">
+        <p className="text-sm text-muted-foreground">
           Дополнительная обработка сырья перед розливом (из требований заявки или продукта).
         </p>
       </div>
 
       {/* Status check */}
       {lot.status !== 'Approved' && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-amber-800">
+        <div className="p-4 warning-box rounded-lg">
+          <p>
             Постпроцессинг доступен только после QA одобрено. Текущий статус: {STATUS_LABELS[lot.status] || lot.status}
           </p>
         </div>
@@ -2385,8 +2385,8 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
 
       {/* Required postprocessing methods */}
       {requiredMethods.length > 0 ? (
-        <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-          <h4 className="text-sm font-medium text-orange-800 mb-3 flex items-center gap-2">
+        <div className="p-4 warning-box rounded-lg">
+          <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
             <Cog size={16} />
             Требуемые постпроцессинг-обработки
           </h4>
@@ -2396,14 +2396,14 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
               return (
                 <div 
                   key={idx} 
-                  className={`flex items-center justify-between p-3 rounded ${isMet ? 'bg-green-100 border border-green-300 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border border-orange-200 dark:border-orange-800'}`}
+                  className={`flex items-center justify-between p-3 rounded ${isMet ? 'success-box' : 'bg-card border border-border'}`}
                 >
                   <div className="flex items-center gap-2">
-                    <span className="text-orange-600 font-medium">{idx + 1}.</span>
-                    <span className={isMet ? 'text-green-800' : ''}>{req.name || req.method_id}</span>
+                    <span className="text-warning font-medium">{idx + 1}.</span>
+                    <span className={isMet ? 'text-success' : ''}>{req.name || req.method_id}</span>
                   </div>
                   {isMet ? (
-                    <span className="flex items-center gap-1 text-green-600 text-sm">
+                    <span className="flex items-center gap-1 text-success text-sm">
                       <CheckCircle size={16} /> Выполнено
                     </span>
                   ) : (
@@ -2424,9 +2424,9 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
             })}
           </div>
           {allCompleted && (
-            <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg text-center">
-              <CheckCircle className="inline mr-2 text-green-600" size={20} />
-              <span className="text-green-800 font-medium">Все постпроцессинг-обработки выполнены. Переходите к розливу.</span>
+            <div className="mt-4 p-3 success-box rounded-lg text-center">
+              <CheckCircle className="inline mr-2 text-success" size={20} />
+              <span className="font-medium">Все постпроцессинг-обработки выполнены. Переходите к розливу.</span>
             </div>
           )}
         </div>
@@ -2440,7 +2440,7 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
       {showForm && canEdit && (
         <form onSubmit={handleAddStep} className="p-4 bg-muted rounded-lg space-y-4">
           <h4 className="font-medium text-foreground">Зафиксировать обработку</h4>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Метод</label>
               <select
@@ -2763,20 +2763,20 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
   return (
     <div className="space-y-6">
       {/* Workflow Info */}
-      <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
-        <h4 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
+      <div className="p-4 info-box rounded-lg">
+        <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
           <Droplets size={20} />
           Розлив продукции
         </h4>
-        <p className="text-sm text-blue-700">
+        <p className="text-sm text-primary">
           Розлив выполняется по заявкам. Выберите заявку и начните розлив указанного количества флаконов.
         </p>
       </div>
 
       {/* Available volume */}
-      <div className="p-4 bg-blue-50 rounded-lg">
-        <p className="text-sm text-blue-600">Доступный объем для розлива</p>
-        <p className="text-2xl font-bold text-blue-900">{availableVolume.toFixed(1)} мл</p>
+      <div className="p-4 info-box rounded-lg">
+        <p className="text-sm text-primary">Доступный объем для розлива</p>
+        <p className="text-2xl font-bold text-foreground">{availableVolume.toFixed(1)} мл</p>
       </div>
 
       {/* Pending requests for filling */}
@@ -2790,7 +2790,7 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
             const possibleUnits = format?.nominal_fill_volume_ml ? Math.floor(availableVolume / format.nominal_fill_volume_ml) : 0;
             
             return (
-              <div key={line.request_line_id} className={`p-4 rounded-lg border ${existingPL ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border-border'}`}>
+              <div key={line.request_line_id} className={`p-4 rounded-lg border ${existingPL ? 'success-box' : 'bg-card border-border'}`}>
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-medium">{line.finished_product_code}</p>
@@ -2806,10 +2806,10 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
                     {existingPL ? (
                       <div className="text-right">
                         <span className={`px-2 py-1 rounded text-xs ${
-                          existingPL.status === 'Filling' ? 'bg-blue-100 text-blue-800' :
-                          existingPL.status === 'QC_Pending' ? 'bg-yellow-100 text-yellow-800' :
-                          existingPL.status === 'Released' ? 'bg-green-100 text-green-800' :
-                          'bg-gray-100'
+                          existingPL.status === 'Filling' ? 'tag-blue' :
+                          existingPL.status === 'QC_Pending' ? 'tag-yellow' :
+                          existingPL.status === 'Released' ? 'tag-green' :
+                          'tag-slate'
                         }`}>{existingPL.status}</span>
                         {existingPL.status === 'Filling' && (
                           <Button
@@ -2822,7 +2822,7 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
                           </Button>
                         )}
                         {existingPL.qty_produced > 0 && existingPL.status === 'Filling' && (
-                          <p className="text-xs text-blue-600 mt-1">Разлито: {existingPL.qty_produced} фл.</p>
+                          <p className="text-xs text-primary mt-1">Разлито: {existingPL.qty_produced} фл.</p>
                         )}
                       </div>
                     ) : (
@@ -2842,8 +2842,8 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
       )}
 
       {allRequestLines.length === 0 && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-          <p className="text-amber-800">Нет заявок для розлива. Сначала создайте резерв на заявку.</p>
+        <div className="p-4 warning-box rounded-lg">
+          <p>Нет заявок для розлива. Сначала создайте резерв на заявку.</p>
         </div>
       )}
 
@@ -2857,9 +2857,9 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
             <>
             {!showMismatchChoice ? (
               <>
-                <div className="p-4 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-600">Заказано по заявке:</p>
-                  <p className="text-2xl font-bold text-blue-800">{completeData.qtyPlanned} фл.</p>
+                <div className="p-4 info-box rounded-lg">
+                  <p className="text-sm text-primary">Заказано по заявке:</p>
+                  <p className="text-2xl font-bold text-foreground">{completeData.qtyPlanned} фл.</p>
                 </div>
 
                 <div>
@@ -2870,13 +2870,13 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
                     max={completeData.qtyPlanned * 2}
                     value={completeData.qtyProduced}
                     onChange={(e) => handleQtyChange(Number(e.target.value))}
-                    className="text-2xl font-bold text-center border-2 border-blue-500"
+                    className="text-2xl font-bold text-center border-2 border-primary"
                   />
                 </div>
 
                 {completeData.qtyProduced !== completeData.qtyPlanned && (
-                  <div className={`p-3 rounded-lg ${completeData.qtyProduced < completeData.qtyPlanned ? 'bg-amber-50 border border-amber-200' : 'bg-green-50 border border-green-200'}`}>
-                    <p className={`text-sm ${completeData.qtyProduced < completeData.qtyPlanned ? 'text-amber-700' : 'text-green-700'}`}>
+                  <div className={`p-3 rounded-lg ${completeData.qtyProduced < completeData.qtyPlanned ? 'warning-box' : 'success-box'}`}>
+                    <p className="text-sm">
                       {completeData.qtyProduced < completeData.qtyPlanned 
                         ? `⚠️ Недостаток: ${completeData.qtyPlanned - completeData.qtyProduced} фл.`
                         : `✓ Излишек: ${completeData.qtyProduced - completeData.qtyPlanned} фл.`
@@ -2905,12 +2905,12 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
               </>
             ) : (
               <>
-                <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
-                  <p className="font-medium text-amber-800 mb-2">Количество меньше заказанного!</p>
-                  <p className="text-sm text-amber-700">
+                <div className="p-4 warning-box rounded-lg">
+                  <p className="font-medium mb-2">Количество меньше заказанного!</p>
+                  <p className="text-sm">
                     Заказано: {completeData.qtyPlanned} фл. | Разлито: {completeData.qtyProduced} фл.
                   </p>
-                  <p className="text-sm text-amber-700 font-medium mt-1">
+                  <p className="text-sm font-medium mt-1">
                     Недостаёт: {completeData.qtyPlanned - completeData.qtyProduced} фл.
                   </p>
                 </div>
@@ -2920,18 +2920,18 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
                 <div className="space-y-2">
                   <button
                     onClick={() => finalizeFilling(true)}
-                    className="w-full p-4 text-left border-2 border-green-500 rounded-lg hover:bg-green-50 dark:hover:bg-green-950/20 transition"
+                    className="w-full p-4 text-left border-2 border-success rounded-lg hover:bg-success/10 transition"
                   >
-                    <p className="font-medium text-green-800">Закрыть с тем, что есть</p>
-                    <p className="text-sm text-green-600">Передать {completeData.qtyProduced} фл. на QC/QA продукта</p>
+                    <p className="font-medium text-success">Закрыть с тем, что есть</p>
+                    <p className="text-sm text-success">Передать {completeData.qtyProduced} фл. на QC/QA продукта</p>
                   </button>
 
                   <button
                     onClick={() => finalizeFilling(false)}
-                    className="w-full p-4 text-left border-2 border-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/20 transition"
+                    className="w-full p-4 text-left border-2 border-primary rounded-lg hover:bg-primary/10 transition"
                   >
-                    <p className="font-medium text-blue-800">Продолжить позже</p>
-                    <p className="text-sm text-blue-600">Сохранить прогресс и вернуться к розливу</p>
+                    <p className="font-medium text-primary">Продолжить позже</p>
+                    <p className="text-sm text-primary">Сохранить прогресс и вернуться к розливу</p>
                   </button>
                 </div>
 
@@ -3025,21 +3025,21 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-        <h4 className="font-semibold text-purple-800 mb-2 flex items-center gap-2">
+      <div className="p-4 purple-box rounded-lg">
+        <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
           <TestTube2 size={20} />
           QC Продукта
         </h4>
-        <p className="text-sm text-purple-700">
+        <p className="text-sm text-muted-foreground">
           Контроль качества готового продукта. Выполняется после розлива.
         </p>
       </div>
 
       {/* Required tests from frozen_spec */}
       {productQcTests.length > 0 && (
-        <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-          <h4 className="text-sm font-medium text-purple-800 mb-3">Требуемые тесты продукта</h4>
-          <div className="grid grid-cols-3 gap-2">
+        <div className="p-4 purple-box rounded-lg">
+          <h4 className="text-sm font-medium text-foreground mb-3">Требуемые тесты продукта</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {productQcTests.map((test: any, idx: number) => (
               <div key={idx} className="p-2 bg-card rounded border border-border text-sm">
                 {test.name || test.code}
@@ -3087,7 +3087,7 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
                     {results.map((r: any) => (
                       <div key={r.qc_result_id} className="p-2 bg-muted rounded text-sm flex justify-between">
                         <span>{r.test_code}: {r.result_value || '-'}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs ${r.pass_fail === 'Pass' ? 'bg-green-200' : 'bg-red-200'}`}>
+                        <span className={`px-2 py-0.5 rounded text-xs ${r.pass_fail === 'Pass' ? 'tag-green' : 'tag-red'}`}>
                           {r.pass_fail}
                         </span>
                       </div>
@@ -3108,7 +3108,7 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
       {showResultForm && (
         <form onSubmit={addResult} className="p-4 bg-muted rounded-lg space-y-4">
           <h4 className="font-medium text-foreground">Добавить результат QC</h4>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Тест</label>
               <select
@@ -3217,12 +3217,12 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border border-emerald-200">
-        <h4 className="font-semibold text-emerald-800 mb-2 flex items-center gap-2">
+      <div className="p-4 success-box rounded-lg">
+        <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
           <Truck size={20} />
           Отгрузка на склад
         </h4>
-        <p className="text-sm text-emerald-700">
+        <p className="text-sm text-success">
           После QC продукта — печать этикеток и перевод на склад готовой продукции.
         </p>
       </div>
@@ -3230,11 +3230,11 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
       {/* Ready for shipping */}
       {readyForShipping.length > 0 && (
         <div className="space-y-3">
-          <h4 className="font-semibold text-green-800">Готово к отгрузке ({readyForShipping.length})</h4>
+          <h4 className="font-semibold text-success">Готово к отгрузке ({readyForShipping.length})</h4>
           {readyForShipping.map((pl: any) => {
             const format = packFormats.find(f => f.pack_format_code === pl.pack_format_code);
             return (
-              <div key={pl.pack_lot_id} className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div key={pl.pack_lot_id} className="p-4 success-box rounded-lg">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-medium">{pl.pack_lot_id}</p>
@@ -3288,7 +3288,7 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
                   <p className="font-medium text-foreground">{pl.pack_lot_id}</p>
                   <p className="text-sm text-muted-foreground">{format?.name} × {pl.qty_produced || pl.qty_planned} фл.</p>
                 </div>
-                <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Released</span>
+                <span className="px-2 py-1 tag-green rounded text-xs">Released</span>
               </div>
             );
           })}
@@ -3342,9 +3342,9 @@ function UsageTab({ lot }: { lot: CmLot }) {
     QC_Pending: 'Ожидает QC', Released: 'Выпущен', Shipped: 'Отгружен'
   };
   const statusColors: Record<string, string> = {
-    Planned: 'bg-muted text-muted-foreground', Filling: 'bg-blue-100 text-blue-700',
-    Processing: 'bg-purple-100 text-purple-700', QC_Pending: 'bg-yellow-100 text-yellow-700',
-    Released: 'bg-green-100 text-green-700', Shipped: 'bg-emerald-100 text-emerald-700'
+    Planned: 'tag-slate', Filling: 'tag-blue',
+    Processing: 'tag-purple', QC_Pending: 'tag-yellow',
+    Released: 'tag-green', Shipped: 'tag-emerald'
   };
 
   const totalUsed = packLots.reduce((sum, pl) => sum + (pl.total_filled_volume_ml || 0), 0);
@@ -3357,13 +3357,13 @@ function UsageTab({ lot }: { lot: CmLot }) {
       <Card>
         <CardContent className="p-4">
           <h3 className="font-semibold text-lg mb-3">Остаток сырья</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded">
-              <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{container?.current_volume_ml?.toFixed(1) || 0} мл</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="text-center p-3 info-box rounded">
+              <p className="text-2xl font-bold text-primary">{container?.current_volume_ml?.toFixed(1) || 0} мл</p>
               <p className="text-xs text-muted-foreground">Текущий остаток</p>
             </div>
-            <div className="text-center p-3 bg-amber-50 dark:bg-amber-950/20 rounded">
-              <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{totalUsed.toFixed(1)} мл</p>
+            <div className="text-center p-3 warning-box rounded">
+              <p className="text-2xl font-bold text-foreground">{totalUsed.toFixed(1)} мл</p>
               <p className="text-xs text-muted-foreground">Использовано</p>
             </div>
             <div className="text-center p-3 bg-muted rounded">
@@ -3411,7 +3411,7 @@ function UsageTab({ lot }: { lot: CmLot }) {
             <div className="space-y-1 text-sm">
               {movements.map((m: any, i: number) => (
                 <div key={i} className="flex justify-between py-2 border-b border-border last:border-0">
-                  <span className={m.direction === 'In' ? 'text-green-600' : 'text-red-600'}>
+                  <span className={m.direction === 'In' ? 'text-success' : 'text-destructive'}>
                     {m.direction === 'In' ? '+' : '-'}{m.qty} {m.item_type === 'Bulk' ? 'мл' : 'шт'}
                   </span>
                   <span className="text-muted-foreground">{m.reason_code}</span>

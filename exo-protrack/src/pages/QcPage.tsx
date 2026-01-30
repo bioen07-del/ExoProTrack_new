@@ -301,8 +301,8 @@ export default function QcPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Контроль качества (QC)</h1>
         <div className="text-sm text-muted-foreground">
-          В очереди: <span className="font-semibold text-amber-600">{pendingCount}</span>
-          {completedCount > 0 && <span className="ml-2">| Завершено: <span className="font-semibold text-green-600">{completedCount}</span></span>}
+          В очереди: <span className="font-semibold text-amber-600 dark:text-amber-400">{pendingCount}</span>
+          {completedCount > 0 && <span className="ml-2">| Завершено: <span className="font-semibold text-green-600 dark:text-green-400">{completedCount}</span></span>}
         </div>
       </div>
 
@@ -460,7 +460,7 @@ export default function QcPage() {
                   </Badge>
                   <Link
                     to={req.lot_type === 'CM' ? `/cm/${req.lot_id}` : `/products/${req.lot_id}`}
-                    className="font-mono text-blue-600 hover:underline text-lg"
+                    className="font-mono text-blue-600 dark:text-blue-400 hover:underline text-lg"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {req.lot_id}
@@ -481,7 +481,7 @@ export default function QcPage() {
                   )}
                   <span className="text-sm text-muted-foreground">
                     {completedTests}/{tests.length} тестов
-                    {failedTests > 0 && <span className="text-red-600 ml-1">({failedTests} fail)</span>}
+                    {failedTests > 0 && <span className="text-red-600 dark:text-red-400 ml-1">({failedTests} fail)</span>}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -506,9 +506,9 @@ export default function QcPage() {
                         }`}>
                           <div className="flex items-center justify-between">
                             <span className="font-medium text-sm text-foreground">{test.name}</span>
-                            {result?.pass_fail === 'Pass' && <CheckCircle className="text-green-600" size={18} />}
-                            {result?.pass_fail === 'Fail' && <XCircle className="text-red-600" size={18} />}
-                            {!result && <Clock className="text-gray-400" size={18} />}
+                            {result?.pass_fail === 'Pass' && <CheckCircle className="text-green-600 dark:text-green-400" size={18} />}
+                            {result?.pass_fail === 'Fail' && <XCircle className="text-red-600 dark:text-red-400" size={18} />}
+                            {!result && <Clock className="text-muted-foreground" size={18} />}
                           </div>
                           {result && (
                             <p className="text-xs text-muted-foreground mt-1">

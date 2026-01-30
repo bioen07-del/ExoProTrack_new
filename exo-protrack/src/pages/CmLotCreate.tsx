@@ -244,8 +244,8 @@ export default function CmLotCreate() {
       <h1 className="text-2xl font-bold text-foreground mb-6">Создание CM Лота</h1>
 
       {mtoLine && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <p className="text-sm text-blue-800">
+        <div className="info-box rounded-lg p-4 mb-4">
+          <p className="text-sm">
             <strong>MTO заявка:</strong>{' '}
             <Link to={`/requests/${mtoLine.request_id}`} className="underline">{mtoLine.request_id}</Link>
             {' — '}{mtoLine.finished_product_code}, {mtoLine.qty_units} шт
@@ -270,7 +270,7 @@ export default function CmLotCreate() {
 
             {/* MTO: Список заявок для выбора */}
             {formData.mode === 'MTO' && !mtoLineId && mtoRequests.length === 0 && (
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-amber-800">
+              <div className="p-4 warning-box rounded-lg">
                 <strong>Нет открытых заявок MTO.</strong> Все заявки уже привязаны к CM лотам или отсутствуют заявки с типом "Новое производство".
               </div>
             )}
@@ -282,8 +282,8 @@ export default function CmLotCreate() {
                     <label
                       key={req.request_line_id}
                       className={`flex items-center justify-between p-3 border-b last:border-b-0 cursor-pointer hover:bg-muted ${
-                        formData.request_line_id === req.request_line_id ? 'bg-blue-50' : ''
-                      } ${req.is_overdue ? 'bg-red-50' : req.is_urgent ? 'bg-amber-50' : ''}`}
+                        formData.request_line_id === req.request_line_id ? 'bg-primary/10' : ''
+                      } ${req.is_overdue ? 'bg-destructive/10' : req.is_urgent ? 'bg-warning/10' : ''}`}
                     >
                       <div className="flex items-center gap-3">
                         <input
@@ -305,7 +305,7 @@ export default function CmLotCreate() {
                           <span className="font-mono text-sm">{req.request_id}</span>
                           <span className="text-muted-foreground ml-2">{req.finished_product_code}</span>
                           <span className="text-muted-foreground ml-2">x{req.qty_units}</span>
-                          <span className="text-blue-600 ml-2 font-medium">({req.required_volume_ml?.toLocaleString()} мл)</span>
+                          <span className="text-primary ml-2 font-medium">({req.required_volume_ml?.toLocaleString()} мл)</span>
                         </div>
                       </div>
                       <div className="text-right text-sm">
@@ -350,16 +350,16 @@ export default function CmLotCreate() {
               const selectedReq = mtoRequests.find(r => r.request_line_id === formData.request_line_id);
               if (!selectedReq) return null;
               return (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                <div className="p-4 info-box rounded-lg space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-blue-800">Выбранная заявка:</span>
+                    <span className="text-sm font-medium">Выбранная заявка:</span>
                     <span className="font-mono text-sm">{selectedReq.request_id}</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div><span className="text-muted-foreground">Продукт:</span> <strong>{selectedReq.finished_product_code}</strong></div>
                     <div><span className="text-muted-foreground">Формат:</span> <strong>{selectedReq.pack_format_name}</strong></div>
                     <div><span className="text-muted-foreground">Количество:</span> <strong>{selectedReq.qty_units} шт</strong></div>
-                    <div><span className="text-muted-foreground">Требуется:</span> <strong className="text-blue-700">{selectedReq.required_volume_ml?.toLocaleString()} мл</strong></div>
+                    <div><span className="text-muted-foreground">Требуется:</span> <strong className="text-primary">{selectedReq.required_volume_ml?.toLocaleString()} мл</strong></div>
                   </div>
                   {selectedReq.due_date && (
                     <div className="text-xs text-muted-foreground">
@@ -373,14 +373,14 @@ export default function CmLotCreate() {
 
             {/* Отображение спецификации среды */}
             {formData.media_spec_id && (
-              <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg">
-                <label className="block text-xs font-medium text-teal-700 mb-1">Спецификация среды</label>
+              <div className="p-3 teal-box rounded-lg">
+                <label className="block text-xs font-medium mb-1">Спецификация среды</label>
                 <MediaFormulaDisplay mediaSpecId={formData.media_spec_id} />
               </div>
             )}
 
-            <div className="p-4 bg-amber-50 border-2 border-amber-400 rounded-lg">
-              <label className="block text-sm font-bold text-amber-800 mb-2">Посуда для сырья (target volume) *</label>
+            <div className="p-4 warning-box border-2 rounded-lg">
+              <label className="block text-sm font-bold mb-2">Посуда для сырья (target volume) *</label>
               <select
                 value={formData.raw_container_code}
                 onChange={(e) => {
@@ -391,7 +391,7 @@ export default function CmLotCreate() {
                     nominal_volume_ml: container?.nominal_fill_volume_ml || 0
                   });
                 }}
-                className="w-full px-3 py-2 border-2 border-amber-500 rounded-lg focus:ring-2 focus:ring-amber-500 bg-background text-foreground"
+                className="w-full px-3 py-2 border-2 border-warning rounded-lg focus:ring-2 focus:ring-amber-500 bg-background text-foreground"
                 required
               >
                 <option value="">Выберите посуду</option>
@@ -402,7 +402,7 @@ export default function CmLotCreate() {
                 ))}
               </select>
               {formData.raw_container_code && (
-                <p className="mt-2 text-amber-700 font-semibold">
+                <p className="mt-2 text-warning dark:text-warning font-semibold">
                   Target Volume: {formData.nominal_volume_ml.toLocaleString()} мл
                 </p>
               )}
@@ -420,7 +420,7 @@ export default function CmLotCreate() {
 
             {/* MTO validation error */}
             {formData.mode === 'MTO' && !mtoLineId && !formData.request_line_id && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              <div className="p-3 error-box rounded-lg text-sm">
                 Для режима MTO необходимо выбрать заявку из списка
               </div>
             )}

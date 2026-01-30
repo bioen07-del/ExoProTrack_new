@@ -13,7 +13,7 @@ export function Tooltip({ text, children }: TooltipProps) {
     <span className="relative inline-flex items-center">
       {children}
       <span
-        className="ml-1 cursor-help text-slate-400 hover:text-slate-600"
+        className="ml-1 cursor-help text-muted-foreground hover:text-foreground"
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
       >
@@ -38,7 +38,7 @@ export function FormLabel({ label, tooltip, required }: FormLabelProps) {
   return (
     <label className="block text-sm font-medium mb-1">
       {label}
-      {required && <span className="text-red-500 ml-0.5">*</span>}
+      {required && <span className="text-destructive ml-0.5">*</span>}
       {tooltip && <Tooltip text={tooltip} />}
     </label>
   );

@@ -102,20 +102,20 @@ export default function MediaFormulaDisplay({ mediaSpecId, compact = false }: Pr
   }
 
   if (loading) {
-    return <span className="text-slate-400 text-sm">...</span>;
+    return <span className="text-muted-foreground text-sm">...</span>;
   }
 
   if (!formula) {
-    return <span className="text-slate-400">-</span>;
+    return <span className="text-muted-foreground">-</span>;
   }
 
   if (compact) {
-    return <span className="text-sm text-slate-700">{formula}</span>;
+    return <span className="text-sm text-foreground">{formula}</span>;
   }
 
   return (
     <div className="text-sm">
-      <span className="font-medium text-slate-800">{formula}</span>
+      <span className="font-medium text-foreground">{formula}</span>
     </div>
   );
 }

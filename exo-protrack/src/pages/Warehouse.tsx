@@ -90,8 +90,8 @@ export default function Warehouse() {
 
       {/* Expiry Alerts */}
       {expiryAlerts.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="font-semibold text-amber-800 flex items-center gap-2">
+        <div className="warning-box rounded-lg p-4">
+          <h3 className="font-semibold flex items-center gap-2">
             <AlertTriangle size={20} />
             Скоро истекает срок годности ({expiryAlerts.length})
           </h3>
@@ -100,7 +100,7 @@ export default function Warehouse() {
               <Link
                 key={lot.cm_lot_id}
                 to={`/cm/${lot.cm_lot_id}`}
-                className="block text-sm text-amber-700 hover:underline"
+                className="block text-sm hover:underline"
               >
                 {lot.cm_lot_id} - до {lot.expiry_date ? new Date(lot.expiry_date).toLocaleDateString('ru-RU') : '-'}
               </Link>
@@ -144,9 +144,9 @@ export default function Warehouse() {
                   {cmLots.map((lot) => {
                     const isExpiringSoon = lot.expiry_date && new Date(lot.expiry_date) <= thirtyDaysFromNow;
                     return (
-                      <tr key={lot.cm_lot_id} className={`hover:bg-muted/50 ${isExpiringSoon ? 'bg-amber-50' : ''}`}>
+                      <tr key={lot.cm_lot_id} className={`hover:bg-muted/50 ${isExpiringSoon ? 'bg-warning/10 dark:bg-warning/5' : ''}`}>
                         <td className="px-4 py-3">
-                          <Link to={`/cm/${lot.cm_lot_id}`} className="font-mono text-blue-600 hover:underline">
+                          <Link to={`/cm/${lot.cm_lot_id}`} className="font-mono text-primary hover:underline">
                             {lot.cm_lot_id}
                           </Link>
                         </td>
@@ -154,15 +154,15 @@ export default function Warehouse() {
                         <td className="px-4 py-3 text-sm text-right font-mono">
                           {lot.container?.current_volume_ml?.toFixed(1) || '0.0'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right font-mono text-amber-600">
+                        <td className="px-4 py-3 text-sm text-right font-mono text-amber-600 dark:text-amber-400">
                           {lot.reserved_ml?.toFixed(1) || '0.0'}
                         </td>
-                        <td className="px-4 py-3 text-sm text-right font-mono text-emerald-600">
+                        <td className="px-4 py-3 text-sm text-right font-mono text-emerald-600 dark:text-emerald-400">
                           {lot.available_ml?.toFixed(1) || '0.0'}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {lot.expiry_date ? (
-                            <span className={isExpiringSoon ? 'text-amber-600 font-medium' : ''}>
+                            <span className={isExpiringSoon ? 'text-amber-600 dark:text-amber-400 font-medium' : ''}>
                               {new Date(lot.expiry_date).toLocaleDateString('ru-RU')}
                             </span>
                           ) : '-'}
@@ -198,7 +198,7 @@ export default function Warehouse() {
                   {packLots.map((pack) => (
                     <tr key={pack.pack_lot_id} className="hover:bg-muted/50">
                       <td className="px-4 py-3">
-                        <Link to={`/packlot/${pack.pack_lot_id}`} className="font-mono text-blue-600 hover:underline">
+                        <Link to={`/packlot/${pack.pack_lot_id}`} className="font-mono text-primary hover:underline">
                           {pack.pack_lot_id}
                         </Link>
                       </td>
@@ -207,7 +207,7 @@ export default function Warehouse() {
                         {pack.qty_produced || pack.qty_planned}
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        <Link to={`/cm/${pack.source_cm_lot_id}`} className="text-blue-600 hover:underline">
+                        <Link to={`/cm/${pack.source_cm_lot_id}`} className="text-primary hover:underline">
                           {pack.source_cm_lot_id}
                         </Link>
                       </td>

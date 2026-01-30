@@ -80,12 +80,12 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+              <div className="p-3 error-box rounded-lg text-sm">
                 {error}
               </div>
             )}
             {success && (
-              <div className="p-3 bg-green-50 text-green-600 rounded-lg text-sm">
+              <div className="p-3 success-box rounded-lg text-sm">
                 {success}
               </div>
             )}
@@ -152,7 +152,7 @@ export default function Login() {
               <Users size={16} className="text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Быстрый вход для тестирования</span>
             </div>
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
               {TEST_USERS.map((testUser) => (
                 <Button
                   key={testUser.role}

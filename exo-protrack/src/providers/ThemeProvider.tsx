@@ -47,17 +47,18 @@ export function ThemeProvider({
 
     // Определяем текущую тему
     let resolved: 'light' | 'dark';
-    
+
     if (theme === 'system') {
-      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches 
-        ? 'dark' 
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
         : 'light';
     } else {
       resolved = theme;
     }
 
-    // Применяем класс
+    // Применяем класс (и theme-X для CSS variables, и dark для Tailwind)
     root.classList.add(`theme-${resolved}`);
+    root.classList.add(resolved); // Tailwind dark mode class
     root.setAttribute('data-theme', resolved);
     
     setResolvedTheme(resolved);
@@ -81,8 +82,10 @@ export function ThemeProvider({
     const handleChange = (e: MediaQueryListEvent) => {
       const root = document.documentElement;
       const resolved = e.matches ? 'dark' : 'light';
-      root.classList.remove('light', 'dark');
+      const opposite = e.matches ? 'light' : 'dark';
+      root.classList.remove('light', 'dark', 'theme-light', 'theme-dark');
       root.classList.add(`theme-${resolved}`);
+      root.classList.add(resolved);
       root.setAttribute('data-theme', resolved);
       setResolvedTheme(resolved);
     };

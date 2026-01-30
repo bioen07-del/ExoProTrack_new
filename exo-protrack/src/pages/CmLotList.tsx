@@ -225,7 +225,7 @@ export default function CmLotList() {
 
       {/* Table */}
       <Card className="overflow-x-auto">
-        <table className="w-full min-w-[1200px]">
+        <table className="w-full">
           <thead className="bg-muted">
             <tr>
               <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">CM Lot ID</th>
@@ -252,7 +252,7 @@ export default function CmLotList() {
               return (
                 <tr key={lot.cm_lot_id} className="hover:bg-muted">
                   <td className="px-3 py-2">
-                    <Link to={`/cm/${lot.cm_lot_id}`} className="font-mono text-sm text-blue-600 hover:underline">
+                    <Link to={`/cm/${lot.cm_lot_id}`} className="font-mono text-sm text-primary hover:underline">
                       {lot.cm_lot_id}
                     </Link>
                   </td>
@@ -287,7 +287,7 @@ export default function CmLotList() {
                               ) : allPassed ? (
                                 <CheckCircle size={16} className="text-green-500" />
                               ) : (
-                                <Clock size={16} className="text-amber-400" />
+                                <Clock size={16} className="text-amber-400 dark:text-amber-300" />
                               )}
                             </span>
                           );
@@ -302,7 +302,7 @@ export default function CmLotList() {
                               ) : result === 'Fail' ? (
                                 <XCircle size={14} className="text-red-500" />
                               ) : (
-                                <Clock size={14} className="text-gray-300" />
+                                <Clock size={14} className="text-muted-foreground/50" />
                               )}
                             </span>
                           );
@@ -323,7 +323,7 @@ export default function CmLotList() {
                   </td>
                   <td className="px-3 py-2 text-sm">
                     {lot.expiry_date ? (
-                      <span className={isExpiringSoon ? 'text-amber-600 flex items-center gap-1' : ''}>
+                      <span className={isExpiringSoon ? 'text-amber-600 dark:text-amber-400 flex items-center gap-1' : ''}>
                         {isExpiringSoon && <AlertTriangle size={12} />}
                         {new Date(lot.expiry_date).toLocaleDateString('ru-RU')}
                       </span>
@@ -332,10 +332,10 @@ export default function CmLotList() {
                   <td className="px-3 py-2 text-sm text-right font-mono">
                     {lot.container?.current_volume_ml?.toFixed(1) || '0.0'}
                   </td>
-                  <td className="px-3 py-2 text-sm text-right font-mono text-amber-600">
+                  <td className="px-3 py-2 text-sm text-right font-mono text-amber-600 dark:text-amber-400">
                     {lot.reserved_ml?.toFixed(1) || '0.0'}
                   </td>
-                  <td className="px-3 py-2 text-sm text-right font-mono text-emerald-600">
+                  <td className="px-3 py-2 text-sm text-right font-mono text-emerald-600 dark:text-emerald-400">
                     {lot.available_ml?.toFixed(1) || '0.0'}
                   </td>
                   <td className="px-3 py-2 text-center">

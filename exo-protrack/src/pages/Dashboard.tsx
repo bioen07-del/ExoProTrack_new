@@ -385,7 +385,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary Stats - 4 new widgets */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 text-white">
           <CardContent className="p-4 pt-4">
             <div className="flex items-center gap-3">
@@ -445,7 +445,7 @@ export default function Dashboard() {
       </div>
 
       {/* Request Stats Cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 pt-4">
             <div className="flex items-center gap-3">
@@ -480,7 +480,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Просроченные</p>
-                <p className="text-2xl font-bold text-red-600">{stats?.requestStats.overdue || 0}</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats?.requestStats.overdue || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -488,7 +488,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardContent className="p-4 pt-4">
             <ReactECharts option={cmPieOption} style={{ height: 300 }} />
@@ -501,7 +501,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardContent className="p-4 pt-4">
             <ReactECharts option={stockLineOption} style={{ height: 280 }} />
@@ -566,7 +566,7 @@ export default function Dashboard() {
                     <td className="px-3 py-2">{item.base_product_code}</td>
                     <td className="px-3 py-2 text-right font-mono">{item.volume_ml.toFixed(1)} мл</td>
                     <td className="px-3 py-2">{item.expiry_date ? new Date(item.expiry_date).toLocaleDateString('ru-RU') : <span className="text-muted-foreground">Не указана</span>}</td>
-                    <td className={`px-3 py-2 text-right font-bold ${item.days_to_expiry !== null && item.days_to_expiry <= 30 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                    <td className={`px-3 py-2 text-right font-bold ${item.days_to_expiry !== null && item.days_to_expiry <= 30 ? 'text-amber-600 dark:text-amber-400' : 'text-muted-foreground'}`}>
                       {item.days_to_expiry !== null ? item.days_to_expiry : '-'}
                     </td>
                   </tr>
@@ -618,7 +618,7 @@ export default function Dashboard() {
                       {req.due_date ? new Date(req.due_date).toLocaleDateString('ru-RU') : '-'}
                     </td>
                     <td className={`px-3 py-2 text-right font-bold ${
-                      req.is_overdue ? 'text-red-600' : req.is_urgent ? 'text-amber-600' : 'text-green-600'
+                      req.is_overdue ? 'text-red-600 dark:text-red-400' : req.is_urgent ? 'text-amber-600 dark:text-amber-400' : 'text-green-600 dark:text-green-400'
                     }`}>
                       {req.days_left !== null && req.days_left !== undefined ? `${req.days_left} дн.` : '-'}
                     </td>
