@@ -3,7 +3,7 @@ import { Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ReactQueryProvider } from './providers/ReactQueryProvider';
 import { RealtimeNotificationListener } from './hooks/use-notifications';
-import Layout from './components/layout/Layout';
+import ModernLayout from './components/layout/ModernLayout';
 
 // Lazy load pages for code splitting
 const Login = lazy(() => import('./pages/Login'));
@@ -74,7 +74,7 @@ function AppRoutes() {
           <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
           <Route path="/" element={
             <ProtectedRoute>
-              <Layout />
+              <ModernLayout />
             </ProtectedRoute>
           }>
             <Route index element={
