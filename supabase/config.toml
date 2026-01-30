@@ -1,67 +1,31 @@
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
 [auth]
 enabled = true
 site_url = "http://localhost:5173"
 additional_redirect_urls = []
-email_confirmations = true
-supabase_url = ""
-max_password_length = 72
 enable_signup = true
 
-[auth.providers.email]
-enabled = true
-skip_nonce_check = false
-
-[auth.providers.phone]
-enabled = false
-
-[auth.sms]
-enabled = false
-
-[database]
-host = "localhost"
-port = 5432
-user = "postgres"
-password = "postgres"
-database = "postgres"
-schema = "public"
-
-[api]
-port = 54321
-openapi_editor_url = ""
-service_key = "service_role_key"
-
-[studio]
-port = 54323
-openai_api_key = ""
-
-[inbucket]
-port = 54324
-
-[logflare]
-enabled = false
-api_key = ""
+[auth.email]
+enable_signup = true
+enable_confirmations = false
 
 [storage]
 enabled = true
-
-[storage.custom_domains]
-enabled = false
-
-[edge_functions]
-enabled = false
+file_size_limit = "50MiB"
 
 [realtime]
 enabled = true
-
-[hooks]
-enabled = true
-
-# Row Level Security
-[auth.row_level_security]
-enabled = true
-
-# JWT settings
-[jwt]
-secret = "your-jwt-secret"
-exp = 3600
-refresh_exp = 604800
