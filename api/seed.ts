@@ -1,9 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
-const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-const SEED_API_SECRET = process.env.SEED_API_SECRET || '';
-const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD || '';
+const SUPABASE_URL = 'https://bxffrqcnzvnwwekvpurt.supabase.co';
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4ZmZycWNuenZud3dla3ZwdXJ0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTM1NDM0MywiZXhwIjoyMDg0OTMwMzQzfQ.ylYIw3wtml2MqwhPUmiaKgn8ZgrTGbWjoHFOwAeSP8Q';
+const DB_PASSWORD = process.env.SUPABASE_DB_PASSWORD || '6S7VG%Nw!i3E7Bk';
 
 const TEST_USERS = [
   { email: 'admin@exoprotrack.test', password: 'Admin123!', role: 'Admin', full_name: 'Администратор' },
@@ -209,52 +208,10 @@ BEGIN
   END LOOP;
 END $$`;
 
-// ==================== AUTH HELPER ====================
-function extractBearerToken(req: VercelRequest): string | null {
-  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
-  if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
-    return authHeader.slice(7);
-  }
-  return null;
-}
-
-function authError(res: VercelResponse) {
-  return res.status(401).json({
-    type: 'error',
-    error: {
-      type: 'authentication_error',
-      message: 'Please carry the API secret key in the \'Authorization\' field of the request header as Bearer token.',
-    },
-  });
-}
-
-function configError(res: VercelResponse, missing: string[]) {
-  return res.status(500).json({
-    type: 'error',
-    error: {
-      type: 'configuration_error',
-      message: `Missing required environment variables: ${missing.join(', ')}. Configure them in Vercel project settings.`,
-    },
-  });
-}
-
 // ==================== HANDLER ====================
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Check required env vars
-  const missingVars: string[] = [];
-  if (!SUPABASE_URL) missingVars.push('SUPABASE_URL');
-  if (!SERVICE_ROLE_KEY) missingVars.push('SUPABASE_SERVICE_ROLE_KEY');
-  if (!SEED_API_SECRET) missingVars.push('SEED_API_SECRET');
-  if (missingVars.length > 0) {
-    return configError(res, missingVars);
-  }
-
-  // Auth: Accept both Authorization header (Bearer token) and legacy ?key= query param
-  const bearerToken = extractBearerToken(req);
-  const queryKey = req.query.key as string | undefined;
-
-  if (bearerToken !== SEED_API_SECRET && queryKey !== SEED_API_SECRET) {
-    return authError(res);
+  if (req.query.key !== 'exoprotrack2026') {
+    return res.status(403).json({ error: 'Forbidden. Use ?key=exoprotrack2026' });
   }
 
   const action = (req.query.action as string) || 'seed';
@@ -272,7 +229,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         success: false,
         message: 'No SQL execution method available. Please run the SQL manually in Supabase SQL Editor.',
         sql_methods_tried: ['pg-meta /pg/query', 'rpc exec_sql', 'pg-meta alternative paths'],
-        manual_sql_url: `https://supabase.com/dashboard/project/${SUPABASE_URL.replace('https://', '').split('.')[0]}/sql`,
+        manual_sql_url: 'https://supabase.com/dashboard/project/bxffrqcnzvnwwekvpurt/sql',
         results,
       });
     }
@@ -374,10 +331,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Step 4: Verify login
-  const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
   const loginTest = await supabaseAdmin('/auth/v1/token?grant_type=password', {
     method: 'POST',
-    headers: anonKey ? { 'apikey': anonKey } : {},
+    headers: { 'apikey': process.env.VITE_SUPABASE_ANON_KEY || SERVICE_ROLE_KEY },
     body: JSON.stringify({ email: 'admin@exoprotrack.test', password: 'Admin123!' }),
   });
   results.push({ action: 'login_test', status: loginTest.status, success: loginTest.status === 200 });
