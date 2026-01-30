@@ -22,6 +22,7 @@ const QcPage = lazy(() => import('./pages/QcPage'));
 const QaPage = lazy(() => import('./pages/QaPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const ScanPage = lazy(() => import('./pages/ScanPage'));
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 
 // Loading fallback component
 function PageLoader() {
@@ -155,6 +156,11 @@ function AppRoutes() {
             <Route path="scan" element={
               <Suspense fallback={<PageLoader />}>
                 <ScanPage />
+              </Suspense>
+            } />
+            <Route path="notifications" element={
+              <Suspense fallback={<PageLoader />}>
+                <NotificationsPage />
               </Suspense>
             } />
           </Route>

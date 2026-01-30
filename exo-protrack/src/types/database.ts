@@ -1776,6 +1776,94 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          notification_id: string
+          user_id: string
+          type: string
+          title: string
+          message: string | null
+          entity_type: string | null
+          entity_id: string | null
+          priority: string | null
+          is_read: boolean | null
+          read_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          notification_id?: string
+          user_id: string
+          type: string
+          title: string
+          message?: string | null
+          entity_type?: string | null
+          entity_id?: string | null
+          priority?: string | null
+          is_read?: boolean | null
+          read_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          notification_id?: string
+          user_id?: string
+          type?: string
+          title?: string
+          message?: string | null
+          entity_type?: string | null
+          entity_id?: string | null
+          priority?: string | null
+          is_read?: boolean | null
+          read_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      notification_subscriptions: {
+        Row: {
+          subscription_id: string
+          user_id: string
+          notification_type: string
+          channel: string
+          is_enabled: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          subscription_id?: string
+          user_id: string
+          notification_type: string
+          channel?: string
+          is_enabled?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          subscription_id?: string
+          user_id?: string
+          notification_type?: string
+          channel?: string
+          is_enabled?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "app_user"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

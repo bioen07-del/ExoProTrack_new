@@ -31,6 +31,7 @@ import { cn } from '../../lib/utils';
 import { useTheme } from '../../providers/ThemeProvider';
 import { useUnreadCount } from '../../hooks/use-notifications';
 import { useAuth } from '../../context/AuthContext';
+import { NotificationBell } from '../shared/NotificationBell';
 
 // Navigation items — match App.tsx routes and Sidebar.tsx structure
 const NAV_GROUPS = [
@@ -116,14 +117,7 @@ function MobileHeader({
             {resolvedTheme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
 
-          <div className="relative p-2">
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-destructive rounded-full">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </div>
+          <NotificationBell />
         </div>
       </div>
     </header>
@@ -427,14 +421,7 @@ function DesktopHeader({
             />
           </div>
 
-          <div className="relative p-2 rounded-lg hover:bg-muted transition-colors cursor-pointer">
-            <Bell className="w-5 h-5 text-muted-foreground" />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-destructive rounded-full">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </div>
+          <NotificationBell />
 
           <Link
             to="/cm/new"

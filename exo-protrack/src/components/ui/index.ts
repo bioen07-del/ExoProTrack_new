@@ -90,4 +90,6 @@ export {
 export { DataTable } from './data-table';
 export type { DataTableColumn, DataTableProps } from './data-table';
 
+export { Skeleton, SkeletonCard, SkeletonTable, SkeletonList, SkeletonDashboard, SkeletonForm, SkeletonDetail } from './skeleton';
+
 export { Toaster } from './sonner';

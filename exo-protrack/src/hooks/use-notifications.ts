@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import { supabase, handleSupabaseError } from '../api/supabase';
 import { useAuth } from '../context/AuthContext';
 import type { Database } from '../types/database';
@@ -210,15 +211,25 @@ export function useDeleteNotification() {
   });
 }
 
-// Toast helper (реализуется отдельно)
+// Toast helper — uses Sonner + Browser Notification API
 function showNotificationToast(notification: Notification) {
-  // В реальном приложении здесь будет вызов toast provider
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(notification.title, {
-      body: notification.message || '',
-      icon: '/icons/icon-192.png',
-      badge: '/icons/badge-72.png',
-    });
+  // In-app toast via Sonner
+  toast(notification.title, {
+    description: notification.message || undefined,
+    duration: 5000,
+  });
+
+  // Browser push notification (if granted)
+  if ('Notification' in window && window.Notification.permission === 'granted') {
+    try {
+      new window.Notification(notification.title, {
+        body: notification.message || '',
+        icon: '/icons/icon-192.png',
+        badge: '/icons/badge-72.png',
+      });
+    } catch {
+      // Silently fail on environments that don't support Notification constructor
+    }
   }
 }
 
