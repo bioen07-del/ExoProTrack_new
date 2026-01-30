@@ -32,6 +32,8 @@ import { useTheme } from '../../providers/ThemeProvider';
 import { useUnreadCount } from '../../hooks/use-notifications';
 import { useAuth } from '../../context/AuthContext';
 import { NotificationBell } from '../shared/NotificationBell';
+import { PWAInstallPrompt } from '../shared/PWAInstallPrompt';
+import { PWAUpdateBanner } from '../shared/PWAUpdateBanner';
 
 // Navigation items — match App.tsx routes and Sidebar.tsx structure
 const NAV_GROUPS = [
@@ -578,6 +580,8 @@ export default function ModernLayout() {
       {isMobile && <MobileBottomNav location={location} />}
 
       <OfflineIndicator />
+      <PWAInstallPrompt />
+      <PWAUpdateBanner />
     </div>
   );
 }
