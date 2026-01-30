@@ -4,6 +4,9 @@ import { ReactNode, useState } from 'react';
 const defaultQueryOptions = {
   retry: 3,
   refetchOnWindowFocus: false,
+  refetchOnReconnect: true,
+  networkMode: 'online' as const,
+  structuralSharing: true,
 };
 
 export function createQueryClient() {
@@ -11,7 +14,7 @@ export function createQueryClient() {
     defaultOptions: {
       queries: {
         ...defaultQueryOptions,
-        staleTime: 60 * 1000,
+        staleTime: 2 * 60 * 1000,
         gcTime: 5 * 60 * 1000,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       },

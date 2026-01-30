@@ -12,5 +12,8 @@ export * from './use-online-status';
 export * from './use-pwa';
 export * from './use-pull-to-refresh';
 
+// Performance hooks
+export * from './use-performance';
+
 // Re-export from providers
 export { useTheme, useDeviceType, useOrientation } from '../providers/ThemeProvider';
