@@ -3,6 +3,12 @@ import { Link } from 'react-router-dom';
 import { Plus, Search, QrCode, CheckCircle, XCircle, Clock, AlertTriangle, Trash2 } from 'lucide-react';
 import { supabase, CmLot, Container, MediaCompatibilitySpec, CmQcResult, CmQaReleaseDecision } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { SkeletonTable } from '../components/ui/skeleton';
+import { showConfirm, showError } from '../lib/toast';
 
 const STATUS_LABELS: Record<string, string> = {
   Open: 'Открыт',
@@ -18,16 +24,16 @@ const STATUS_LABELS: Record<string, string> = {
   Released: 'Отпущен',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  Open: 'bg-blue-100 text-blue-800',
-  Closed_Collected: 'bg-purple-100 text-purple-800',
-  In_Processing: 'bg-amber-100 text-amber-800',
-  QC_Pending: 'bg-yellow-100 text-yellow-800',
-  QC_Completed: 'bg-green-100 text-green-800',
-  Approved: 'bg-emerald-100 text-emerald-800',
-  Rejected: 'bg-red-100 text-red-800',
-  OnHold: 'bg-orange-100 text-orange-800',
-  Consumed: 'bg-gray-100 text-gray-800',
+const STATUS_BADGE_VARIANT: Record<string, 'info' | 'secondary' | 'warning' | 'success' | 'destructive' | 'muted'> = {
+  Open: 'info',
+  Closed_Collected: 'secondary',
+  In_Processing: 'warning',
+  QC_Pending: 'warning',
+  QC_Completed: 'success',
+  Approved: 'success',
+  Rejected: 'destructive',
+  OnHold: 'warning',
+  Consumed: 'muted',
 };
 
 interface CmLotWithData extends CmLot {
@@ -80,43 +86,43 @@ export default function CmLotList() {
         const lotReservations = reservations.filter(r => r.cm_lot_id === lot.cm_lot_id);
         const reserved_ml = lotReservations.reduce((sum, r) => sum + r.reserved_volume_ml, 0);
         const current_ml = container?.current_volume_ml || 0;
-        
+
         // Total collected
         const lotCollections = collections.filter(c => c.cm_lot_id === lot.cm_lot_id);
         const total_collected_ml = lotCollections.reduce((sum, c) => sum + (c.volume_ml || 0), 0);
-        
+
         // Media spec label - full name
         const mediaSpec = mediaSpecs.find(m => m.media_spec_id === lot.media_spec_id);
         const media_spec_label = mediaSpec ? `${mediaSpec.base_medium_code} (${mediaSpec.serum_class})` : '-';
-        
+
         // QC status
         const lotQcRequests = qcRequests.filter(r => r.cm_lot_id === lot.cm_lot_id);
         const lotQcRequestIds = lotQcRequests.map(r => r.qc_request_id);
         const lotQcResults = qcResults.filter(r => lotQcRequestIds.includes(r.qc_request_id));
-        
+
         const getLatestResult = (testCode: string) => {
           const results = lotQcResults.filter(r => r.test_code === testCode);
           if (results.length === 0) return undefined;
-          return results.sort((a, b) => 
+          return results.sort((a, b) =>
             new Date(b.tested_at || b.created_at || 0).getTime() - new Date(a.tested_at || a.created_at || 0).getTime()
           )[0]?.pass_fail;
         };
-        
+
         // Динамические QC тесты из frozen_spec
         const frozenSpec = (lot as any).frozen_spec;
         const qcTestsFromSpec: string[] = frozenSpec?.qc?.raw?.map((t: any) => t.code || t.name) || ['sterility', 'lal', 'dls'];
-        
+
         const qc_status: Record<string, string | undefined> = {};
         qcTestsFromSpec.forEach((testCode: string) => {
           qc_status[testCode.toLowerCase()] = getLatestResult(testCode);
         });
-        
+
         // QA status & expiry
         const lotQaDecisions = qaDecisions.filter(d => d.cm_lot_id === lot.cm_lot_id);
         const latestQa = lotQaDecisions[0];
         const qa_status = latestQa?.decision;
         const expiry_date = latestQa?.expiry_date;
-        
+
         return {
           ...lot,
           container,
@@ -140,7 +146,8 @@ export default function CmLotList() {
   }
 
   async function handleDeleteLot(cmLotId: string) {
-    if (!confirm(`Удалить CM Lot ${cmLotId} и все связанные данные?`)) return;
+    const ok = await showConfirm(`Удалить CM Lot ${cmLotId} и все связанные данные?`);
+    if (!ok) return;
     try {
       await supabase.from('collection_event').delete().eq('cm_lot_id', cmLotId);
       await supabase.from('processing_step').delete().eq('cm_lot_id', cmLotId);
@@ -155,7 +162,7 @@ export default function CmLotList() {
       await supabase.from('cm_lot').delete().eq('cm_lot_id', cmLotId);
       loadLots();
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка удаления', err.message);
     }
   }
 
@@ -167,48 +174,47 @@ export default function CmLotList() {
   });
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Загрузка...</div>;
+    return <SkeletonTable rows={8} />;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-slate-900">CM Лоты</h1>
-          <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-50 rounded-lg border text-xs">
-            <span className="text-slate-500">Легенда:</span>
+          <h1 className="text-2xl font-bold text-foreground">CM Лоты</h1>
+          <div className="flex items-center gap-3 px-3 py-1.5 bg-muted rounded-lg border border-border text-xs">
+            <span className="text-muted-foreground">Легенда:</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500" />Брак</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" />Внимание</span>
             <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500" />Одобрено</span>
           </div>
         </div>
         {hasRole(['Production']) && (
-          <Link
-            to="/cm/new"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Plus size={20} />
-            Создать CM Лот
-          </Link>
+          <Button asChild>
+            <Link to="/cm/new">
+              <Plus size={20} />
+              Создать CM Лот
+            </Link>
+          </Button>
         )}
       </div>
 
       {/* Filters */}
       <div className="flex gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-          <input
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground z-10" size={20} />
+          <Input
             type="text"
             placeholder="Поиск по ID или коду продукта..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className="pl-10"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 border border-input rounded-lg bg-background text-foreground focus:ring-2 focus:ring-ring"
         >
           <option value="">Все статусы</option>
           {Object.entries(STATUS_LABELS).map(([value, label]) => (
@@ -218,51 +224,49 @@ export default function CmLotList() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-x-auto">
+      <Card className="overflow-x-auto">
         <table className="w-full min-w-[1200px]">
-          <thead className="bg-slate-50">
+          <thead className="bg-muted">
             <tr>
-              <th className="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase">CM Lot ID</th>
-              <th className="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase">Режим</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase">Продукт</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase">Среда</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase">Статус</th>
-              <th className="px-3 py-3 text-right text-xs font-medium text-slate-500 uppercase">Собрано</th>
-              <th className="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase">QC</th>
-              <th className="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase">QA</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase">Срок годн.</th>
-              <th className="px-3 py-3 text-right text-xs font-medium text-slate-500 uppercase">Объем</th>
-              <th className="px-3 py-3 text-right text-xs font-medium text-slate-500 uppercase">Резерв</th>
-              <th className="px-3 py-3 text-right text-xs font-medium text-slate-500 uppercase">Доступно</th>
-              <th className="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase">QR</th>
-              {hasRole(['Admin']) && <th className="px-3 py-3 text-center text-xs font-medium text-slate-500 uppercase"></th>}
+              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">CM Lot ID</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Режим</th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Продукт</th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Среда</th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Статус</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Собрано</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase">QC</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase">QA</th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Срок годн.</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Объем</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Резерв</th>
+              <th className="px-3 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Доступно</th>
+              <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase">QR</th>
+              {hasRole(['Admin']) && <th className="px-3 py-3 text-center text-xs font-medium text-muted-foreground uppercase"></th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200">
+          <tbody className="divide-y divide-border">
             {filteredLots.map((lot) => {
-              const isExpiringSoon = lot.expiry_date && 
+              const isExpiringSoon = lot.expiry_date &&
                 new Date(lot.expiry_date) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-              
+
               return (
-                <tr key={lot.cm_lot_id} className="hover:bg-slate-50">
+                <tr key={lot.cm_lot_id} className="hover:bg-muted">
                   <td className="px-3 py-2">
                     <Link to={`/cm/${lot.cm_lot_id}`} className="font-mono text-sm text-blue-600 hover:underline">
                       {lot.cm_lot_id}
                     </Link>
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      lot.mode === 'MTO' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
-                    }`}>
+                    <Badge variant={lot.mode === 'MTO' ? 'info' : 'muted'}>
                       {lot.mode || 'MTS'}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-3 py-2 text-sm">{lot.base_product_code}</td>
-                  <td className="px-3 py-2 text-xs text-slate-600">{lot.media_spec_label}</td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground">{lot.media_spec_label}</td>
                   <td className="px-3 py-2">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[lot.status] || 'bg-gray-100'}`}>
+                    <Badge variant={STATUS_BADGE_VARIANT[lot.status] || 'muted'}>
                       {STATUS_LABELS[lot.status] || lot.status}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-3 py-2 text-sm text-right font-mono">
                     {lot.total_collected_ml?.toFixed(1) || '0.0'}
@@ -308,13 +312,13 @@ export default function CmLotList() {
                   </td>
                   <td className="px-3 py-2 text-center">
                     {lot.qa_status === 'Approved' ? (
-                      <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded">OK</span>
+                      <Badge variant="success">OK</Badge>
                     ) : lot.qa_status === 'Rejected' ? (
-                      <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-xs rounded">Брак</span>
+                      <Badge variant="destructive">Брак</Badge>
                     ) : lot.qa_status === 'OnHold' ? (
-                      <span className="px-1.5 py-0.5 bg-amber-100 text-amber-700 text-xs rounded">Hold</span>
+                      <Badge variant="warning">Hold</Badge>
                     ) : (
-                      <span className="text-gray-400 text-xs">-</span>
+                      <span className="text-muted-foreground text-xs">-</span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-sm">
@@ -335,19 +339,26 @@ export default function CmLotList() {
                     {lot.available_ml?.toFixed(1) || '0.0'}
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => window.print()}
-                      className="text-slate-400 hover:text-blue-600"
                       title="Печать QR"
                     >
                       <QrCode size={16} />
-                    </button>
+                    </Button>
                   </td>
                   {hasRole(['Admin']) && (
                     <td className="px-3 py-2 text-center">
-                      <button onClick={() => handleDeleteLot(lot.cm_lot_id)} className="text-red-400 hover:text-red-600" title="Удалить">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDeleteLot(lot.cm_lot_id)}
+                        title="Удалить"
+                        className="text-red-400 hover:text-red-600"
+                      >
                         <Trash2 size={16} />
-                      </button>
+                      </Button>
                     </td>
                   )}
                 </tr>
@@ -355,13 +366,13 @@ export default function CmLotList() {
             })}
           </tbody>
         </table>
-        
+
         {filteredLots.length === 0 && (
-          <div className="text-center py-8 text-slate-500">
+          <div className="text-center py-8 text-muted-foreground">
             Нет данных для отображения
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

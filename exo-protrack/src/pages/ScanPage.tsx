@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { ArrowLeft } from 'lucide-react';
+import { Button } from '../components/ui/button';
 
 export default function ScanPage() {
   const navigate = useNavigate();
@@ -38,16 +39,17 @@ export default function ScanPage() {
 
   return (
     <div className="max-w-lg mx-auto p-4">
-      <button
+      <Button
+        variant="ghost"
         onClick={() => navigate(-1)}
-        className="flex items-center gap-2 text-slate-600 hover:text-slate-800 mb-4"
+        className="mb-4"
       >
-        <ArrowLeft size={20} />
+        <ArrowLeft size={20} className="mr-2" />
         Назад
-      </button>
+      </Button>
 
       <h1 className="text-xl font-bold mb-4">Сканирование QR кода</h1>
-      
+
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
           {error}
@@ -55,8 +57,8 @@ export default function ScanPage() {
       )}
 
       <div id="qr-reader" className="w-full" />
-      
-      <p className="mt-4 text-sm text-slate-500 text-center">
+
+      <p className="mt-4 text-sm text-muted-foreground text-center">
         Наведите камеру на QR код CM лота
       </p>
     </div>

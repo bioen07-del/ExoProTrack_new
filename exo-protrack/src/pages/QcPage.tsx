@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { CheckCircle, Clock, XCircle, Plus, ChevronDown, ChevronUp, FlaskConical, Package, Eye, EyeOff, Search } from 'lucide-react';
+import { Button } from '../components/ui';
+import { Card, CardContent } from '../components/ui';
+import { Badge } from '../components/ui';
+import { Input } from '../components/ui';
+import { showError } from '../lib/toast';
 
 type QcRequestItem = {
   id: string;
@@ -56,7 +61,7 @@ export default function QcPage() {
         .from('cm_qc_request')
         .select('*')
         .order('requested_at', { ascending: false });
-      
+
       const cmLotIds = (cmRequests || []).map(r => r.cm_lot_id);
       let cmLots: any[] = [];
       if (cmLotIds.length > 0) {
@@ -74,7 +79,7 @@ export default function QcPage() {
       if (packLotIds.length > 0) {
         const { data } = await supabase.from('pack_lot').select('*').in('pack_lot_id', packLotIds);
         packLots = data || [];
-        
+
         // Get frozen_spec from request via request_line
         const requestLineIds = packLots.map(l => l.request_line_id).filter(Boolean);
         if (requestLineIds.length > 0) {
@@ -250,7 +255,7 @@ export default function QcPage() {
       setResultData({ test_code: '', result_value: '', pass_fail: 'Pass', report_ref: '' });
       loadData();
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
 
@@ -294,125 +299,129 @@ export default function QcPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Контроль качества (QC)</h1>
-        <div className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-foreground">Контроль качества (QC)</h1>
+        <div className="text-sm text-muted-foreground">
           В очереди: <span className="font-semibold text-amber-600">{pendingCount}</span>
           {completedCount > 0 && <span className="ml-2">| Завершено: <span className="font-semibold text-green-600">{completedCount}</span></span>}
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border p-4">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              placeholder="Поиск по номеру лота..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm"
-            />
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Search */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+              <Input
+                type="text"
+                placeholder="Поиск по номеру лота..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Type Filter */}
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as any)}
+              className="px-3 py-2 border border-border rounded-lg text-sm bg-background text-foreground"
+            >
+              <option value="all">Все типы</option>
+              <option value="cm">Сырьё (CM)</option>
+              <option value="pack">Продукция</option>
+            </select>
+
+            {/* Sort */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-3 py-2 border border-border rounded-lg text-sm bg-background text-foreground"
+            >
+              <option value="date_asc">По дате (FEFO)</option>
+              <option value="date_desc">По дате (новые)</option>
+              <option value="name">По названию</option>
+            </select>
+
+            {/* Show Completed Toggle */}
+            <Button
+              variant={showCompleted ? 'success' : 'outline'}
+              size="sm"
+              onClick={() => setShowCompleted(!showCompleted)}
+              className="flex items-center gap-2"
+            >
+              {showCompleted ? <Eye size={16} /> : <EyeOff size={16} />}
+              {showCompleted ? 'Скрыть завершённые' : 'Показать завершённые'}
+            </Button>
           </div>
-
-          {/* Type Filter */}
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as any)}
-            className="px-3 py-2 border rounded-lg text-sm"
-          >
-            <option value="all">Все типы</option>
-            <option value="cm">🧪 Сырьё (CM)</option>
-            <option value="pack">📦 Продукция</option>
-          </select>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
-            className="px-3 py-2 border rounded-lg text-sm"
-          >
-            <option value="date_asc">По дате (FEFO)</option>
-            <option value="date_desc">По дате (новые)</option>
-            <option value="name">По названию</option>
-          </select>
-
-          {/* Show Completed Toggle */}
-          <button
-            onClick={() => setShowCompleted(!showCompleted)}
-            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm border ${
-              showCompleted ? 'bg-green-50 border-green-300 text-green-700' : 'bg-slate-50 border-slate-300 text-slate-600'
-            }`}
-          >
-            {showCompleted ? <Eye size={16} /> : <EyeOff size={16} />}
-            {showCompleted ? 'Скрыть завершённые' : 'Показать завершённые'}
-          </button>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Result Form Modal */}
       {showResultForm && selectedRequest && (
-        <form onSubmit={addResult} className="bg-white rounded-lg shadow-sm border p-6 space-y-4">
-          <h3 className="font-semibold flex items-center gap-2">
-            {selectedRequest.lot_type === 'CM' ? <FlaskConical size={20} /> : <Package size={20} />}
-            Добавить результат теста для {selectedRequest.lot_id}
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Тест *</label>
-              <select
-                value={resultData.test_code}
-                onChange={(e) => setResultData({ ...resultData, test_code: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              >
-                <option value="">Выберите тест...</option>
-                {testsForForm.map(t => (
-                  <option key={t.code} value={t.code}>{t.name} ({t.code})</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Результат</label>
-              <input
-                type="text"
-                value={resultData.result_value}
-                onChange={(e) => setResultData({ ...resultData, result_value: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Pass/Fail *</label>
-              <select
-                value={resultData.pass_fail}
-                onChange={(e) => setResultData({ ...resultData, pass_fail: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              >
-                <option value="Pass">Pass</option>
-                <option value="Fail">Fail</option>
-                <option value="NA">N/A</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Ссылка на протокол</label>
-              <input
-                type="text"
-                value={resultData.report_ref}
-                onChange={(e) => setResultData({ ...resultData, report_ref: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setShowResultForm(false)} className="px-4 py-2 border rounded-lg">
-              Отмена
-            </button>
-            <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-lg">
-              Сохранить
-            </button>
-          </div>
-        </form>
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={addResult} className="space-y-4">
+              <h3 className="font-semibold flex items-center gap-2 text-foreground">
+                {selectedRequest.lot_type === 'CM' ? <FlaskConical size={20} /> : <Package size={20} />}
+                Добавить результат теста для {selectedRequest.lot_id}
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Тест *</label>
+                  <select
+                    value={resultData.test_code}
+                    onChange={(e) => setResultData({ ...resultData, test_code: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                    required
+                  >
+                    <option value="">Выберите тест...</option>
+                    {testsForForm.map(t => (
+                      <option key={t.code} value={t.code}>{t.name} ({t.code})</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Результат</label>
+                  <Input
+                    type="text"
+                    value={resultData.result_value}
+                    onChange={(e) => setResultData({ ...resultData, result_value: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Pass/Fail *</label>
+                  <select
+                    value={resultData.pass_fail}
+                    onChange={(e) => setResultData({ ...resultData, pass_fail: e.target.value })}
+                    className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground"
+                  >
+                    <option value="Pass">Pass</option>
+                    <option value="Fail">Fail</option>
+                    <option value="NA">N/A</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-foreground">Ссылка на протокол</label>
+                  <Input
+                    type="text"
+                    value={resultData.report_ref}
+                    onChange={(e) => setResultData({ ...resultData, report_ref: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowResultForm(false)}>
+                  Отмена
+                </Button>
+                <Button type="submit" variant="success">
+                  Сохранить
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Requests List */}
@@ -424,7 +433,7 @@ export default function QcPage() {
 
           const getLatestResult = (testCode: string) => {
             const results = reqResults.filter(r => r.test_code === testCode);
-            return results.sort((a, b) => 
+            return results.sort((a, b) =>
               new Date(b.tested_at || 0).getTime() - new Date(a.tested_at || 0).getTime()
             )[0];
           };
@@ -437,19 +446,19 @@ export default function QcPage() {
           });
 
           return (
-            <div key={req.id} className={`bg-white rounded-lg shadow-sm border overflow-hidden ${
+            <Card key={req.id} className={`overflow-hidden ${
               req.status === 'Completed' ? 'opacity-75' : ''
             }`}>
               {/* Header */}
-              <div 
-                className="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-50"
+              <div
+                className="p-4 flex justify-between items-center cursor-pointer hover:bg-muted"
                 onClick={() => setExpandedRequest(isExpanded ? null : req.id)}
               >
                 <div className="flex items-center gap-4">
-                  <span className={`p-2 rounded-lg ${req.lot_type === 'CM' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}`}>
+                  <Badge variant="secondary" className={`p-2 rounded-lg ${req.lot_type === 'CM' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                     {req.lot_type === 'CM' ? <FlaskConical size={20} /> : <Package size={20} />}
-                  </span>
-                  <Link 
+                  </Badge>
+                  <Link
                     to={req.lot_type === 'CM' ? `/cm/${req.lot_id}` : `/products/${req.lot_id}`}
                     className="font-mono text-blue-600 hover:underline text-lg"
                     onClick={(e) => e.stopPropagation()}
@@ -457,26 +466,26 @@ export default function QcPage() {
                     {req.lot_id}
                   </Link>
                   {req.status === 'Completed' ? (
-                    <span className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <Badge variant="success" className="flex items-center gap-1">
                       <CheckCircle size={14} />
                       Завершён
-                    </span>
+                    </Badge>
                   ) : req.status === 'InProgress' ? (
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <Badge variant="info">
                       В работе
-                    </span>
+                    </Badge>
                   ) : (
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                    <Badge variant="warning">
                       Ожидает
-                    </span>
+                    </Badge>
                   )}
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-muted-foreground">
                     {completedTests}/{tests.length} тестов
                     {failedTests > 0 && <span className="text-red-600 ml-1">({failedTests} fail)</span>}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-muted-foreground">
                     {req.requested_at ? new Date(req.requested_at).toLocaleDateString('ru-RU') : '-'}
                   </span>
                   {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -485,24 +494,24 @@ export default function QcPage() {
 
               {/* Expanded Content */}
               {isExpanded && (
-                <div className="border-t p-4 bg-slate-50">
+                <div className="border-t border-border p-4 bg-muted">
                   {/* Tests Grid */}
                   <div className="grid grid-cols-3 gap-3 mb-4">
                     {tests.map(test => {
                       const result = getLatestResult(test.code);
                       return (
                         <div key={test.code} className={`p-3 rounded-lg ${
-                          result?.pass_fail === 'Pass' ? 'bg-green-100' :
-                          result?.pass_fail === 'Fail' ? 'bg-red-100' : 'bg-gray-100'
+                          result?.pass_fail === 'Pass' ? 'bg-green-100 dark:bg-green-900/30' :
+                          result?.pass_fail === 'Fail' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-gray-100 dark:bg-gray-800/30'
                         }`}>
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm">{test.name}</span>
+                            <span className="font-medium text-sm text-foreground">{test.name}</span>
                             {result?.pass_fail === 'Pass' && <CheckCircle className="text-green-600" size={18} />}
                             {result?.pass_fail === 'Fail' && <XCircle className="text-red-600" size={18} />}
                             {!result && <Clock className="text-gray-400" size={18} />}
                           </div>
                           {result && (
-                            <p className="text-xs text-slate-600 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {result.result_value || '-'} {test.unit || ''}
                             </p>
                           )}
@@ -514,30 +523,31 @@ export default function QcPage() {
                   {/* Actions */}
                   <div className="flex gap-2">
                     {canAddResult && req.status !== 'Completed' && (
-                      <button
+                      <Button
+                        size="sm"
                         onClick={() => openResultForm(req)}
-                        className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm"
                       >
                         <Plus size={16} />
                         Добавить результат
-                      </button>
+                      </Button>
                     )}
                     {req.status !== 'Completed' && canAddResult && allTestsDone && (
-                      <button
+                      <Button
+                        variant="success"
+                        size="sm"
                         onClick={() => completeRequest(req)}
-                        className="px-3 py-2 bg-green-600 text-white rounded-lg text-sm"
                       >
                         Завершить QC
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           );
         })}
         {filteredRequests.length === 0 && (
-          <p className="text-center py-8 text-slate-500">
+          <p className="text-center py-8 text-muted-foreground">
             {showCompleted ? 'Нет запросов QC' : 'Нет активных запросов QC'}
           </p>
         )}

@@ -7,12 +7,19 @@ import {
 } from 'lucide-react';
 import { supabase, PackLot, Container, PackFormat, Reservation, RequestLine } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { StatusBadge } from '../components/ui/status-badge';
+import { Input } from '../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { showError, showSuccess } from '../lib/toast';
 
 // Tooltip component
 function Tip({ text }: { text: string }) {
   return (
     <span className="group relative inline-block ml-1">
-      <Info size={14} className="text-slate-400 cursor-help inline" />
+      <Info size={14} className="text-muted-foreground cursor-help inline" />
       <span className="absolute z-50 invisible group-hover:visible bg-slate-800 text-white text-xs rounded py-1 px-2 -top-8 left-0 whitespace-nowrap max-w-xs">
         {text}
       </span>
@@ -57,7 +64,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Planned: 'bg-slate-100 text-slate-700',
+  Planned: 'bg-slate-100 text-foreground',
   Processing: 'bg-purple-100 text-purple-800',
   PreFill_QC_Pending: 'bg-yellow-100 text-yellow-800',
   PreFill_QC_Completed: 'bg-emerald-100 text-emerald-800',
@@ -631,7 +638,7 @@ export default function PackLotDetail() {
     
     if (updateError) {
       console.error('Failed to update pack lot:', updateError);
-      alert('Ошибка при обновлении продукта: ' + updateError.message);
+      showError('Ошибка', updateError.message);
       return;
     }
     
@@ -884,8 +891,9 @@ export default function PackLotDetail() {
     return (
       <div className="space-y-6">
         {/* BP Progress */}
-        <div className="bg-white rounded-lg shadow-sm border p-4">
-          <h3 className="font-semibold text-slate-800 mb-4">Прогресс производства</h3>
+        <Card>
+          <CardContent className="p-4">
+          <h3 className="font-semibold text-foreground mb-4">Прогресс производства</h3>
           <div className="flex items-center gap-2">
             {bpProgress.steps.map((step, idx) => {
               const isCompleted = idx < bpProgress.currentIdx;
@@ -895,62 +903,66 @@ export default function PackLotDetail() {
                   <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium ${
                     isCompleted ? 'bg-green-100 text-green-800' :
                     isCurrent ? 'bg-blue-100 text-blue-800' :
-                    'bg-slate-100 text-slate-500'
+                    'bg-muted text-muted-foreground'
                   }`}>
                     {isCompleted ? <CheckCircle size={16} /> : isCurrent ? <Clock size={16} /> : <span className="w-4" />}
                     {step.label}
                   </div>
                   {idx < bpProgress.steps.length - 1 && (
-                    <div className={`flex-1 h-0.5 ${isCompleted ? 'bg-green-400' : 'bg-slate-200'}`} />
+                    <div className={`flex-1 h-0.5 ${isCompleted ? 'bg-green-400' : 'bg-muted'}`} />
                   )}
                 </React.Fragment>
               );
             })}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <div className="flex-1 h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
               <div className="h-full bg-blue-500 transition-all" style={{ width: `${bpProgress.progress}%` }} />
             </div>
             <span className="font-medium text-sm">{bpProgress.progress}%</span>
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-3 gap-6">
           {/* QR Code */}
-          <div className="bg-white rounded-lg shadow-sm border p-6 flex flex-col items-center">
+          <Card className="flex flex-col items-center">
+            <CardContent className="p-6 flex flex-col items-center">
             <QRCodeSVG value={packLot.pack_lot_id} size={140} />
             <p className="mt-2 font-mono text-sm">{packLot.pack_lot_id}</p>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Info */}
-          <div className="col-span-2 bg-white rounded-lg shadow-sm border p-6">
+          <Card className="col-span-2">
+            <CardContent className="p-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-slate-500">Продукт</p>
+                <p className="text-sm text-muted-foreground">Продукт</p>
                 <p className="font-semibold">{(requestLine as any)?.finished_product_code || '-'}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-500">Формат</p>
+                <p className="text-sm text-muted-foreground">Формат</p>
                 <p className="font-semibold">{packFormat?.name || packLot.pack_format_code}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-500">План / Факт</p>
+                <p className="text-sm text-muted-foreground">План / Факт</p>
                 <p className="text-2xl font-bold">
-                  {packLot.qty_planned} <span className="text-slate-400 text-lg">/ {packLot.qty_produced ?? '-'}</span> шт
+                  {packLot.qty_planned} <span className="text-muted-foreground text-lg">/ {packLot.qty_produced ?? '-'}</span> шт
                 </p>
               </div>
               <div>
-                <p className="text-sm text-slate-500">Израсходовано</p>
+                <p className="text-sm text-muted-foreground">Израсходовано</p>
                 <p className="font-semibold">{packLot.total_filled_volume_ml?.toFixed(1) || '-'} мл</p>
               </div>
               <div>
-                <p className="text-sm text-slate-500">Источник CM</p>
+                <p className="text-sm text-muted-foreground">Источник CM</p>
                 <Link to={`/cm/${packLot.source_cm_lot_id}`} className="text-blue-600 hover:underline font-mono">
                   {packLot.source_cm_lot_id}
                 </Link>
               </div>
               <div>
-                <p className="text-sm text-slate-500">Заявка</p>
+                <p className="text-sm text-muted-foreground">Заявка</p>
                 {request ? (
                   <Link to={`/requests/${request.request_id}`} className="text-blue-600 hover:underline">
                     {request.request_id}
@@ -958,20 +970,22 @@ export default function PackLotDetail() {
                 ) : '-'}
               </div>
             </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Requirements */}
         {frozenSpec && (
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            <h3 className="font-semibold text-slate-800 mb-4">Требования к продукту</h3>
+          <Card>
+            <CardContent className="p-6">
+            <h3 className="font-semibold text-foreground mb-4">Требования к продукту</h3>
             <div className="grid grid-cols-3 gap-4">
               {hasPreProcessing && (
                 <div className="p-3 bg-purple-50 rounded-lg">
                   <h4 className="font-medium text-purple-800 text-sm mb-2">Процессинг до розлива ({preFillMethods.length})</h4>
                   <div className="space-y-1">
                     {preFillMethods.map((m: any, i: number) => (
-                      <div key={i} className="text-xs bg-white p-1.5 rounded">{m.name || m.method_id}</div>
+                      <div key={i} className="text-xs bg-card p-1.5 rounded">{m.name || m.method_id}</div>
                     ))}
                   </div>
                 </div>
@@ -981,7 +995,7 @@ export default function PackLotDetail() {
                   <h4 className="font-medium text-indigo-800 text-sm mb-2">Постпроцессинг ({postFillMethods.length})</h4>
                   <div className="space-y-1">
                     {postFillMethods.map((m: any, i: number) => (
-                      <div key={i} className="text-xs bg-white p-1.5 rounded">{m.name || m.method_id}</div>
+                      <div key={i} className="text-xs bg-card p-1.5 rounded">{m.name || m.method_id}</div>
                     ))}
                   </div>
                 </div>
@@ -991,7 +1005,7 @@ export default function PackLotDetail() {
                   <h4 className="font-medium text-emerald-800 text-sm mb-2">QC Продукта ({productQcTests.length})</h4>
                   <div className="space-y-1">
                     {productQcTests.map((t: any, i: number) => (
-                      <div key={i} className="text-xs bg-white p-1.5 rounded">{t.name || t.code}</div>
+                      <div key={i} className="text-xs bg-card p-1.5 rounded">{t.name || t.code}</div>
                     ))}
                   </div>
                 </div>
@@ -999,14 +1013,15 @@ export default function PackLotDetail() {
               {hasQa && (
                 <div className="p-3 bg-amber-50 rounded-lg">
                   <h4 className="font-medium text-amber-800 text-sm mb-2">QA</h4>
-                  <p className="text-xs text-slate-600">Требуется финальное одобрение QA</p>
+                  <p className="text-xs text-muted-foreground">Требуется финальное одобрение QA</p>
                 </div>
               )}
               {!hasProcessing && !hasQc && !hasQa && (
-                <p className="text-slate-400 text-sm col-span-3">Нет дополнительных требований — продукт переходит сразу в Released</p>
+                <p className="text-muted-foreground text-sm col-span-3">Нет дополнительных требований — продукт переходит сразу в Released</p>
               )}
             </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     );
@@ -1019,26 +1034,27 @@ export default function PackLotDetail() {
     
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4">Розлив продукции</h3>
+        <Card>
+          <CardContent className="p-6">
+          <h3 className="font-semibold text-foreground mb-4">Розлив продукции</h3>
           
           <div className="grid grid-cols-2 gap-6">
             <div>
-              <p className="text-sm text-slate-500 mb-1">Плановое количество</p>
+              <p className="text-sm text-muted-foreground mb-1">Плановое количество</p>
               <p className="text-3xl font-bold">{packLot.qty_planned} шт</p>
-              <p className="text-sm text-slate-400">× {packFormat?.nominal_fill_volume_ml || 0} мл = {(packLot.qty_planned * (packFormat?.nominal_fill_volume_ml || 0)).toFixed(1)} мл</p>
+              <p className="text-sm text-muted-foreground">× {packFormat?.nominal_fill_volume_ml || 0} мл = {(packLot.qty_planned * (packFormat?.nominal_fill_volume_ml || 0)).toFixed(1)} мл</p>
             </div>
             
             {canComplete && (
               <div>
                 <label className="block text-sm font-medium mb-2">Фактическое количество</label>
-                <input
+                <Input
                   type="number"
                   min="1"
                   max={packLot.qty_planned}
                   value={qtyProduced}
                   onChange={(e) => setQtyProduced(Number(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-blue-500 rounded-lg text-2xl font-bold text-center"
+                  className="px-4 py-3 h-auto border-2 border-blue-500 text-2xl font-bold text-center"
                 />
                 {qtyProduced < packLot.qty_planned && (
                   <p className="text-amber-600 text-sm mt-1 flex items-center gap-1">
@@ -1051,25 +1067,25 @@ export default function PackLotDetail() {
             
             {isCompleted && (
               <div>
-                <p className="text-sm text-slate-500 mb-1">Произведено</p>
+                <p className="text-sm text-muted-foreground mb-1">Произведено</p>
                 <p className="text-3xl font-bold text-green-600">{packLot.qty_produced} шт</p>
-                <p className="text-sm text-slate-400">Израсходовано: {packLot.total_filled_volume_ml?.toFixed(1)} мл</p>
+                <p className="text-sm text-muted-foreground">Израсходовано: {packLot.total_filled_volume_ml?.toFixed(1)} мл</p>
               </div>
             )}
           </div>
 
           <div className="mt-6 flex gap-3">
             {canStart && (
-              <button onClick={startFilling} className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <Button onClick={startFilling} variant="default" size="lg" className="gap-2">
                 <Play size={20} />
                 Начать розлив
-              </button>
+              </Button>
             )}
             {canComplete && (
-              <button onClick={completeFilling} className="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+              <Button onClick={completeFilling} variant="success" size="lg" className="gap-2">
                 <CheckCircle size={20} />
                 Завершить розлив
-              </button>
+              </Button>
             )}
             {isCompleted && (
               <div className="flex items-center gap-2 text-green-600">
@@ -1078,21 +1094,22 @@ export default function PackLotDetail() {
               </div>
             )}
           </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Source CM Info */}
         {sourceCmLot && (
-          <div className="bg-slate-50 rounded-lg border p-4">
-            <h4 className="font-medium text-slate-700 mb-2">Источник сырья</h4>
+          <Card className="bg-muted">
+            <CardContent className="p-4">
+            <h4 className="font-medium text-foreground mb-2">Источник сырья</h4>
             <div className="flex justify-between items-center">
               <Link to={`/cm/${sourceCmLot.cm_lot_id}`} className="text-blue-600 hover:underline font-mono">
                 {sourceCmLot.cm_lot_id}
               </Link>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${STATUS_COLORS[sourceCmLot.status] || 'bg-gray-100'}`}>
-                {STATUS_LABELS[sourceCmLot.status] || sourceCmLot.status}
-              </span>
+              <StatusBadge status={sourceCmLot.status} />
             </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
       </div>
     );
@@ -1127,7 +1144,7 @@ export default function PackLotDetail() {
       const qtyOut = parseInt(form.qty_output) || qtyIn;
       
       if (!qtyIn) {
-        alert('Укажите количество на входе');
+        showError('Ошибка', 'Укажите количество на входе');
         return;
       }
 
@@ -1194,10 +1211,11 @@ export default function PackLotDetail() {
     
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4">
+        <Card>
+          <CardContent className="p-6">
+          <h3 className="font-semibold text-foreground mb-4">
             {tabTitle}
-            <span className="ml-2 text-sm font-normal text-slate-500">
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
               ({completedSteps.length}/{currentSteps.length} выполнено)
             </span>
           </h3>
@@ -1212,19 +1230,19 @@ export default function PackLotDetail() {
               
               return (
                 <div key={step.processing_step_id} className={`p-4 rounded-lg border ${
-                  isCompleted ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200'
+                  isCompleted ? 'bg-green-50 border-green-200' : 'bg-card border-border'
                 }`}>
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-3">
                       <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                        isCompleted ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-600'
+                        isCompleted ? 'bg-green-500 text-white' : 'bg-muted text-muted-foreground'
                       }`}>
                         {idx + 1}
                       </span>
                       <div>
                         <p className="font-medium">{step.method_name || step.method_id}</p>
                         {isCompleted && step.completed_at && (
-                          <p className="text-xs text-slate-500">
+                          <p className="text-xs text-muted-foreground">
                             Выполнено: {new Date(step.completed_at).toLocaleString('ru-RU')}
                           </p>
                         )}
@@ -1235,14 +1253,14 @@ export default function PackLotDetail() {
                   
                   {isCompleted ? (
                     <div className="grid grid-cols-3 gap-4 text-sm bg-green-100 p-3 rounded">
-                      <div><span className="text-slate-500">Вход:</span> {step.qty_input || '-'} {stepUnit}</div>
-                      <div><span className="text-slate-500">Выход:</span> {step.qty_output || '-'} {stepUnit}</div>
-                      <div><span className="text-slate-500">Примечания:</span> {step.notes || '-'}</div>
+                      <div><span className="text-muted-foreground">Вход:</span> {step.qty_input || '-'} {stepUnit}</div>
+                      <div><span className="text-muted-foreground">Выход:</span> {step.qty_output || '-'} {stepUnit}</div>
+                      <div><span className="text-muted-foreground">Примечания:</span> {step.notes || '-'}</div>
                       {step.started_at && step.ended_at && (
                         <>
-                          <div><span className="text-slate-500">Начало:</span> {new Date(step.started_at).toLocaleString('ru-RU')}</div>
-                          <div><span className="text-slate-500">Окончание:</span> {new Date(step.ended_at).toLocaleString('ru-RU')}</div>
-                          <div><span className="text-slate-500">Длительность:</span> {step.duration_minutes || '-'} мин</div>
+                          <div><span className="text-muted-foreground">Начало:</span> {new Date(step.started_at).toLocaleString('ru-RU')}</div>
+                          <div><span className="text-muted-foreground">Окончание:</span> {new Date(step.ended_at).toLocaleString('ru-RU')}</div>
+                          <div><span className="text-muted-foreground">Длительность:</span> {step.duration_minutes || '-'} мин</div>
                         </>
                       )}
                     </div>
@@ -1250,22 +1268,20 @@ export default function PackLotDetail() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium mb-1">Кол-во на входе ({stepUnit}) <span className="text-slate-400">(план: {expectedQty})</span></label>
-                          <input
+                          <label className="block text-sm font-medium mb-1">Кол-во на входе ({stepUnit}) <span className="text-muted-foreground">(план: {expectedQty})</span></label>
+                          <Input
                             type="number" min="1"
                             value={form.qty_input || ''}
                             onChange={(e) => updateStepForm(step.processing_step_id, 'qty_input', e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg"
                             placeholder={String(expectedQty)}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-1">Кол-во на выходе ({stepUnit})</label>
-                          <input
+                          <Input
                             type="number" min="0"
                             value={form.qty_output || ''}
                             onChange={(e) => updateStepForm(step.processing_step_id, 'qty_output', e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg"
                             placeholder="Если не указано, равно входу"
                           />
                         </div>
@@ -1275,7 +1291,7 @@ export default function PackLotDetail() {
                         <textarea
                           value={form.notes || ''}
                           onChange={(e) => updateStepForm(step.processing_step_id, 'notes', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg"
+                          className="w-full rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm"
                           rows={2}
                         />
                       </div>
@@ -1283,20 +1299,18 @@ export default function PackLotDetail() {
                         <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                           <div>
                             <label className="block text-sm font-medium mb-1 text-blue-800">Начало процедуры</label>
-                            <input
+                            <Input
                               type="datetime-local"
                               value={form.started_at || ''}
                               onChange={(e) => updateStepForm(step.processing_step_id, 'started_at', e.target.value)}
-                              className="w-full px-3 py-2 border rounded-lg"
                             />
                           </div>
                           <div>
                             <label className="block text-sm font-medium mb-1 text-blue-800">Окончание процедуры</label>
-                            <input
+                            <Input
                               type="datetime-local"
                               value={form.ended_at || ''}
                               onChange={(e) => updateStepForm(step.processing_step_id, 'ended_at', e.target.value)}
-                              className="w-full px-3 py-2 border rounded-lg"
                             />
                           </div>
                           {form.started_at && form.ended_at && (
@@ -1306,12 +1320,13 @@ export default function PackLotDetail() {
                           )}
                         </div>
                       )}
-                      <button
+                      <Button
                         onClick={() => submitProcessingStep(step.processing_step_id)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                        variant="default"
+                        className="bg-purple-600 hover:bg-purple-700"
                       >
                         Завершить этап
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -1323,29 +1338,34 @@ export default function PackLotDetail() {
           {currentSteps.length === 0 && packLot.status === 'Planned' && hasPreProcessing && hasRole(['Production', 'Admin']) && (
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
               <p className="text-blue-800 mb-3">Для начала процессинга нажмите кнопку ниже</p>
-              <button
+              <Button
                 onClick={advanceWorkflow}
-                className="flex items-center gap-2 mx-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                variant="default"
+                size="lg"
+                className="gap-2 mx-auto"
               >
                 <Play size={20} />
                 Начать процессинг
-              </button>
+              </Button>
             </div>
           )}
           
           {/* Completion button */}
           {currentSteps.length > 0 && completedSteps.length === currentSteps.length && hasRole(['Production', 'Admin']) && (
-            <div className="mt-6 pt-4 border-t">
-              <button
+            <div className="mt-6 pt-4 border-t border-border">
+              <Button
                 onClick={advanceWorkflow}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                variant="success"
+                size="lg"
+                className="gap-2"
               >
                 <CheckCircle size={20} />
                 Завершить и перейти к следующему этапу
-              </button>
+              </Button>
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -1405,13 +1425,13 @@ export default function PackLotDetail() {
     // Save individual test result
     const saveTestResult = async (test: any) => {
       if (!qcRequest) {
-        alert('Нет активного QC запроса');
+        showError('Ошибка', 'Нет активного QC запроса');
         return;
       }
       const testCode = test.code || test.name;
       const form = qcFormData[testCode] || {};
       if (form.pass === undefined) {
-        alert('Укажите Pass/Fail');
+        showError('Ошибка', 'Укажите Pass/Fail');
         return;
       }
       
@@ -1428,10 +1448,10 @@ export default function PackLotDetail() {
         setQcFormData(prev => { const n = {...prev}; delete n[testCode]; return n; });
         loadData();
       } catch (err: any) {
-        alert('Ошибка сохранения: ' + err.message);
+        showError('Ошибка сохранения', err.message);
       }
     };
-    
+
     return (
       <div className="space-y-4">
         {/* Header */}
@@ -1448,13 +1468,15 @@ export default function PackLotDetail() {
         {canSendToQc && (
           <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg text-center">
             <p className="text-blue-800 mb-4">Для начала контроля качества необходимо передать задачу в QC отдел</p>
-            <button
+            <Button
               onClick={sendToQc}
-              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium mx-auto"
+              variant="default"
+              size="lg"
+              className="gap-2 mx-auto"
             >
               <ArrowRight size={20} />
               Передать задачу в QC
-            </button>
+            </Button>
           </div>
         )}
         
@@ -1465,7 +1487,7 @@ export default function PackLotDetail() {
         )}
         
         {productQcTests.length === 0 ? (
-          <div className="p-4 bg-slate-50 rounded-lg text-slate-500">
+          <div className="p-4 bg-muted rounded-lg text-muted-foreground">
             Нет требуемых тестов в спецификации продукта
           </div>
         ) : (
@@ -1476,15 +1498,15 @@ export default function PackLotDetail() {
               const form = qcFormData[testCode] || {};
               
               return (
-                <div key={testCode} className={`p-4 rounded-lg border-2 ${existingResult ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200'}`}>
+                <div key={testCode} className={`p-4 rounded-lg border-2 ${existingResult ? 'bg-green-50 border-green-300' : 'bg-card border-border'}`}>
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                      <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
                         {idx + 1}
                       </span>
                       <div>
                         <p className="font-medium text-lg">{test.name || testCode}</p>
-                        <p className="text-sm text-slate-500">{test.code}</p>
+                        <p className="text-sm text-muted-foreground">{test.code}</p>
                       </div>
                     </div>
                     {existingResult && (
@@ -1496,10 +1518,10 @@ export default function PackLotDetail() {
                   </div>
                   
                   {/* Reference values and hints */}
-                  <div className="mb-3 p-3 bg-slate-100 rounded text-sm">
+                  <div className="mb-3 p-3 bg-muted rounded text-sm">
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <span className="text-slate-500">Референс:</span>
+                        <span className="text-muted-foreground">Референс:</span>
                         <span className="ml-2 font-medium">
                           {test.norm_min != null && test.norm_max != null 
                             ? `${test.norm_min} - ${test.norm_max}` 
@@ -1509,23 +1531,23 @@ export default function PackLotDetail() {
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-500">Единицы:</span>
+                        <span className="text-muted-foreground">Единицы:</span>
                         <span className="ml-2 font-medium">{test.unit || '-'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500">Метод:</span>
+                        <span className="text-muted-foreground">Метод:</span>
                         <span className="ml-2 font-medium text-blue-600">{test.method || '-'}</span>
                       </div>
                     </div>
                     {test.description && (
-                      <p className="mt-2 text-slate-600 italic">{test.description}</p>
+                      <p className="mt-2 text-muted-foreground italic">{test.description}</p>
                     )}
                   </div>
                   
                   {existingResult ? (
                     <div className="grid grid-cols-3 gap-4 text-sm bg-green-100 p-3 rounded">
-                      <div><span className="text-slate-500">Результат:</span> <span className="font-mono">{existingResult.result_value || '-'}</span> {test.unit || ''}</div>
-                      <div><span className="text-slate-500">Дата:</span> {existingResult.tested_at ? new Date(existingResult.tested_at).toLocaleDateString('ru-RU') : '-'}</div>
+                      <div><span className="text-muted-foreground">Результат:</span> <span className="font-mono">{existingResult.result_value || '-'}</span> {test.unit || ''}</div>
+                      <div><span className="text-muted-foreground">Дата:</span> {existingResult.tested_at ? new Date(existingResult.tested_at).toLocaleDateString('ru-RU') : '-'}</div>
                       <div>
                         {existingResult.report_ref && (
                           <a href={existingResult.report_ref} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
@@ -1539,12 +1561,11 @@ export default function PackLotDetail() {
                       <div className="grid grid-cols-3 gap-4">
                         <div>
                           <label className="block text-sm font-medium mb-1">Результат {test.unit ? `(${test.unit})` : ''}</label>
-                          <input
+                          <Input
                             type="text"
                             placeholder={test.input_format || 'Введите значение...'}
                             value={form.value || ''}
                             onChange={(e) => updateQcFormWithAutoCheck(testCode, 'value', e.target.value, test)}
-                            className="w-full px-3 py-2 border rounded-lg"
                           />
                         </div>
                         <div>
@@ -1552,7 +1573,7 @@ export default function PackLotDetail() {
                           <select
                             value={form.pass === true ? 'Pass' : form.pass === false ? 'Fail' : ''}
                             onChange={(e) => updateQcFormWithAutoCheck(testCode, 'pass', e.target.value === 'Pass', test)}
-                            className="w-full px-3 py-2 border rounded-lg"
+                            className="w-full h-10 rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm"
                           >
                             <option value="">Выберите...</option>
                             <option value="Pass">✅ Pass</option>
@@ -1560,18 +1581,19 @@ export default function PackLotDetail() {
                           </select>
                         </div>
                         <div className="flex items-end">
-                          <button
+                          <Button
                             onClick={() => saveTestResult(test)}
                             disabled={form.pass === undefined}
-                            className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            variant="success"
+                            className="w-full"
                           >
                             Сохранить
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-slate-500 italic p-3 bg-slate-50 rounded">Ожидает ввода результатов QC специалистом</p>
+                    <p className="text-muted-foreground italic p-3 bg-muted rounded">Ожидает ввода результатов QC специалистом</p>
                   )}
                 </div>
               );
@@ -1584,7 +1606,7 @@ export default function PackLotDetail() {
             <CheckCircle size={32} className="mx-auto text-green-600 mb-2" />
             <p className="font-medium text-green-800">Все тесты QC пройдены!</p>
             <p className="text-sm text-green-600 mb-4">Продукт готов к решению QA</p>
-            <button
+            <Button
               onClick={async () => {
                 if (!qcRequest) return;
                 try {
@@ -1592,10 +1614,10 @@ export default function PackLotDetail() {
                   await supabase.from('pack_qc_request')
                     .update({ status: 'Completed', completed_at: new Date().toISOString() })
                     .eq('qc_request_id', qcRequest.qc_request_id);
-                  
+
                   // Check if all passed
                   const allPassed = Object.values(latestQcByTest).every((r: any) => r.pass_fail === 'Pass');
-                  
+
                   // Determine next status
                   let nextStatus = 'QC_Completed';
                   if (hasQa) {
@@ -1603,21 +1625,23 @@ export default function PackLotDetail() {
                   } else if (allPassed) {
                     nextStatus = 'Released';
                   }
-                  
+
                   await supabase.from('pack_lot')
                     .update({ status: nextStatus })
                     .eq('pack_lot_id', packLot.pack_lot_id);
-                  
+
                   loadData();
                 } catch (err: any) {
-                  alert('Ошибка: ' + err.message);
+                  showError('Ошибка', err.message);
                 }
               }}
-              className="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+              className="gap-2"
+              variant="success"
+              size="lg"
             >
               <CheckCircle size={20} />
               Завершить и перейти к следующему этапу
-            </button>
+            </Button>
           </div>
         )}
         
@@ -1637,23 +1661,24 @@ export default function PackLotDetail() {
     
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4">QA Решение</h3>
+        <Card>
+          <CardContent className="p-6">
+          <h3 className="font-semibold text-foreground mb-4">QA Решение</h3>
           
           {/* Summary */}
           <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-500">Произведено</p>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">Произведено</p>
               <p className="text-xl font-bold">{packLot.qty_produced} шт</p>
             </div>
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-500">Процессинг</p>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">Процессинг</p>
               <p className="text-xl font-bold">
                 {hasProcessing ? `${processingSteps.filter(s => s.status === 'Completed').length}/${processingSteps.length}` : 'N/A'}
               </p>
             </div>
-            <div className="p-3 bg-slate-50 rounded-lg">
-              <p className="text-sm text-slate-500">QC</p>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-sm text-muted-foreground">QC</p>
               <p className="text-xl font-bold">
                 {hasQc ? (qcResults.every(r => r.pass_fail === 'Pass') ? '✓ Pass' : '✗ Fail') : 'N/A'}
               </p>
@@ -1665,32 +1690,34 @@ export default function PackLotDetail() {
               <h4 className="font-medium text-amber-800 mb-3">Принять решение</h4>
               <textarea
                 placeholder="Комментарий QA (опционально)"
-                className="w-full px-3 py-2 border rounded-lg mb-3"
+                className="w-full rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm mb-3"
                 rows={2}
                 value={qaComment}
                 onChange={(e) => setQaComment(e.target.value)}
               />
               <div className="flex gap-2">
-                <button
+                <Button
                   onClick={() => submitQaDecision('Approved', qaComment)}
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                  variant="success"
+                  className="gap-2"
                 >
                   <CheckCircle size={18} />
                   Одобрить → Выпуск
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => submitQaDecision('OnHold', qaComment)}
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                  variant="warning"
                 >
                   На удержание
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => submitQaDecision('Rejected', qaComment)}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  variant="destructive"
+                  className="gap-2"
                 >
                   <XCircle size={18} />
                   Отклонить
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1705,12 +1732,13 @@ export default function PackLotDetail() {
                           latestDecision.decision === 'Rejected' ? 'Отклонено ✗' : 'На удержании'}
               </p>
               {latestDecision.comment && <p className="text-sm mt-1">{latestDecision.comment}</p>}
-              <p className="text-xs text-slate-500 mt-2">
+              <p className="text-xs text-muted-foreground mt-2">
                 {new Date(latestDecision.decided_at).toLocaleString('ru-RU')}
               </p>
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -1903,49 +1931,52 @@ export default function PackLotDetail() {
     return (
       <div className="space-y-6">
         {/* QR Labels */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2"><Printer size={20} />Этикетки с QR-кодом</h3>
+        <Card>
+          <CardContent className="p-6">
+          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><Printer size={20} />Этикетки с QR-кодом</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 bg-slate-50 rounded-lg">
+            <div className="p-4 bg-muted rounded-lg">
               <h4 className="font-medium mb-3">Круглая этикетка (1×1 см)</h4>
-              <p className="text-sm text-slate-500 mb-3">Для флаконов — микрокод + номер лота</p>
+              <p className="text-sm text-muted-foreground mb-3">Для флаконов — микрокод + номер лота</p>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-full border-2 border-slate-300 flex flex-col items-center justify-center bg-white">
+                <div className="w-16 h-16 rounded-full border-2 border-border flex flex-col items-center justify-center bg-card">
                   <QRCodeSVG value={packLot.pack_lot_id} size={32} />
                   <span className="text-[6px] font-mono font-bold mt-0.5">{packLot.pack_lot_id.slice(-8)}</span>
                 </div>
-                <div className="text-sm text-slate-600"><p>10×10 мм, круглый</p></div>
+                <div className="text-sm text-muted-foreground"><p>10×10 мм, круглый</p></div>
               </div>
-              <button onClick={printVialLabel} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><Printer size={18} />Печать этикетки флакона</button>
+              <Button onClick={printVialLabel} variant="default" className="gap-2"><Printer size={18} />Печать этикетки флакона</Button>
             </div>
-            <div className="p-4 bg-slate-50 rounded-lg">
+            <div className="p-4 bg-muted rounded-lg">
               <h4 className="font-medium mb-3">Термоэтикетка (3.5×5.5 см)</h4>
-              <p className="text-sm text-slate-500 mb-3">Для термопринтера — QR + лот + дата</p>
+              <p className="text-sm text-muted-foreground mb-3">Для термопринтера — QR + лот + дата</p>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-20 h-28 border-2 border-slate-300 flex flex-col items-center justify-center p-2 bg-white">
+                <div className="w-20 h-28 border-2 border-border flex flex-col items-center justify-center p-2 bg-card">
                   <QRCodeSVG value={packLot.pack_lot_id} size={48} />
                   <span className="text-[7px] font-mono font-bold mt-1">{packLot.pack_lot_id}</span>
-                  <span className="text-[5px] text-slate-500">{productCode}</span>
+                  <span className="text-[5px] text-muted-foreground">{productCode}</span>
                   <span className="text-[6px] mt-0.5">{productionDate}</span>
                 </div>
-                <div className="text-sm text-slate-600"><p>35×55 мм</p></div>
+                <div className="text-sm text-muted-foreground"><p>35×55 мм</p></div>
               </div>
-              <button onClick={printThermalLabel} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"><Printer size={18} />Печать термоэтикетки</button>
+              <Button onClick={printThermalLabel} variant="default" className="gap-2"><Printer size={18} />Печать термоэтикетки</Button>
             </div>
           </div>
-        </div>
-        
+          </CardContent>
+        </Card>
+
         {/* Documents */}
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2"><FileText size={20} />Сертификаты и документы</h3>
+        <Card>
+          <CardContent className="p-6">
+          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2"><FileText size={20} />Сертификаты и документы</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 border rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
               <div className="flex items-start gap-3">
                 <div className="p-2 bg-green-100 rounded-lg"><ClipboardCheck className="text-green-600" size={24} /></div>
                 <div className="flex-1">
                   <h4 className="font-medium">Certificate of Analysis (COA)</h4>
-                  <p className="text-sm text-slate-500 mt-1">Сертификат анализа с результатами QC и решением QA</p>
-                  <button onClick={generateCOA} className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700"><FileText size={16} />Генерировать COA</button>
+                  <p className="text-sm text-muted-foreground mt-1">Сертификат анализа с результатами QC и решением QA</p>
+                  <Button onClick={generateCOA} variant="success" size="sm" className="mt-3 gap-2"><FileText size={16} />Генерировать COA</Button>
                 </div>
               </div>
             </div>
@@ -1954,13 +1985,14 @@ export default function PackLotDetail() {
                 <div className="p-2 bg-amber-100 rounded-lg"><ShieldCheck className="text-amber-600" size={24} /></div>
                 <div className="flex-1">
                   <h4 className="font-medium">Safety Data Sheet (SDS)</h4>
-                  <p className="text-sm text-slate-500 mt-1">Паспорт безопасности материала</p>
-                  <button onClick={generateSDS} className="mt-3 flex items-center gap-2 px-3 py-1.5 bg-amber-600 text-white text-sm rounded hover:bg-amber-700"><FileText size={16} />Генерировать SDS</button>
+                  <p className="text-sm text-muted-foreground mt-1">Паспорт безопасности материала</p>
+                  <Button onClick={generateSDS} variant="warning" size="sm" className="mt-3 gap-2"><FileText size={16} />Генерировать SDS</Button>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -2032,7 +2064,7 @@ export default function PackLotDetail() {
         
         loadData();
       } catch (err: any) {
-        alert('Ошибка: ' + err.message);
+        showError('Ошибка', err.message);
       } finally {
         setLyoSaving(false);
       }
@@ -2040,8 +2072,9 @@ export default function PackLotDetail() {
 
     return (
       <div className="space-y-6">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+        <Card>
+          <CardContent className="p-6">
+          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
             <Snowflake size={20} className="text-blue-600" />
             Лиофилизация
             {isCompleted && <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 text-sm rounded">Выполнено</span>}
@@ -2058,9 +2091,9 @@ export default function PackLotDetail() {
                       {step.step_number}
                     </span>
                     <div>
-                      <p className="text-slate-800">{step.description}</p>
+                      <p className="text-foreground">{step.description}</p>
                       {step.expected_results && (
-                        <p className="text-slate-500 text-xs">Ожидаемый результат: {step.expected_results}</p>
+                        <p className="text-muted-foreground text-xs">Ожидаемый результат: {step.expected_results}</p>
                       )}
                     </div>
                   </div>
@@ -2073,14 +2106,14 @@ export default function PackLotDetail() {
           {isCompleted && lyoStep && (
             <div className="p-4 bg-green-50 rounded-lg border border-green-200">
               <div className="grid grid-cols-3 gap-4 text-sm">
-                <div><span className="text-slate-500">Вход:</span> {lyoStep.qty_input || '-'} шт</div>
-                <div><span className="text-slate-500">Выход:</span> {lyoStep.qty_output || '-'} шт</div>
-                <div><span className="text-slate-500">Примечания:</span> {lyoStep.notes || '-'}</div>
+                <div><span className="text-muted-foreground">Вход:</span> {lyoStep.qty_input || '-'} шт</div>
+                <div><span className="text-muted-foreground">Выход:</span> {lyoStep.qty_output || '-'} шт</div>
+                <div><span className="text-muted-foreground">Примечания:</span> {lyoStep.notes || '-'}</div>
                 {lyoStep.started_at && lyoStep.ended_at && (
                   <>
-                    <div><span className="text-slate-500">Начало:</span> {new Date(lyoStep.started_at).toLocaleString('ru-RU')}</div>
-                    <div><span className="text-slate-500">Окончание:</span> {new Date(lyoStep.ended_at).toLocaleString('ru-RU')}</div>
-                    <div><span className="text-slate-500">Длительность:</span> {lyoStep.duration_minutes || '-'} мин</div>
+                    <div><span className="text-muted-foreground">Начало:</span> {new Date(lyoStep.started_at).toLocaleString('ru-RU')}</div>
+                    <div><span className="text-muted-foreground">Окончание:</span> {new Date(lyoStep.ended_at).toLocaleString('ru-RU')}</div>
+                    <div><span className="text-muted-foreground">Длительность:</span> {lyoStep.duration_minutes || '-'} мин</div>
                   </>
                 )}
               </div>
@@ -2092,44 +2125,40 @@ export default function PackLotDetail() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Кол-во на входе (шт) <span className="text-slate-400">(план: {qtyPlanned})</span></label>
-                  <input
+                  <label className="block text-sm font-medium mb-1">Кол-во на входе (шт) <span className="text-muted-foreground">(план: {qtyPlanned})</span></label>
+                  <Input
                     type="number" min="1"
                     value={lyoFormData.qty_input || ''}
                     onChange={(e) => updateLyoStepForm('qty_input', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg"
                     placeholder={String(qtyPlanned)}
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Кол-во на выходе (шт)</label>
-                  <input
+                  <Input
                     type="number" min="0"
                     value={lyoFormData.qty_output || ''}
                     onChange={(e) => updateLyoStepForm('qty_output', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg"
                     placeholder="Если не указано, равно входу"
                   />
                 </div>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <div>
                   <label className="block text-sm font-medium mb-1 text-blue-800">Начало процедуры</label>
-                  <input
+                  <Input
                     type="datetime-local"
                     value={lyoFormData.started_at || ''}
                     onChange={(e) => updateLyoStepForm('started_at', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1 text-blue-800">Окончание процедуры</label>
-                  <input
+                  <Input
                     type="datetime-local"
                     value={lyoFormData.ended_at || ''}
                     onChange={(e) => updateLyoStepForm('ended_at', e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg"
                   />
                 </div>
                 {lyoFormData.started_at && lyoFormData.ended_at && (
@@ -2144,18 +2173,19 @@ export default function PackLotDetail() {
                 <textarea
                   value={lyoFormData.notes || ''}
                   onChange={(e) => updateLyoStepForm('notes', e.target.value)}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full rounded-lg border border-input bg-background text-foreground px-3 py-2 text-sm"
                   rows={2}
                 />
               </div>
               
-              <button
+              <Button
                 onClick={submitLyoStep}
                 disabled={lyoSaving}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                loading={lyoSaving}
+                variant="default"
               >
                 {lyoSaving ? 'Сохранение...' : 'Завершить лиофилизацию'}
-              </button>
+              </Button>
             </div>
           )}
 
@@ -2165,7 +2195,8 @@ export default function PackLotDetail() {
               Этап лиофилизации ещё не создан. Он будет доступен после перехода к постпроцессингу.
             </div>
           )}
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -2194,7 +2225,7 @@ export default function PackLotDetail() {
         setShipmentFormData({ qty_shipped: '', shipped_at: new Date().toISOString(), recipient_name: '', invoice_number: '', waybill_number: '' });
         loadData();
       } catch (err: any) {
-        alert('Ошибка сохранения: ' + err.message);
+        showError('Ошибка сохранения', err.message);
       } finally {
         setShipmentSaving(false);
       }
@@ -2222,80 +2253,76 @@ export default function PackLotDetail() {
 
         {/* Add shipment button */}
         {canShip && qtyAvailable > 0 && !showShipmentForm && (
-          <button
+          <Button
             onClick={() => setShowShipmentForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            variant="default"
+            className="gap-2"
           >
             <Truck size={20} />
             Добавить отгрузку
-          </button>
+          </Button>
         )}
 
         {/* Shipment form */}
         {showShipmentForm && (
-          <form onSubmit={handleSubmit} className="p-4 border rounded-lg bg-slate-50 space-y-4">
+          <form onSubmit={handleSubmit} className="p-4 border border-border rounded-lg bg-muted space-y-4">
             <h4 className="font-medium">Новая отгрузка</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm text-slate-600 mb-1">Количество (макс. {qtyAvailable})</label>
-                <input
+                <label className="block text-sm text-muted-foreground mb-1">Количество (макс. {qtyAvailable})</label>
+                <Input
                   type="number"
                   min="1"
                   max={qtyAvailable}
                   value={shipmentFormData.qty_shipped}
                   onChange={e => setShipmentFormData({...shipmentFormData, qty_shipped: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-600 mb-1">Дата отгрузки</label>
-                <input
+                <label className="block text-sm text-muted-foreground mb-1">Дата отгрузки</label>
+                <Input
                   type="date"
                   value={shipmentFormData.shipped_at.split('T')[0]}
                   onChange={e => setShipmentFormData({...shipmentFormData, shipped_at: new Date(e.target.value).toISOString()})}
-                  className="w-full px-3 py-2 border rounded-lg"
                   required
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-sm text-slate-600 mb-1">Получатель (ФИО / Название компании)</label>
-                <input
+                <label className="block text-sm text-muted-foreground mb-1">Получатель (ФИО / Название компании)</label>
+                <Input
                   type="text"
                   value={shipmentFormData.recipient_name}
                   onChange={e => setShipmentFormData({...shipmentFormData, recipient_name: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
                   placeholder="ООО Ромашка или Иванов И.И."
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-600 mb-1">Номер счета</label>
-                <input
+                <label className="block text-sm text-muted-foreground mb-1">Номер счета</label>
+                <Input
                   type="text"
                   value={shipmentFormData.invoice_number}
                   onChange={e => setShipmentFormData({...shipmentFormData, invoice_number: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
                   placeholder="СЧ-2026-001"
                 />
               </div>
               <div>
-                <label className="block text-sm text-slate-600 mb-1">Номер накладной</label>
-                <input
+                <label className="block text-sm text-muted-foreground mb-1">Номер накладной</label>
+                <Input
                   type="text"
                   value={shipmentFormData.waybill_number}
                   onChange={e => setShipmentFormData({...shipmentFormData, waybill_number: e.target.value})}
-                  className="w-full px-3 py-2 border rounded-lg"
                   placeholder="ТН-2026-001"
                 />
               </div>
             </div>
             <div className="flex gap-2">
-              <button type="submit" disabled={shipmentSaving} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
+              <Button type="submit" disabled={shipmentSaving} loading={shipmentSaving} variant="success">
                 {shipmentSaving ? 'Сохранение...' : 'Сохранить'}
-              </button>
-              <button type="button" onClick={() => setShowShipmentForm(false)} className="px-4 py-2 border rounded-lg hover:bg-slate-100">
+              </Button>
+              <Button type="button" onClick={() => setShowShipmentForm(false)} variant="outline">
                 Отмена
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -2304,14 +2331,14 @@ export default function PackLotDetail() {
         <div className="space-y-3">
           <h4 className="font-medium">История отгрузок</h4>
           {shipments.length === 0 ? (
-            <p className="text-slate-500 text-sm">Отгрузок пока нет</p>
+            <p className="text-muted-foreground text-sm">Отгрузок пока нет</p>
           ) : (
             <div className="divide-y border rounded-lg">
               {shipments.map((s: any) => (
                 <div key={s.shipment_id} className="p-4 flex justify-between items-start">
                   <div>
                     <p className="font-medium">{s.qty_shipped} шт → {s.recipient_name || 'Не указан'}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-muted-foreground">
                       {s.shipped_at ? new Date(s.shipped_at).toLocaleDateString('ru-RU') : '-'}
                       {s.invoice_number && ` | Счёт: ${s.invoice_number}`}
                       {s.waybill_number && ` | Накладная: ${s.waybill_number}`}
@@ -2331,8 +2358,8 @@ export default function PackLotDetail() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 font-mono">{packLot.pack_lot_id}</h1>
-          <p className="text-slate-500">
+          <h1 className="text-2xl font-bold text-foreground font-mono">{packLot.pack_lot_id}</h1>
+          <p className="text-muted-foreground">
             {(requestLine as any)?.finished_product_code || 'Продукт'} | 
             {packFormat?.name || packLot.pack_format_code} | 
             CM: <Link to={`/cm/${packLot.source_cm_lot_id}`} className="text-blue-600 hover:underline">{packLot.source_cm_lot_id}</Link>
@@ -2342,7 +2369,7 @@ export default function PackLotDetail() {
       </div>
 
       {/* Tabs - only highlight active workflow tabs */}
-      <div className="border-b border-slate-200">
+      <div className="border-b border-border">
         <div className="flex items-center justify-between">
           <nav className="flex gap-1 -mb-px">
             {visibleTabs.map((tab) => {
@@ -2361,8 +2388,8 @@ export default function PackLotDetail() {
                       : isCurrent
                       ? 'border-green-500 text-green-700 bg-green-50'
                       : isAvailable
-                      ? 'border-transparent text-slate-600 hover:text-slate-700 hover:border-slate-300'
-                      : 'border-transparent text-slate-400 hover:text-slate-500'
+                      ? 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
+                      : 'border-transparent text-muted-foreground hover:text-muted-foreground'
                   }`}
                 >
                   <Icon size={18} />
@@ -2402,71 +2429,76 @@ export default function PackLotDetail() {
           <div className="flex gap-2 mt-3">
             <Link
               to={`/requests/${newRequestCreated.id}`}
-              className="flex-1 px-3 py-2 bg-white text-green-700 rounded text-center text-sm font-medium hover:bg-green-50"
+              className="flex-1 px-3 py-2 bg-card text-green-700 rounded text-center text-sm font-medium hover:bg-green-50"
             >
               Перейти к заявке
             </Link>
-            <button
+            <Button
               onClick={() => setNewRequestCreated(null)}
-              className="px-3 py-2 bg-green-700 rounded text-sm hover:bg-green-800"
+              variant="ghost"
+              size="sm"
+              className="bg-green-700 hover:bg-green-800 text-white"
             >
               Закрыть
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {/* Partial Fill Modal */}
-      {showPartialFillModal && packLot && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <div className="flex items-center gap-3 mb-4">
+      <Dialog open={showPartialFillModal && !!packLot} onOpenChange={(open) => !open && setShowPartialFillModal(false)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
               <AlertTriangle className="text-amber-500" size={24} />
-              <h3 className="text-lg font-semibold">Частичный розлив</h3>
-            </div>
-            
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-amber-800">
-                Произведено <strong>{qtyProduced}</strong> из <strong>{packLot.qty_planned}</strong> запланированных единиц.
-              </p>
-              <p className="text-sm text-amber-700 mt-1">
-                Недопроизведено: <strong>{packLot.qty_planned - qtyProduced}</strong> шт
-              </p>
-            </div>
-            
-            <p className="text-sm text-slate-600 mb-4">Что сделать с заявкой?</p>
-            
-            <div className="space-y-3">
-              <button
-                onClick={() => handlePartialFillOption('newRequest')}
-                className="w-full p-4 text-left border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
-              >
-                <p className="font-medium text-blue-800">Создать доп. заявку</p>
-                <p className="text-sm text-slate-500 mt-1">
-                  Текущая заявка → "Частично выполнена", новая заявка на {packLot.qty_planned - qtyProduced} шт
-                </p>
-              </button>
-              
-              <button
-                onClick={() => handlePartialFillOption('accept')}
-                className="w-full p-4 text-left border-2 border-slate-200 rounded-lg hover:border-slate-400 hover:bg-slate-50 transition-all"
-              >
-                <p className="font-medium text-slate-800">Принять как есть</p>
-                <p className="text-sm text-slate-500 mt-1">
-                  Заявка → "Выполнена" (без дозаказа)
-                </p>
-              </button>
-            </div>
-            
+              Частичный розлив
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <p className="text-sm text-amber-800">
+              Произведено <strong>{qtyProduced}</strong> из <strong>{packLot?.qty_planned}</strong> запланированных единиц.
+            </p>
+            <p className="text-sm text-amber-700 mt-1">
+              Недопроизведено: <strong>{(packLot?.qty_planned || 0) - qtyProduced}</strong> шт
+            </p>
+          </div>
+
+          <p className="text-sm text-muted-foreground">Что сделать с заявкой?</p>
+
+          <div className="space-y-3">
             <button
-              onClick={() => setShowPartialFillModal(false)}
-              className="w-full mt-4 px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
+              onClick={() => handlePartialFillOption('newRequest')}
+              className="w-full p-4 text-left border-2 border-blue-200 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-all"
             >
-              Отмена
+              <p className="font-medium text-blue-800">Создать доп. заявку</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Текущая заявка → "Частично выполнена", новая заявка на {(packLot?.qty_planned || 0) - qtyProduced} шт
+              </p>
+            </button>
+
+            <button
+              onClick={() => handlePartialFillOption('accept')}
+              className="w-full p-4 text-left border-2 border-border rounded-lg hover:border-muted-foreground hover:bg-muted transition-all"
+            >
+              <p className="font-medium text-foreground">Принять как есть</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Заявка → "Выполнена" (без дозаказа)
+              </p>
             </button>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              onClick={() => setShowPartialFillModal(false)}
+              variant="outline"
+              className="w-full"
+            >
+              Отмена
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

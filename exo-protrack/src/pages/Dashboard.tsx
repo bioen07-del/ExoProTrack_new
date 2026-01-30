@@ -5,6 +5,10 @@ const ReactECharts = ReactEChartsCore as any;
 import { Plus, AlertTriangle, Clock, Package, Beaker, CheckCircle, Box } from 'lucide-react';
 import { supabase, CmLot, PackLot, StockMovement, Container, RequestLine } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { SkeletonDashboard } from '../components/ui/skeleton';
 
 interface MtoRequest {
   request_line_id: string;
@@ -81,18 +85,17 @@ const STATUS_COLORS: Record<string, string> = {
 // Компонент легенды цветов
 function ColorLegend() {
   const items = [
-    { color: 'bg-red-500', label: 'Просрочено / Брак' },
-    { color: 'bg-amber-500', label: 'Срочно / Внимание' },
-    { color: 'bg-green-500', label: 'В норме / Одобрено' },
+    { variant: 'destructive' as const, label: 'Просрочено / Брак' },
+    { variant: 'warning' as const, label: 'Срочно / Внимание' },
+    { variant: 'success' as const, label: 'В норме / Одобрено' },
   ];
   return (
-    <div className="flex items-center gap-4 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200">
-      <span className="text-sm font-medium text-slate-600">Легенда:</span>
+    <div className="flex items-center gap-4 px-4 py-2 bg-muted rounded-lg border border-border">
+      <span className="text-sm font-medium text-muted-foreground">Легенда:</span>
       {items.map(item => (
-        <div key={item.label} className="flex items-center gap-1.5">
-          <span className={`w-3 h-3 rounded-full ${item.color}`} />
-          <span className="text-sm text-slate-600">{item.label}</span>
-        </div>
+        <Badge key={item.label} variant={item.variant} className="text-xs">
+          {item.label}
+        </Badge>
       ))}
     </div>
   );
@@ -137,11 +140,11 @@ export default function Dashboard() {
       // Calculate summary stats
       const cmLotsApproved = cmLots.filter(l => l.status === 'Approved').length;
       const packLotsReleased = packLots.filter(l => l.status === 'Released').length;
-      
+
       // Total raw volume from containers (DB uses 'CM_Lot')
       const rawContainers = containers.filter(c => c.owner_entity_type === 'CM_Lot' || c.owner_entity_type === 'CmLot');
       const totalRawVolume = rawContainers.reduce((sum, c) => sum + (c.current_volume_ml || 0), 0);
-      
+
       // Total finished volume from pack lots
       const totalFinishedVolume = packLots
         .filter(p => p.status === 'Released')
@@ -150,7 +153,7 @@ export default function Dashboard() {
       // Expiry alerts - CM lots with expiry within 30 days
       const now = new Date();
       const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-      
+
       const { data: decisionsWithExpiry } = await supabase
         .from('cm_qa_release_decision')
         .select('*')
@@ -158,7 +161,7 @@ export default function Dashboard() {
         .lte('expiry_date', thirtyDaysFromNow.toISOString().split('T')[0]);
 
       const expiryLotIds = decisionsWithExpiry?.map(d => d.cm_lot_id) || [];
-      const expiryAlerts = cmLots.filter(lot => 
+      const expiryAlerts = cmLots.filter(lot =>
         expiryLotIds.includes(lot.cm_lot_id) && lot.status === 'Approved'
       );
 
@@ -192,7 +195,7 @@ export default function Dashboard() {
         .from('request_line')
         .select('*, request:request_id(status, due_date, created_at)')
         .or('source_type.eq.NewProduction,source_type.eq.new_batch');
-      
+
       const existingMtoCmLots = cmLots.filter((l: any) => l.request_line_id).map((l: any) => l.request_line_id);
       const mtoRequests = (mtoLines || [])
         .filter((line: any) => !existingMtoCmLots.includes(line.request_line_id) && line.request?.status !== 'Completed')
@@ -236,7 +239,7 @@ export default function Dashboard() {
         const decision = allDecisions?.find(d => d.cm_lot_id === lot.cm_lot_id);
         const container = containers.find(c => c.owner_id === lot.cm_lot_id);
         const expiryDate = decision?.expiry_date || null;
-        const daysToExpiry = expiryDate 
+        const daysToExpiry = expiryDate
           ? Math.ceil((new Date(expiryDate).getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
           : null;
         fefoList.push({
@@ -337,274 +340,301 @@ export default function Dashboard() {
     xAxis: { type: 'category', data: collectionDays },
     yAxis: { type: 'value', name: 'мл' },
     series: [
-      { 
-        name: 'Собрано', 
-        type: 'line', 
+      {
+        name: 'Собрано',
+        type: 'line',
         smooth: true,
         areaStyle: { opacity: 0.3 },
-        data: collectionDays.map(d => stats?.dailyVolumeFlow[d]?.collected || 0), 
-        color: '#3b82f6' 
+        data: collectionDays.map(d => stats?.dailyVolumeFlow[d]?.collected || 0),
+        color: '#3b82f6'
       },
     ]
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Загрузка...</div>;
+    return <SkeletonDashboard />;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-bold text-slate-900">Дашборд</h1>
+          <h1 className="text-2xl font-bold text-foreground">Дашборд</h1>
           <ColorLegend />
         </div>
         <div className="flex gap-2">
           {hasRole(['Production']) && (
-            <Link
-              to="/cm/new"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              <Plus size={20} />
-              Создать CM Лот
-            </Link>
+            <Button asChild>
+              <Link to="/cm/new" className="flex items-center gap-2">
+                <Plus size={20} />
+                Создать CM Лот
+              </Link>
+            </Button>
           )}
           {hasRole(['Manager', 'Admin']) && (
-            <button
+            <Button
+              variant="success"
               onClick={() => navigate('/requests?create=true')}
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              className="flex items-center gap-2"
             >
               <Plus size={20} />
               Создать заявку
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Summary Stats - 4 new widgets */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <Beaker size={24} />
+        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 border-0 text-white">
+          <CardContent className="p-4 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Beaker size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-blue-100">CM на хранении</p>
+                <p className="text-3xl font-bold">{stats?.cmLotsApproved || 0}</p>
+                <p className="text-xs text-blue-200">лотов (Approved)</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-blue-100">CM на хранении</p>
-              <p className="text-3xl font-bold">{stats?.cmLotsApproved || 0}</p>
-              <p className="text-xs text-blue-200">лотов (Approved)</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 border-0 text-white">
+          <CardContent className="p-4 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Box size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-emerald-100">Готовая продукция</p>
+                <p className="text-3xl font-bold">{stats?.packLotsReleased || 0}</p>
+                <p className="text-xs text-emerald-200">лотов (Released)</p>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg p-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <Box size={24} />
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 border-0 text-white">
+          <CardContent className="p-4 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <Package size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-purple-100">Объём сырья</p>
+                <p className="text-3xl font-bold">{((stats?.totalRawVolume || 0) / 1000).toFixed(1)}</p>
+                <p className="text-xs text-purple-200">литров</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-emerald-100">Готовая продукция</p>
-              <p className="text-3xl font-bold">{stats?.packLotsReleased || 0}</p>
-              <p className="text-xs text-emerald-200">лотов (Released)</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-gradient-to-br from-amber-500 to-amber-600 border-0 text-white">
+          <CardContent className="p-4 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <CheckCircle size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-amber-100">Объём ГП</p>
+                <p className="text-3xl font-bold">{((stats?.totalFinishedVolume || 0) / 1000).toFixed(1)}</p>
+                <p className="text-xs text-amber-200">литров</p>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <Package size={24} />
-            </div>
-            <div>
-              <p className="text-sm text-purple-100">Объём сырья</p>
-              <p className="text-3xl font-bold">{((stats?.totalRawVolume || 0) / 1000).toFixed(1)}</p>
-              <p className="text-xs text-purple-200">литров</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg p-4 text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white/20 rounded-lg">
-              <CheckCircle size={24} />
-            </div>
-            <div>
-              <p className="text-sm text-amber-100">Объём ГП</p>
-              <p className="text-3xl font-bold">{((stats?.totalFinishedVolume || 0) / 1000).toFixed(1)}</p>
-              <p className="text-xs text-amber-200">литров</p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Request Stats Cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Clock className="text-blue-600" size={24} />
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Clock className="text-blue-600 dark:text-blue-400" size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Новые заявки</p>
+                <p className="text-2xl font-bold">{stats?.requestStats.new || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-500">Новые заявки</p>
-              <p className="text-2xl font-bold">{stats?.requestStats.new || 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
+                <Package className="text-amber-600 dark:text-amber-400" size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">В работе</p>
+                <p className="text-2xl font-bold">{stats?.requestStats.inWork || 0}</p>
+              </div>
             </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <Package className="text-amber-600" size={24} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                <AlertTriangle className="text-red-600 dark:text-red-400" size={24} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Просроченные</p>
+                <p className="text-2xl font-bold text-red-600">{stats?.requestStats.overdue || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-500">В работе</p>
-              <p className="text-2xl font-bold">{stats?.requestStats.inWork || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="text-red-600" size={24} />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Просроченные</p>
-              <p className="text-2xl font-bold text-red-600">{stats?.requestStats.overdue || 0}</p>
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <ReactECharts option={cmPieOption} style={{ height: 300 }} />
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <ReactECharts option={packPieOption} style={{ height: 300 }} />
-        </div>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <ReactECharts option={cmPieOption} style={{ height: 300 }} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <ReactECharts option={packPieOption} style={{ height: 300 }} />
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <ReactECharts option={stockLineOption} style={{ height: 280 }} />
-        </div>
-        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <ReactECharts option={dailyCollectionOption} style={{ height: 280 }} />
-        </div>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <ReactECharts option={stockLineOption} style={{ height: 280 }} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <ReactECharts option={dailyCollectionOption} style={{ height: 280 }} />
+          </CardContent>
+        </Card>
       </div>
 
       {/* Expiry Alerts */}
       {stats && stats.expiryAlerts.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="font-semibold text-amber-800 flex items-center gap-2 mb-3">
-            <AlertTriangle size={20} />
-            Скоро истекает срок годности ({stats.expiryAlerts.length})
-          </h3>
-          <div className="space-y-2">
-            {stats.expiryAlerts.slice(0, 5).map(lot => (
-              <Link
-                key={lot.cm_lot_id}
-                to={`/cm/${lot.cm_lot_id}`}
-                className="block p-2 bg-white rounded border border-amber-200 hover:bg-amber-100"
-              >
-                <span className="font-mono text-sm">{lot.cm_lot_id}</span>
-                <span className="text-slate-500 ml-2">{lot.base_product_code}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+          <CardContent className="p-4 pt-4">
+            <h3 className="font-semibold text-amber-800 dark:text-amber-400 flex items-center gap-2 mb-3">
+              <AlertTriangle size={20} />
+              Скоро истекает срок годности ({stats.expiryAlerts.length})
+            </h3>
+            <div className="space-y-2">
+              {stats.expiryAlerts.slice(0, 5).map(lot => (
+                <Link
+                  key={lot.cm_lot_id}
+                  to={`/cm/${lot.cm_lot_id}`}
+                  className="block p-2 bg-card rounded border border-amber-200 dark:border-amber-800 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                >
+                  <span className="font-mono text-sm">{lot.cm_lot_id}</span>
+                  <span className="text-muted-foreground ml-2">{lot.base_product_code}</span>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* FEFO Table - CM Lots on Stock */}
       {stats && (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <h3 className="font-semibold text-slate-800 mb-3">CM на складе (FEFO)</h3>
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">CM Lot</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Продукт</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Объем</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Годен до</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Дней</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {stats.fefoList.length === 0 ? (
-                <tr><td colSpan={5} className="px-3 py-4 text-center text-slate-500">Нет CM на складе (Approved)</td></tr>
-              ) : stats.fefoList.slice(0, 10).map(item => (
-                <tr key={item.cm_lot_id} className={item.days_to_expiry !== null && item.days_to_expiry <= 30 ? 'bg-amber-50' : ''}>
-                  <td className="px-3 py-2">
-                    <Link to={`/cm/${item.cm_lot_id}`} className="font-mono text-blue-600 hover:underline">
-                      {item.cm_lot_id}
-                    </Link>
-                  </td>
-                  <td className="px-3 py-2">{item.base_product_code}</td>
-                  <td className="px-3 py-2 text-right font-mono">{item.volume_ml.toFixed(1)} мл</td>
-                  <td className="px-3 py-2">{item.expiry_date ? new Date(item.expiry_date).toLocaleDateString('ru-RU') : <span className="text-slate-400">Не указана</span>}</td>
-                  <td className={`px-3 py-2 text-right font-bold ${item.days_to_expiry !== null && item.days_to_expiry <= 30 ? 'text-amber-600' : 'text-slate-600'}`}>
-                    {item.days_to_expiry !== null ? item.days_to_expiry : '-'}
-                  </td>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <h3 className="font-semibold text-foreground mb-3">CM на складе (FEFO)</h3>
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">CM Lot</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Продукт</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Объем</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Годен до</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Дней</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {stats.fefoList.length === 0 ? (
+                  <tr><td colSpan={5} className="px-3 py-4 text-center text-muted-foreground">Нет CM на складе (Approved)</td></tr>
+                ) : stats.fefoList.slice(0, 10).map(item => (
+                  <tr key={item.cm_lot_id} className={item.days_to_expiry !== null && item.days_to_expiry <= 30 ? 'bg-amber-50 dark:bg-amber-950/20' : ''}>
+                    <td className="px-3 py-2">
+                      <Link to={`/cm/${item.cm_lot_id}`} className="font-mono text-blue-600 dark:text-blue-400 hover:underline">
+                        {item.cm_lot_id}
+                      </Link>
+                    </td>
+                    <td className="px-3 py-2">{item.base_product_code}</td>
+                    <td className="px-3 py-2 text-right font-mono">{item.volume_ml.toFixed(1)} мл</td>
+                    <td className="px-3 py-2">{item.expiry_date ? new Date(item.expiry_date).toLocaleDateString('ru-RU') : <span className="text-muted-foreground">Не указана</span>}</td>
+                    <td className={`px-3 py-2 text-right font-bold ${item.days_to_expiry !== null && item.days_to_expiry <= 30 ? 'text-amber-600' : 'text-muted-foreground'}`}>
+                      {item.days_to_expiry !== null ? item.days_to_expiry : '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
       )}
 
       {/* MTO Production Requests - Only for Production role */}
       {hasRole(['Production']) && stats && (
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-4">
-          <h3 className="font-semibold text-slate-800 flex items-center gap-2 mb-3">
-            <Beaker size={20} />
-            Заявки на производство (MTO/FEFO) ({stats.mtoRequests.length})
-          </h3>
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Номер</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Продукт</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Создана</th>
-                <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase">Срок</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Осталось</th>
-                <th className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase">Действия</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {stats.mtoRequests.length === 0 ? (
-                <tr><td colSpan={6} className="px-3 py-4 text-center text-slate-500">Нет заявок на производство MTO</td></tr>
-              ) : stats.mtoRequests.map(req => (
-                <tr key={req.request_line_id} className={
-                  req.is_overdue ? 'bg-red-50' : req.is_urgent ? 'bg-amber-50' : ''
-                }>
-                  <td className="px-3 py-2">
-                    <Link to={`/requests/${req.request_id}`} className="font-mono text-blue-600 hover:underline">
-                      {req.request_id}
-                    </Link>
-                    {req.is_overdue && <span className="ml-2 px-1.5 py-0.5 bg-red-500 text-white text-xs rounded">ПРОСРОЧЕНО</span>}
-                    {req.is_urgent && <span className="ml-2 px-1.5 py-0.5 bg-amber-500 text-white text-xs rounded">СРОЧНО</span>}
-                  </td>
-                  <td className="px-3 py-2">{req.finished_product_code} x{req.qty_units}</td>
-                  <td className="px-3 py-2 text-slate-500">
-                    {req.created_at ? new Date(req.created_at).toLocaleDateString('ru-RU') : '-'}
-                  </td>
-                  <td className="px-3 py-2">
-                    {req.due_date ? new Date(req.due_date).toLocaleDateString('ru-RU') : '-'}
-                  </td>
-                  <td className={`px-3 py-2 text-right font-bold ${
-                    req.is_overdue ? 'text-red-600' : req.is_urgent ? 'text-amber-600' : 'text-green-600'
-                  }`}>
-                    {req.days_left !== null && req.days_left !== undefined ? `${req.days_left} дн.` : '-'}
-                  </td>
-                  <td className="px-3 py-2 text-right">
-                    <Link
-                      to={`/cm/new?mto=${req.request_line_id}`}
-                      className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
-                    >
-                      Стартовать CM
-                    </Link>
-                  </td>
+        <Card>
+          <CardContent className="p-4 pt-4">
+            <h3 className="font-semibold text-foreground flex items-center gap-2 mb-3">
+              <Beaker size={20} />
+              Заявки на производство (MTO/FEFO) ({stats.mtoRequests.length})
+            </h3>
+            <table className="w-full text-sm">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Номер</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Продукт</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Создана</th>
+                  <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Срок</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Осталось</th>
+                  <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Действия</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {stats.mtoRequests.length === 0 ? (
+                  <tr><td colSpan={6} className="px-3 py-4 text-center text-muted-foreground">Нет заявок на производство MTO</td></tr>
+                ) : stats.mtoRequests.map(req => (
+                  <tr key={req.request_line_id} className={
+                    req.is_overdue ? 'bg-red-50 dark:bg-red-950/20' : req.is_urgent ? 'bg-amber-50 dark:bg-amber-950/20' : ''
+                  }>
+                    <td className="px-3 py-2">
+                      <Link to={`/requests/${req.request_id}`} className="font-mono text-blue-600 dark:text-blue-400 hover:underline">
+                        {req.request_id}
+                      </Link>
+                      {req.is_overdue && <Badge variant="destructive" className="ml-2">ПРОСРОЧЕНО</Badge>}
+                      {req.is_urgent && <Badge variant="warning" className="ml-2">СРОЧНО</Badge>}
+                    </td>
+                    <td className="px-3 py-2">{req.finished_product_code} x{req.qty_units}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {req.created_at ? new Date(req.created_at).toLocaleDateString('ru-RU') : '-'}
+                    </td>
+                    <td className="px-3 py-2">
+                      {req.due_date ? new Date(req.due_date).toLocaleDateString('ru-RU') : '-'}
+                    </td>
+                    <td className={`px-3 py-2 text-right font-bold ${
+                      req.is_overdue ? 'text-red-600' : req.is_urgent ? 'text-amber-600' : 'text-green-600'
+                    }`}>
+                      {req.days_left !== null && req.days_left !== undefined ? `${req.days_left} дн.` : '-'}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <Button size="sm" asChild>
+                        <Link to={`/cm/new?mto=${req.request_line_id}`}>
+                          Стартовать CM
+                        </Link>
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

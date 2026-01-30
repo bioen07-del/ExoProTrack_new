@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search } from 'lucide-react';
 import { supabase, Culture, CellType } from '../lib/supabase';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
 
 export default function CultureList() {
   const navigate = useNavigate();
@@ -92,136 +96,133 @@ export default function CultureList() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-900">Каталог культур</h1>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Plus size={20} />
+        <h1 className="text-2xl font-bold text-foreground">Каталог культур</h1>
+        <Button onClick={() => setShowForm(true)}>
+          <Plus size={20} className="mr-2" />
           Создать культуру
-        </button>
+        </Button>
       </div>
 
       {/* Create Form */}
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white rounded-lg shadow-sm border p-6 space-y-4">
-          <h3 className="text-lg font-semibold">Новая культура</h3>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">ID культуры *</label>
-              <input
-                type="text"
-                value={formData.culture_id}
-                onChange={(e) => setFormData({ ...formData, culture_id: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Тип клеток *</label>
-              <select
-                value={formData.cell_type_code}
-                onChange={(e) => setFormData({ ...formData, cell_type_code: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              >
-                <option value="">Выберите</option>
-                {cellTypes.map(ct => (
-                  <option key={ct.cell_type_code} value={ct.cell_type_code}>
-                    {ct.name} ({ct.cell_type_code})
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Ссылка на донора</label>
-              <input
-                type="text"
-                value={formData.donor_ref}
-                onChange={(e) => setFormData({ ...formData, donor_ref: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Ссылка на журнал культуры</label>
-              <input
-                type="text"
-                value={formData.culture_journal_ref}
-                onChange={(e) => setFormData({ ...formData, culture_journal_ref: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-lg">
-              Отмена
-            </button>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
-              Создать
-            </button>
-          </div>
-        </form>
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <form onSubmit={handleCreate} className="space-y-4">
+              <h3 className="text-lg font-semibold">Новая культура</h3>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">ID культуры *</label>
+                  <Input
+                    type="text"
+                    value={formData.culture_id}
+                    onChange={(e) => setFormData({ ...formData, culture_id: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Тип клеток *</label>
+                  <select
+                    value={formData.cell_type_code}
+                    onChange={(e) => setFormData({ ...formData, cell_type_code: e.target.value })}
+                    className="w-full px-3 py-2 border border-input rounded-lg bg-background text-foreground"
+                    required
+                  >
+                    <option value="">Выберите</option>
+                    {cellTypes.map(ct => (
+                      <option key={ct.cell_type_code} value={ct.cell_type_code}>
+                        {ct.name} ({ct.cell_type_code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Ссылка на донора</label>
+                  <Input
+                    type="text"
+                    value={formData.donor_ref}
+                    onChange={(e) => setFormData({ ...formData, donor_ref: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Ссылка на журнал культуры</label>
+                  <Input
+                    type="text"
+                    value={formData.culture_journal_ref}
+                    onChange={(e) => setFormData({ ...formData, culture_journal_ref: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                  Отмена
+                </Button>
+                <Button type="submit">
+                  Создать
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       )}
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-        <input
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+        <Input
           type="text"
           placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg"
+          className="pl-10"
         />
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <Card className="overflow-hidden">
         <table className="w-full">
-          <thead className="bg-slate-50">
+          <thead className="bg-muted">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">ID культуры</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Тип клеток</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Донор</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Статус</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Создана</th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">ID культуры</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Тип клеток</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Донор</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Статус</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Создана</th>
+              <th className="px-4 py-3 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {filteredCultures.map((culture) => (
-              <tr 
-                  key={culture.culture_id} 
-                  className="hover:bg-slate-50 cursor-pointer"
+              <tr
+                  key={culture.culture_id}
+                  className="hover:bg-muted cursor-pointer"
                   onClick={() => navigate(`/culture/${culture.culture_id}`)}
                 >
                 <td className="px-4 py-3 font-mono text-blue-600">{culture.culture_id}</td>
                 <td className="px-4 py-3">{culture.cell_type_code}</td>
-                <td className="px-4 py-3 text-sm text-slate-500">{culture.donor_ref || '-'}</td>
+                <td className="px-4 py-3 text-sm text-muted-foreground">{culture.donor_ref || '-'}</td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    culture.status === 'InWork' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
+                  <Badge variant={culture.status === 'InWork' ? 'success' : 'muted'}>
                     {culture.status === 'InWork' ? 'В работе' : 'Архив'}
-                  </span>
+                  </Badge>
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-500">
+                <td className="px-4 py-3 text-sm text-muted-foreground">
                   {culture.created_at ? new Date(culture.created_at).toLocaleDateString('ru-RU') : '-'}
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <button
-                    onClick={() => toggleStatus(culture)}
-                    className="text-sm text-blue-600 hover:underline"
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={(e) => { e.stopPropagation(); toggleStatus(culture); }}
                   >
                     {culture.status === 'InWork' ? 'В архив' : 'Восстановить'}
-                  </button>
+                  </Button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

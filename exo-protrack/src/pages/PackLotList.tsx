@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Search, Filter, Clock, CheckCircle, AlertTriangle, Droplets } from 'lucide-react';
+import { Package, Search, Clock, CheckCircle, AlertTriangle, Droplets } from 'lucide-react';
 import { supabase, PackLot } from '../lib/supabase';
+import { Button } from '../components/ui/button';
+import { Card } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { StatusBadge } from '../components/ui/status-badge';
+import { SkeletonTable } from '../components/ui/skeleton';
 
 const STATUS_LABELS: Record<string, string> = {
   'Planned': 'Запланирован',
@@ -15,22 +20,19 @@ const STATUS_LABELS: Record<string, string> = {
   'Rejected': 'Брак',
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  'Planned': 'bg-slate-100 text-slate-700',
-  'Filling': 'bg-blue-100 text-blue-800',
-  'Filled': 'bg-cyan-100 text-cyan-800',
-  'QC_Pending': 'bg-yellow-100 text-yellow-800',
-  'QC_Completed': 'bg-emerald-100 text-emerald-800',
-  'QA_Pending': 'bg-orange-100 text-orange-800',
-  'Released': 'bg-green-100 text-green-800',
-  'Shipped': 'bg-purple-100 text-purple-800',
-  'Rejected': 'bg-red-100 text-red-800',
+// Explicit class lookup for status filter cards (template literals don't work with Tailwind JIT)
+const STATUS_CARD_STYLES: Record<string, { active: string; icon: string }> = {
+  Filling:      { active: 'bg-blue-100 border-blue-300 dark:bg-blue-900/30 dark:border-blue-700', icon: 'text-blue-600 dark:text-blue-400' },
+  QC_Pending:   { active: 'bg-yellow-100 border-yellow-300 dark:bg-yellow-900/30 dark:border-yellow-700', icon: 'text-yellow-600 dark:text-yellow-400' },
+  QC_Completed: { active: 'bg-emerald-100 border-emerald-300 dark:bg-emerald-900/30 dark:border-emerald-700', icon: 'text-emerald-600 dark:text-emerald-400' },
+  Released:     { active: 'bg-green-100 border-green-300 dark:bg-green-900/30 dark:border-green-700', icon: 'text-green-600 dark:text-green-400' },
+  Rejected:     { active: 'bg-red-100 border-red-300 dark:bg-red-900/30 dark:border-red-700', icon: 'text-red-600 dark:text-red-400' },
 };
 
 interface PackLotWithDetails extends PackLot {
   cm_lot?: { cm_lot_id: string; base_product_code: string };
-  request_line?: { 
-    request_id: string; 
+  request_line?: {
+    request_id: string;
     finished_product_code: string;
     request?: { customer_ref: string };
   };
@@ -70,7 +72,7 @@ export default function PackLotList() {
 
   const filteredLots = packLots.filter(lot => {
     const matchesStatus = statusFilter === 'all' || lot.status === statusFilter;
-    const matchesSearch = !searchQuery || 
+    const matchesSearch = !searchQuery ||
       lot.pack_lot_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lot.source_cm_lot_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (lot.request_line as any)?.finished_product_code?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -84,68 +86,81 @@ export default function PackLotList() {
   }, {} as Record<string, number>);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64">Загрузка...</div>;
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Готовая продукция</h1>
+            <p className="text-muted-foreground">Управление партиями продукции (Pack Lots)</p>
+          </div>
+        </div>
+        <SkeletonTable rows={7} />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Готовая продукция</h1>
-          <p className="text-slate-500">Управление партиями продукции (Pack Lots)</p>
+          <h1 className="text-2xl font-bold text-foreground">Готовая продукция</h1>
+          <p className="text-muted-foreground">Управление партиями продукции (Pack Lots)</p>
         </div>
-        <Link
-          to="/requests"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          <Package size={18} />
-          Создать заявку
-        </Link>
+        <Button asChild>
+          <Link to="/requests" className="flex items-center gap-2">
+            <Package size={18} />
+            Создать заявку
+          </Link>
+        </Button>
       </div>
 
       {/* Status cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
         {[
-          { status: 'Filling', icon: Droplets, color: 'blue' },
-          { status: 'QC_Pending', icon: Clock, color: 'yellow' },
-          { status: 'QC_Completed', icon: CheckCircle, color: 'emerald' },
-          { status: 'Released', icon: Package, color: 'green' },
-          { status: 'Rejected', icon: AlertTriangle, color: 'red' },
-        ].map(({ status, icon: Icon, color }) => (
-          <button
-            key={status}
-            onClick={() => setStatusFilter(statusFilter === status ? 'all' : status)}
-            className={`p-3 rounded-lg border transition-all ${
-              statusFilter === status 
-                ? `bg-${color}-100 border-${color}-300` 
-                : 'bg-white border-slate-200 hover:border-slate-300'
-            }`}
-          >
-            <div className="flex items-center gap-2">
-              <Icon size={18} className={`text-${color}-600`} />
-              <span className="text-2xl font-bold">{statusCounts[status] || 0}</span>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">{STATUS_LABELS[status]}</p>
-          </button>
-        ))}
+          { status: 'Filling', icon: Droplets },
+          { status: 'QC_Pending', icon: Clock },
+          { status: 'QC_Completed', icon: CheckCircle },
+          { status: 'Released', icon: Package },
+          { status: 'Rejected', icon: AlertTriangle },
+        ].map(({ status, icon: Icon }) => {
+          const isActive = statusFilter === status;
+          const styles = STATUS_CARD_STYLES[status];
+          return (
+            <button
+              key={status}
+              onClick={() => setStatusFilter(statusFilter === status ? 'all' : status)}
+              className={`p-3 rounded-lg border transition-all ${
+                isActive
+                  ? styles.active
+                  : 'bg-card border-border hover:border-muted-foreground/30'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Icon size={18} className={styles.icon} />
+                <span className="text-2xl font-bold text-foreground">{statusCounts[status] || 0}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{STATUS_LABELS[status]}</p>
+            </button>
+          );
+        })}
       </div>
 
       {/* Search and filters */}
       <div className="flex gap-4 flex-wrap">
         <div className="relative flex-1 min-w-[200px]">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Input
             type="text"
             placeholder="Поиск по ID, продукту..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border rounded-lg"
+            className="pl-10"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border rounded-lg"
+          className="px-4 py-2 border border-input rounded-lg bg-background text-foreground"
         >
           <option value="all">Все статусы</option>
           {Object.entries(STATUS_LABELS).map(([key, label]) => (
@@ -155,26 +170,26 @@ export default function PackLotList() {
       </div>
 
       {/* Pack Lots table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <Card className="overflow-hidden">
         <table className="w-full">
-          <thead className="bg-slate-50 border-b">
+          <thead className="bg-muted border-b border-border">
             <tr>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Pack Lot ID</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Продукт</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Источник CM</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Кол-во</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Заявка</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Статус</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-600">Создан</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Pack Lot ID</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Продукт</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Источник CM</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Кол-во</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Заявка</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Статус</th>
+              <th className="text-left px-4 py-3 text-sm font-medium text-muted-foreground">Создан</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border">
             {filteredLots.map((lot) => (
-              <tr key={lot.pack_lot_id} className="hover:bg-slate-50">
+              <tr key={lot.pack_lot_id} className="hover:bg-muted/50">
                 <td className="px-4 py-3">
-                  <Link 
+                  <Link
                     to={`/packlot/${lot.pack_lot_id}`}
-                    className="font-mono text-blue-600 hover:underline font-medium"
+                    className="font-mono text-primary hover:underline font-medium"
                   >
                     {lot.pack_lot_id}
                   </Link>
@@ -182,54 +197,52 @@ export default function PackLotList() {
                 <td className="px-4 py-3 text-sm">
                   {(lot.request_line as any)?.finished_product_code || '-'}
                   {(lot.pack_format as any)?.name && (
-                    <span className="text-slate-400 ml-1">
+                    <span className="text-muted-foreground ml-1">
                       ({(lot.pack_format as any).name})
                     </span>
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  <Link 
+                  <Link
                     to={`/cm/${lot.source_cm_lot_id}`}
-                    className="font-mono text-sm text-slate-600 hover:text-blue-600"
+                    className="font-mono text-sm text-muted-foreground hover:text-primary"
                   >
                     {lot.source_cm_lot_id}
                   </Link>
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <span className="font-medium">{lot.qty_produced || 0}</span>
-                  <span className="text-slate-400">/{lot.qty_planned}</span>
-                  <span className="text-xs text-slate-400 ml-1">шт</span>
+                  <span className="text-muted-foreground">/{lot.qty_planned}</span>
+                  <span className="text-xs text-muted-foreground ml-1">шт</span>
                 </td>
                 <td className="px-4 py-3 text-sm">
                   {(lot.request_line as any)?.request_id ? (
-                    <Link 
+                    <Link
                       to={`/requests/${(lot.request_line as any).request_id}`}
-                      className="text-blue-600 hover:underline"
+                      className="text-primary hover:underline"
                     >
                       {(lot.request_line as any).request_id}
                     </Link>
                   ) : '-'}
                 </td>
                 <td className="px-4 py-3">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[lot.status] || 'bg-gray-100'}`}>
-                    {STATUS_LABELS[lot.status] || lot.status}
-                  </span>
+                  <StatusBadge status={lot.status} />
                 </td>
-                <td className="px-4 py-3 text-sm text-slate-500">
+                <td className="px-4 py-3 text-sm text-muted-foreground">
                   {lot.created_at ? new Date(lot.created_at).toLocaleDateString('ru-RU') : '-'}
                 </td>
               </tr>
             ))}
             {filteredLots.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   Нет данных
                 </td>
               </tr>
             )}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

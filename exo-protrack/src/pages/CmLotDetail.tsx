@@ -13,8 +13,8 @@ import {
 function Tip({ text }: { text: string }) {
   return (
     <span className="group relative inline-block ml-1">
-      <Info size={14} className="text-slate-400 cursor-help inline" />
-      <span className="absolute z-50 invisible group-hover:visible bg-slate-800 text-white text-xs rounded py-1 px-2 -top-8 left-0 whitespace-nowrap max-w-xs">
+      <Info size={14} className="text-muted-foreground cursor-help inline" />
+      <span className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground text-xs rounded py-1 px-2 -top-8 left-0 whitespace-nowrap max-w-xs shadow-md border border-border">
         {text}
       </span>
     </span>
@@ -25,6 +25,13 @@ import { supabase, CmLot, Container, CollectionEvent, ProcessingStep,
 import { useAuth } from '../context/AuthContext';
 import MediaFormulaDisplay from '../components/MediaFormulaDisplay';
 import ProductRequirementsCard from '../components/ProductRequirementsCard';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { StatusBadge } from '../components/ui/status-badge';
+import { Input } from '../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { showError, showSuccess, showConfirm } from '../lib/toast';
 
 const TABS = [
   { id: 'summary', label: 'Обзор', icon: FlaskConical },
@@ -174,11 +181,11 @@ export default function CmLotDetail() {
   
   async function handleAddInfectionResult() {
     if (!infectionForm.culture_id) {
-      alert('Выберите культуру');
+      showError('Ошибка', 'Выберите культуру');
       return;
     }
     if (!infectionForm.infection_type_id) {
-      alert('Выберите тип инфекции');
+      showError('Ошибка', 'Выберите тип инфекции');
       return;
     }
     try {
@@ -194,41 +201,41 @@ export default function CmLotDetail() {
       setInfectionForm({ culture_id: '', infection_type_id: '', result: 'negative', test_date: new Date().toISOString().split('T')[0] });
       loadData();
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
   
   async function handleDeleteInfectionResult(resultId: string) {
-    if (!confirm('Удалить результат?')) return;
+    const ok = await showConfirm('Удалить результат?', { description: 'Это действие нельзя отменить' });
+    if (!ok) return;
     await (supabase.from as any)('infection_test_result').delete().eq('result_id', resultId);
     loadData();
   }
 
   async function handleStatusChange(newStatus: string) {
     if (!lot) return;
-    
+
     // Validation rules
     if (newStatus === 'Closed_Collected' && collections.length === 0) {
-      alert('Невозможно закрыть сбор без событий сбора');
+      showError('Ошибка', 'Невозможно закрыть сбор без событий сбора');
       return;
     }
-    
+
     if (newStatus === 'Closed_Collected') {
-      if (!confirm('Вы уверены, что хотите закрыть сбор? После выполнения этой операции продолжить сбор не получится.')) {
-        return;
-      }
+      const ok = await showConfirm('Закрыть сбор?', { description: 'После выполнения этой операции продолжить сбор не получится.' });
+      if (!ok) return;
     }
 
     const { error } = await supabase
       .from('cm_lot')
-      .update({ 
+      .update({
         status: newStatus,
         collection_end_at: newStatus === 'Closed_Collected' ? new Date().toISOString() : lot.collection_end_at
       })
       .eq('cm_lot_id', lot.cm_lot_id);
 
     if (error) {
-      alert('Ошибка: ' + error.message);
+      showError('Ошибка', error.message);
     } else {
       // Автоматическое создание QC запроса при переходе в QC_Pending
       if (newStatus === 'QC_Pending') {
@@ -241,7 +248,7 @@ export default function CmLotDetail() {
         });
         if (qcError) {
           console.error('Ошибка создания QC запроса:', qcError);
-          alert('Ошибка автоматического создания QC запроса: ' + qcError.message);
+          showError('Ошибка', 'Ошибка автоматического создания QC запроса: ' + qcError.message);
         }
       }
       loadData();
@@ -283,23 +290,23 @@ export default function CmLotDetail() {
 
     // Validation: check if current step is completed
     if (lot.status === 'Open' && collections.length === 0) {
-      alert('⚠️ Нельзя перейти: сначала добавьте хотя бы одно событие сбора');
+      showError('Нельзя перейти', 'Сначала добавьте хотя бы одно событие сбора');
       setActiveTab('collections');
       return;
     }
     if (lot.status === 'Closed_Collected' && processingSteps.length === 0) {
-      alert('⚠️ Нельзя перейти: сначала выполните шаги обработки');
+      showError('Нельзя перейти', 'Сначала выполните шаги обработки');
       setActiveTab('processing');
       return;
     }
     // QC_Pending: все тесты должны быть выполнены
     if (lot.status === 'QC_Pending') {
       const requiredTests: string[] = (lot as any).frozen_spec?.qc?.raw?.map((t: any) => t.code) || [];
-      const allQcDone = requiredTests.length > 0 && requiredTests.every(code => 
+      const allQcDone = requiredTests.length > 0 && requiredTests.every(code =>
         qcResults.some(r => r.test_code === code)
       );
       if (!allQcDone) {
-        alert('⚠️ Нельзя перейти: сначала завершите все тесты QC');
+        showError('Нельзя перейти', 'Сначала завершите все тесты QC');
         setActiveTab('qc');
         return;
       }
@@ -307,7 +314,7 @@ export default function CmLotDetail() {
     // QC_Completed: решение QA должно быть принято
     if (lot.status === 'QC_Completed') {
       if (qaDecisions.length === 0) {
-        alert('⚠️ Нельзя перейти: сначала примите решение QA');
+        showError('Нельзя перейти', 'Сначала примите решение QA');
         setActiveTab('qa');
         return;
       }
@@ -315,15 +322,15 @@ export default function CmLotDetail() {
     // Approved: должен быть хотя бы один розлив (packLot)
     if (lot.status === 'Approved') {
       if (packLots.length === 0) {
-        alert('⚠️ Нельзя перейти: сначала начните розлив по заявкам');
+        showError('Нельзя перейти', 'Сначала начните розлив по заявкам');
         setActiveTab('filling');
         return;
       }
     }
-    
 
     if (lot.status === 'Open') {
-      if (!confirm('Закрыть сбор и перейти к обработке?')) return;
+      const ok = await showConfirm('Закрыть сбор?', { description: 'Закрыть сбор и перейти к обработке?' });
+      if (!ok) return;
     }
 
     await handleStatusChange(next.nextStatus);
@@ -352,7 +359,7 @@ export default function CmLotDetail() {
 
     // Open print dialog
     window.print();
-    alert('Печать QR-этикетки зафиксирована');
+    showSuccess('Успешно', 'Печать QR-этикетки зафиксирована');
   }
 
   const latestDecision = qaDecisions[0];
@@ -381,32 +388,27 @@ export default function CmLotDetail() {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-slate-900 font-mono">{lot.cm_lot_id}</h1>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${STATUS_COLORS[lot.status] || 'bg-gray-100'}`}>
-              {STATUS_LABELS[lot.status] || lot.status}
-            </span>
+            <h1 className="text-2xl font-bold text-foreground font-mono">{lot.cm_lot_id}</h1>
+            <StatusBadge status={lot.status} />
             {requestLine?.additional_qc_required && (
-              <span className="flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs font-medium">
+              <Badge variant="warning" className="gap-1">
                 <AlertTriangle size={14} />
                 Требуется доп. QC
-              </span>
+              </Badge>
             )}
           </div>
-          <p className="text-slate-500 mt-1">{lot.base_product_code} | Режим: {lot.mode}</p>
+          <p className="text-muted-foreground mt-1">{lot.base_product_code} | Режим: {lot.mode}</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={printLabel}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50"
-          >
-            <Printer size={20} />
+          <Button variant="outline" onClick={printLabel}>
+            <Printer size={20} className="mr-2" />
             Печать QR
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Workflow Progress Indicator */}
-      <div className="bg-white rounded-lg border p-4 mb-4">
+      <Card className="p-4 mb-4">
         <div className="flex items-center justify-between">
           {[
             { statuses: ['Open'], label: 'Сбор', icon: Beaker, tab: 'collections' },
@@ -425,14 +427,14 @@ export default function CmLotDetail() {
             const Icon = step.icon;
             return (
               <React.Fragment key={step.label}>
-                <button 
+                <button
                   onClick={() => setActiveTab(step.tab)}
                   className={`flex flex-col items-center cursor-pointer transition-transform hover:scale-105 ${
-                    isCompleted ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-slate-300'
+                    isCompleted ? 'text-green-600' : isCurrent ? 'text-blue-600' : 'text-muted-foreground/40'
                   }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    isCompleted ? 'bg-green-100' : isCurrent ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-slate-100'
+                    isCompleted ? 'bg-green-100' : isCurrent ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-muted'
                   }`}>
                     <Icon size={20} />
                   </div>
@@ -440,17 +442,17 @@ export default function CmLotDetail() {
                 </button>
                 {idx < arr.length - 1 && (
                   <div className={`flex-1 h-1 mx-2 rounded ${
-                    isCompleted ? 'bg-green-400' : 'bg-slate-200'
+                    isCompleted ? 'bg-green-400' : 'bg-muted'
                   }`} />
                 )}
               </React.Fragment>
             );
           })}
         </div>
-      </div>
+      </Card>
 
       {/* Tabs + Workflow Button */}
-      <div className="border-b border-slate-200 overflow-hidden">
+      <div className="border-b border-border overflow-hidden">
         <div className="flex items-center gap-2">
           <nav className="flex gap-1 overflow-x-auto flex-1 min-w-0">
             {TABS.filter(tab => {
@@ -472,17 +474,17 @@ export default function CmLotDetail() {
               };
               const nextTab = statusToNextTab[lot.status];
               const isNextStep = tab.id === nextTab && activeTab !== tab.id;
-              
+
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                     activeTab === tab.id
-                      ? 'border-blue-600 text-blue-600 bg-blue-50'
+                      ? 'border-blue-600 text-blue-600 bg-blue-50 dark:bg-blue-950/30'
                       : isNextStep
-                      ? 'border-amber-300 text-amber-500 bg-amber-50/50'
-                      : 'border-transparent text-slate-500 hover:text-slate-700'
+                      ? 'border-amber-300 text-amber-500 bg-amber-50/50 dark:bg-amber-950/20'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   <tab.icon size={18} />
@@ -492,27 +494,25 @@ export default function CmLotDetail() {
               );
             })}
           </nav>
-          
+
           {/* Workflow Advance Button - скрыт для QC роли */}
           {getNextWorkflowStep() && !( hasRole(['QC']) && !hasRole(['Admin', 'Production']) ) && (
-            <button
+            <Button
+              variant={canAdvanceWorkflow() ? 'success' : 'secondary'}
+              size="sm"
               onClick={advanceWorkflow}
               disabled={!canAdvanceWorkflow()}
-              className={`flex items-center gap-1 px-3 py-2 text-sm rounded-lg shadow transition-all whitespace-nowrap flex-shrink-0 ${
-                canAdvanceWorkflow()
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-slate-300 text-slate-500 cursor-not-allowed'
-              }`}
+              className="flex-shrink-0"
             >
-              <ArrowRight size={16} />
+              <ArrowRight size={16} className="mr-1" />
               {getNextWorkflowStep()?.label}
-            </button>
+            </Button>
           )}
         </div>
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <Card><CardContent className="p-6">
         {activeTab === 'summary' && (
           <SummaryTab 
             lot={lot} 
@@ -554,22 +554,22 @@ export default function CmLotDetail() {
           />
         )}
         {activeTab === 'infections' && (
-          <div className="bg-white rounded-lg border p-6">
+          <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Инфекционный статус культур</h3>
-              <p className="text-sm text-slate-500">Результаты тестов вносятся в карточке культуры</p>
+              <h3 className="text-lg font-semibold text-foreground">Инфекционный статус культур</h3>
+              <p className="text-sm text-muted-foreground">Результаты тестов вносятся в карточке культуры</p>
             </div>
             
             {infectionResults.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">Нет результатов инфекционных тестов для культур данного лота</p>
+              <p className="text-muted-foreground text-center py-8">Нет результатов инфекционных тестов для культур данного лота</p>
             ) : (
               <table className="w-full">
-                <thead className="bg-slate-50">
+                <thead className="bg-muted">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Культура</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Инфекция</th>
-                    <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Результат</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Дата</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Культура</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Инфекция</th>
+                    <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Результат</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -610,7 +610,7 @@ export default function CmLotDetail() {
         {activeTab === 'documents' && (
           <DocumentsTab lot={lot} />
         )}
-      </div>
+      </CardContent></Card>
     </div>
   );
 }
@@ -684,38 +684,38 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
   return (
     <div className="grid grid-cols-3 gap-6">
       {/* QR Code */}
-      <div className="flex flex-col items-center p-4 bg-slate-50 rounded-lg">
+      <div className="flex flex-col items-center p-4 bg-muted rounded-lg">
         <QRCodeSVG value={lot.cm_lot_id} size={120} />
-        <p className="mt-2 font-mono text-sm">{lot.cm_lot_id}</p>
+        <p className="mt-2 font-mono text-sm text-foreground">{lot.cm_lot_id}</p>
       </div>
 
       {/* Status & Info */}
       <div className="col-span-2 space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <p className="text-sm text-slate-500">Продукт</p>
-            <p className="font-medium">{lot.base_product_code}</p>
+            <p className="text-sm text-muted-foreground">Продукт</p>
+            <p className="font-medium text-foreground">{lot.base_product_code}</p>
           </div>
           <div>
-            <p className="text-sm text-slate-500">Режим</p>
-            <p className="font-medium">{lot.mode}</p>
+            <p className="text-sm text-muted-foreground">Режим</p>
+            <p className="font-medium text-foreground">{lot.mode}</p>
           </div>
           <div>
-            <p className="text-sm text-slate-500">Спецификация среды</p>
+            <p className="text-sm text-muted-foreground">Спецификация среды</p>
             {lot?.media_spec_id ? (
               <MediaFormulaDisplay mediaSpecId={lot.media_spec_id} />
             ) : (
-              <p className="font-medium text-slate-400">Не определена</p>
+              <p className="font-medium text-muted-foreground">Не определена</p>
             )}
             {mediaSpec && (
-              <span className={`text-xs px-1.5 py-0.5 rounded ${mediaSpec.phenol_red_flag ? 'bg-pink-100 text-pink-700' : 'bg-slate-100 text-slate-600'}`}>
+              <span className={`text-xs px-1.5 py-0.5 rounded ${mediaSpec.phenol_red_flag ? 'bg-pink-100 text-pink-700' : 'bg-muted text-muted-foreground'}`}>
                 Феноловый красный: {mediaSpec.phenol_red_flag ? 'Да' : 'Нет'}
               </span>
             )}
           </div>
           <div>
-            <p className="text-sm text-slate-500">Начало сбора</p>
-            <p className="font-medium">
+            <p className="text-sm text-muted-foreground">Начало сбора</p>
+            <p className="font-medium text-foreground">
               {lot.collection_start_at ? new Date(lot.collection_start_at).toLocaleString('ru-RU') : '-'}
             </p>
           </div>
@@ -743,8 +743,8 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
         </div>
 
         {/* QC Status */}
-        <div className="p-4 bg-slate-50 rounded-lg">
-          <p className="text-sm text-slate-500 mb-2">Статус QC</p>
+        <div className="p-4 bg-muted rounded-lg">
+          <p className="text-sm text-muted-foreground mb-2">Статус QC</p>
           <div className="flex gap-4">
             {['Sterility', 'LAL', 'DLS'].map(test => {
               const result = latestQcByTest[test];
@@ -812,10 +812,10 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
                       <Link to={`/requests/${line?.request?.request_id}`} className="text-blue-600 hover:underline">
                         {line?.request?.request_id || 'Заявка'}
                       </Link>
-                      <span className="text-slate-500 ml-2">
+                      <span className="text-muted-foreground ml-2">
                         {prod?.name || line?.finished_product_code} x {line?.qty_units || 1}
                       </span>
-                      <span className="text-slate-400 ml-1">({r.reserved_volume_ml?.toFixed(1)} мл)</span>
+                      <span className="text-muted-foreground/70 ml-1">({r.reserved_volume_ml?.toFixed(1)} мл)</span>
                     </div>
                     {line?.request?.due_date && (
                       <span className="text-xs text-purple-600">
@@ -831,27 +831,27 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
 
         {/* Метрики сбора */}
         {collections.length > 0 && (
-          <div className="p-4 bg-slate-50 rounded-lg">
-            <p className="text-sm text-slate-600 mb-3 font-medium">Метрики сбора</p>
+          <div className="p-4 bg-muted rounded-lg">
+            <p className="text-sm text-muted-foreground mb-3 font-medium">Метрики сбора</p>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-slate-500">Количество сборов:</span>
+                <span className="text-muted-foreground">Количество сборов:</span>
                 <span className="font-medium">{collectionsCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Количество культур:</span>
+                <span className="text-muted-foreground">Количество культур:</span>
                 <span className="font-medium">{culturesCount}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Средний объем на сбор:</span>
+                <span className="text-muted-foreground">Средний объем на сбор:</span>
                 <span className="font-medium">{avgVolumePerCollection.toFixed(1)} мл</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Средняя конфлюэнтность:</span>
+                <span className="text-muted-foreground">Средняя конфлюэнтность:</span>
                 <span className="font-medium">{avgConfluence.toFixed(1)}%</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Средний пассаж:</span>
+                <span className="text-muted-foreground">Средний пассаж:</span>
                 <span className="font-medium">{avgPassage.toFixed(1)}</span>
               </div>
             </div>
@@ -860,8 +860,8 @@ function SummaryTab({ lot, container, collections, latestQcByTest, latestDecisio
 
         {/* Диаграмма морфологий */}
         {Object.keys(morphologyCounts).length > 0 && (
-          <div className="p-4 bg-white border border-slate-200 rounded-lg">
-            <p className="text-sm text-slate-600 mb-2 font-medium">Морфология по сборам</p>
+          <div className="p-4 bg-card border border-border rounded-lg">
+            <p className="text-sm text-muted-foreground mb-2 font-medium">Морфология по сборам</p>
             <ReactECharts option={morphologyChartOption} style={{ height: 180 }} />
           </div>
         )}
@@ -953,7 +953,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
   async function handleCreateCulture(e: React.FormEvent) {
     e.preventDefault();
     if (!newCulture.culture_id || !newCulture.cell_type_code) {
-      alert('Заполните обязательные поля');
+      showError('Ошибка', 'Заполните обязательные поля');
       return;
     }
     try {
@@ -972,7 +972,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
       setShowCultureModal(false);
       setNewCulture({ culture_id: '', cell_type_code: '', donor_ref: '', culture_journal_ref: '', notes: '' });
     } catch (error: any) {
-      alert('Ошибка: ' + error.message);
+      showError('Ошибка', error.message);
     }
   }
 
@@ -981,14 +981,14 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
     
     // Validate media_spec_id
     if (lot.media_spec_id && formData.media_spec_id !== lot.media_spec_id) {
-      alert('Спецификация среды должна совпадать с ранее зафиксированной');
+      showError('Ошибка', 'Спецификация среды должна совпадать с ранее зафиксированной');
       return;
     }
 
     // Check culture cell_type
     const selectedCulture = cultures.find(c => c.culture_id === formData.culture_id);
     if (!selectedCulture) {
-      alert('Выберите культуру');
+      showError('Ошибка', 'Выберите культуру');
       return;
     }
 
@@ -996,7 +996,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
     if (collections.length > 0) {
       const firstCulture = cultures.find(c => c.culture_id === collections[0].culture_id);
       if (firstCulture && selectedCulture.cell_type_code !== firstCulture.cell_type_code) {
-        alert('Запрещено смешивать разные типы клеток в одном CM Lot');
+        showError('Ошибка', 'Запрещено смешивать разные типы клеток в одном CM Lot');
         return;
       }
     }
@@ -1004,7 +1004,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
     // Check container overflow
     const newTotal = (container?.current_volume_ml || 0) + formData.volume_ml;
     if (newTotal > (container?.nominal_volume_ml || 0)) {
-      alert(`Переполнение контейнера! Максимум ${container?.nominal_volume_ml} мл. Создайте новый CM Lot.`);
+      showError('Переполнение контейнера', `Максимум ${container?.nominal_volume_ml} мл. Создайте новый CM Lot.`);
       return;
     }
 
@@ -1047,7 +1047,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
       setShowForm(false);
       onRefresh();
     } catch (error: any) {
-      alert('Ошибка: ' + error.message);
+      showError('Ошибка', error.message);
     }
   }
 
@@ -1098,7 +1098,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
             <div className="mt-3 pt-3 border-t border-blue-200 flex gap-2 flex-wrap">
               <span className="text-xs text-blue-600">Морфология:</span>
               {Object.entries(morphCounts).map(([m, c]) => (
-                <span key={m} className="px-2 py-0.5 bg-white rounded text-xs">{m}: {c}</span>
+                <span key={m} className="px-2 py-0.5 bg-card rounded text-xs">{m}: {c}</span>
               ))}
             </div>
           )}
@@ -1108,94 +1108,88 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">События сбора ({collections.length})</h3>
         {canAddCollection && (
-          <button
-            onClick={() => setShowForm(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            <Plus size={18} />
+          <Button onClick={() => setShowForm(true)}>
+            <Plus size={18} className="mr-2" />
             Добавить сбор
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Create Culture Modal */}
-      {showCultureModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
-            <h4 className="text-lg font-semibold mb-4">Создать культуру</h4>
-            <form onSubmit={handleCreateCulture} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">ID культуры *</label>
-                <input
-                  type="text"
-                  value={newCulture.culture_id}
-                  onChange={(e) => setNewCulture({ ...newCulture, culture_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  placeholder="Например: MSC-2024-001"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Тип клеток *</label>
-                <select
-                  value={newCulture.cell_type_code}
-                  onChange={(e) => setNewCulture({ ...newCulture, cell_type_code: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  required
-                >
-                  <option value="">Выберите</option>
-                  {cellTypes.map(ct => (
-                    <option key={ct.cell_type_code} value={ct.cell_type_code}>
-                      {ct.name} ({ct.cell_type_code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Ссылка на донора</label>
-                <input
-                  type="text"
-                  value={newCulture.donor_ref}
-                  onChange={(e) => setNewCulture({ ...newCulture, donor_ref: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Ссылка на журнал</label>
-                <input
-                  type="text"
-                  value={newCulture.culture_journal_ref}
-                  onChange={(e) => setNewCulture({ ...newCulture, culture_journal_ref: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Примечания</label>
-                <textarea
-                  value={newCulture.notes}
-                  onChange={(e) => setNewCulture({ ...newCulture, notes: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
-                  rows={2}
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setShowCultureModal(false)} className="px-4 py-2 border rounded-lg">
-                  Отмена
-                </button>
-                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-lg">
-                  Создать
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <Dialog open={showCultureModal} onOpenChange={setShowCultureModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Создать культуру</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateCulture} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">ID культуры *</label>
+              <Input
+                type="text"
+                value={newCulture.culture_id}
+                onChange={(e) => setNewCulture({ ...newCulture, culture_id: e.target.value })}
+                placeholder="Например: MSC-2024-001"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Тип клеток *</label>
+              <select
+                value={newCulture.cell_type_code}
+                onChange={(e) => setNewCulture({ ...newCulture, cell_type_code: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
+                required
+              >
+                <option value="">Выберите</option>
+                {cellTypes.map(ct => (
+                  <option key={ct.cell_type_code} value={ct.cell_type_code}>
+                    {ct.name} ({ct.cell_type_code})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Ссылка на донора</label>
+              <Input
+                type="text"
+                value={newCulture.donor_ref}
+                onChange={(e) => setNewCulture({ ...newCulture, donor_ref: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Ссылка на журнал</label>
+              <Input
+                type="text"
+                value={newCulture.culture_journal_ref}
+                onChange={(e) => setNewCulture({ ...newCulture, culture_journal_ref: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Примечания</label>
+              <textarea
+                value={newCulture.notes}
+                onChange={(e) => setNewCulture({ ...newCulture, notes: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
+                rows={2}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowCultureModal(false)}>
+                Отмена
+              </Button>
+              <Button type="submit" variant="success">
+                Создать
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {showForm && (
-        <form onSubmit={handleAddCollection} className="p-4 bg-slate-50 rounded-lg space-y-6">
+        <form onSubmit={handleAddCollection} className="p-4 bg-muted rounded-lg space-y-6">
           {/* Group 1: Culture & Volume */}
-          <div className="p-4 border border-slate-200 rounded-lg bg-white">
-            <h4 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">Культура и объем</h4>
+          <div className="p-4 border border-border rounded-lg bg-card">
+            <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Культура и объем</h4>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Культура *<Tip text="Выберите культуру клеток для сбора CM" /></label>
@@ -1203,7 +1197,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
                   <select
                     value={formData.culture_id}
                     onChange={(e) => { setFormData({ ...formData, culture_id: e.target.value }); loadCultureInfections(e.target.value); }}
-                    className="flex-1 px-3 py-2 border rounded-lg"
+                    className="flex-1 px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                     required
                   >
                     <option value="">Выберите</option>
@@ -1213,13 +1207,14 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
                       </option>
                     ))}
                   </select>
-                  <button
+                  <Button
                     type="button"
+                    variant="success"
+                    size="sm"
                     onClick={() => setShowCultureModal(true)}
-                    className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm whitespace-nowrap"
                   >
                     + Создать
-                  </button>
+                  </Button>
                 </div>
                 {formData.culture_id && (
                   <div className="mt-2 p-2 rounded text-xs">
@@ -1235,15 +1230,14 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Объем (мл) *<Tip text="Объем собранной кондиционированной среды" /></label>
-                <input
+                <Input
                   type="number"
                   step="0.1"
                   value={formData.volume_ml}
                   onChange={(e) => setFormData({ ...formData, volume_ml: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded-lg"
                   required
                 />
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Текущий: {container?.current_volume_ml?.toFixed(1) || 0} / {container?.nominal_volume_ml || 0} мл
                 </p>
               </div>
@@ -1251,16 +1245,15 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
           </div>
 
           {/* Group 2: Passage & Morphology */}
-          <div className="p-4 border border-slate-200 rounded-lg bg-white">
-            <h4 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">Пассаж и морфология</h4>
+          <div className="p-4 border border-border rounded-lg bg-card">
+            <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Пассаж и морфология</h4>
             <div className="grid grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Пассаж *<Tip text="Номер пассажа клеточной культуры" /></label>
-                <input
+                <Input
                   type="number"
                   value={formData.passage_no}
                   onChange={(e) => setFormData({ ...formData, passage_no: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border rounded-lg"
                   required
                 />
               </div>
@@ -1269,7 +1262,7 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
                 <select
                   value={formData.morphology}
                   onChange={(e) => setFormData({ ...formData, morphology: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                 >
                   <option value="">-</option>
                   <option value="Excellent">Отлично</option>
@@ -1280,62 +1273,58 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Конфлюэнтность начало (%)</label>
-                <input
+                <Input
                   type="number"
                   step="0.1"
                   value={formData.confluence_start_percent}
                   onChange={(e) => setFormData({ ...formData, confluence_start_percent: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Конфлюэнтность конец (%)</label>
-                <input
+                <Input
                   type="number"
                   step="0.1"
                   value={formData.confluence_end_percent}
                   onChange={(e) => setFormData({ ...formData, confluence_end_percent: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
                 />
               </div>
             </div>
           </div>
 
           {/* Group 3: Dates (Enrichment) */}
-          <div className="p-4 border border-slate-200 rounded-lg bg-white">
-            <h4 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">Даты обогащения</h4>
+          <div className="p-4 border border-border rounded-lg bg-card">
+            <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Даты обогащения</h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Начало обогащения</label>
-                <input
+                <Input
                   type="date"
                   value={formData.enrichment_start_date}
                   onChange={(e) => setFormData({ ...formData, enrichment_start_date: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Окончание обогащения</label>
-                <input
+                <Input
                   type="date"
                   value={formData.enrichment_end_date}
                   onChange={(e) => setFormData({ ...formData, enrichment_end_date: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
                 />
               </div>
             </div>
           </div>
 
           {/* Group 4: Media */}
-          <div className="p-4 border border-slate-200 rounded-lg bg-white">
-            <h4 className="text-sm font-semibold text-slate-700 mb-3 uppercase tracking-wide">Среда</h4>
+          <div className="p-4 border border-border rounded-lg bg-card">
+            <h4 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Среда</h4>
             <div className="grid grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Спецификация среды *</label>
                 <select
                   value={formData.media_spec_id}
                   onChange={(e) => setFormData({ ...formData, media_spec_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
+                  className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                   required
                   disabled={!!lot.media_spec_id}
                 >
@@ -1355,21 +1344,19 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Журнал приготовления *</label>
-                <input
+                <Input
                   type="text"
                   value={formData.media_prep_journal_no}
                   onChange={(e) => setFormData({ ...formData, media_prep_journal_no: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
                   required
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Дата записи *</label>
-                <input
+                <Input
                   type="date"
                   value={formData.media_prep_journal_date}
                   onChange={(e) => setFormData({ ...formData, media_prep_journal_date: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-lg"
                   required
                 />
               </div>
@@ -1382,31 +1369,31 @@ function CollectionsTab({ lot, collections, container, mediaSpecs, onRefresh, sh
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
               rows={2}
             />
           </div>
 
           <div className="flex gap-2">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-lg">
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
               Отмена
-            </button>
-            <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg">
+            </Button>
+            <Button type="submit">
               Сохранить
-            </button>
+            </Button>
           </div>
         </form>
       )}
 
       <table className="w-full">
-        <thead className="bg-slate-50">
+        <thead className="bg-muted">
           <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Дата</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Культура</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Пассаж</th>
-            <th className="px-4 py-2 text-right text-xs font-medium text-slate-500 uppercase">Объем (мл)</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Посуда</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Морфология</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Культура</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Пассаж</th>
+            <th className="px-4 py-2 text-right text-xs font-medium text-muted-foreground uppercase">Объем (мл)</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Посуда</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Морфология</th>
           </tr>
         </thead>
         <tbody className="divide-y">
@@ -1502,7 +1489,7 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
     
     const inputVol = form.input_volume_ml ? Number(form.input_volume_ml) : null;
     if (inputVol != null && inputVol > currentVolume) {
-      alert(`Ошибка: Входной объем (${inputVol} мл) превышает текущий (${currentVolume.toFixed(1)} мл)`);
+      showError('Ошибка', `Входной объем (${inputVol} мл) превышает текущий (${currentVolume.toFixed(1)} мл)`);
       return;
     }
 
@@ -1529,7 +1516,7 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
       setStepForms(prev => { const n = {...prev}; delete n[key]; return n; });
       onRefresh();
     } catch (error: any) {
-      alert('Ошибка: ' + error.message);
+      showError('Ошибка', error.message);
     }
   }
 
@@ -1566,15 +1553,15 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
             const form = stepForms[key] || {};
 
             return (
-              <div key={key} className={`p-4 rounded-lg border-2 ${completed ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200'}`}>
+              <div key={key} className={`p-4 rounded-lg border-2 ${completed ? 'bg-green-50 border-green-300 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border-border'}`}>
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${completed ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${completed ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
                       {idx + 1}
                     </span>
                     <div>
-                      <p className="font-medium">{rs.name}</p>
-                      <p className="text-sm text-slate-500">Цикл {rs.cycle_no}</p>
+                      <p className="font-medium text-foreground">{rs.name}</p>
+                      <p className="text-sm text-muted-foreground">Цикл {rs.cycle_no}</p>
                     </div>
                   </div>
                   {completed && (
@@ -1586,62 +1573,58 @@ function ProcessingTab({ lot, steps, onRefresh, productSpecs, processMethods: pa
 
                 {completed ? (
                   <div className="grid grid-cols-4 gap-4 text-sm bg-green-100 p-3 rounded">
-                    <div><span className="text-slate-500">Вход:</span> {stepData?.input_volume_ml?.toFixed(1) || '-'} мл</div>
-                    <div><span className="text-slate-500">Выход:</span> {stepData?.output_volume_ml?.toFixed(1) || '-'} мл</div>
-                    <div><span className="text-slate-500">Начало:</span> {stepData?.started_at ? new Date(stepData.started_at).toLocaleString('ru-RU') : '-'}</div>
-                    <div><span className="text-slate-500">Окончание:</span> {stepData?.ended_at ? new Date(stepData.ended_at).toLocaleString('ru-RU') : '-'}</div>
+                    <div><span className="text-muted-foreground">Вход:</span> {stepData?.input_volume_ml?.toFixed(1) || '-'} мл</div>
+                    <div><span className="text-muted-foreground">Выход:</span> {stepData?.output_volume_ml?.toFixed(1) || '-'} мл</div>
+                    <div><span className="text-muted-foreground">Начало:</span> {stepData?.started_at ? new Date(stepData.started_at).toLocaleString('ru-RU') : '-'}</div>
+                    <div><span className="text-muted-foreground">Окончание:</span> {stepData?.ended_at ? new Date(stepData.ended_at).toLocaleString('ru-RU') : '-'}</div>
                   </div>
                 ) : canEdit ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Входной объем (мл) <span className="text-slate-400">(макс: {currentVolume.toFixed(1)})</span></label>
-                        <input
+                        <label className="block text-sm font-medium mb-1">Входной объем (мл) <span className="text-muted-foreground">(макс: {currentVolume.toFixed(1)})</span></label>
+                        <Input
                           type="number" step="0.1" max={currentVolume}
                           value={form.input_volume_ml || ''}
                           onChange={(e) => updateStepForm(key, 'input_volume_ml', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Выходной объем (мл)</label>
-                        <input
+                        <Input
                           type="number" step="0.1"
                           value={form.output_volume_ml || ''}
                           onChange={(e) => updateStepForm(key, 'output_volume_ml', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Начало</label>
-                        <input
+                        <Input
                           type="datetime-local"
                           value={form.started_at || new Date().toISOString().slice(0, 16)}
                           onChange={(e) => updateStepForm(key, 'started_at', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Окончание</label>
-                        <input
+                        <Input
                           type="datetime-local"
                           value={form.ended_at || ''}
                           onChange={(e) => updateStepForm(key, 'ended_at', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
                     </div>
-                    <button
+                    <Button
+                      className="w-full"
                       onClick={() => handleSaveStep(rs.method_id, rs.cycle_no)}
-                      className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
                     >
                       Сохранить шаг
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <p className="text-slate-500 italic">Ожидает выполнения</p>
+                  <p className="text-muted-foreground italic">Ожидает выполнения</p>
                 )}
               </div>
             );
@@ -1706,12 +1689,12 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
 
   async function saveTestResult(test: any) {
     if (!activeRequest) {
-      alert('Нет активного QC запроса. Обновите страницу.');
+      showError('Ошибка', 'Нет активного QC запроса. Обновите страницу.');
       return;
     }
     const form = testForms[test.code] || {};
     if (!form.pass_fail) {
-      alert('Выберите Pass/Fail');
+      showError('Ошибка', 'Выберите Pass/Fail');
       return;
     }
     setSaving(test.code);
@@ -1742,7 +1725,7 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
       
       onRefresh();
     } catch (error: any) {
-      alert('Ошибка сохранения: ' + error.message);
+      showError('Ошибка сохранения', error.message);
     } finally {
       setSaving(null);
     }
@@ -1770,7 +1753,7 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
       )}
 
       {qcTestTypes.length === 0 ? (
-        <div className="p-4 bg-slate-50 rounded-lg text-slate-500">
+        <div className="p-4 bg-muted rounded-lg text-muted-foreground">
           Нет требуемых тестов в спецификации продукта
         </div>
       ) : (
@@ -1781,15 +1764,15 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
             const isSaving = saving === test.code;
 
             return (
-              <div key={test.code} className={`p-4 rounded-lg border-2 ${existingResult ? 'bg-green-50 border-green-300' : 'bg-white border-slate-200'}`}>
+              <div key={test.code} className={`p-4 rounded-lg border-2 ${existingResult ? 'bg-green-50 border-green-300 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border-border'}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-green-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${existingResult ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
                       {idx + 1}
                     </span>
                     <div>
-                      <p className="font-medium text-lg">{test.name}</p>
-                      <p className="text-sm text-slate-500">{test.code}</p>
+                      <p className="font-medium text-lg text-foreground">{test.name}</p>
+                      <p className="text-sm text-muted-foreground">{test.code}</p>
                     </div>
                   </div>
                   {existingResult && (
@@ -1801,10 +1784,10 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                 </div>
 
                 {/* Референсы и подсказки */}
-                <div className="mb-3 p-3 bg-slate-100 rounded text-sm">
+                <div className="mb-3 p-3 bg-muted rounded text-sm">
                   <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <span className="text-slate-500">Референс:</span>
+                      <span className="text-muted-foreground">Референс:</span>
                       <span className="ml-2 font-medium">
                         {test.norm_min != null && test.norm_max != null 
                           ? `${test.norm_min} - ${test.norm_max}` 
@@ -1814,23 +1797,23 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-500">Единицы:</span>
+                      <span className="text-muted-foreground">Единицы:</span>
                       <span className="ml-2 font-medium">{test.unit || '-'}</span>
                     </div>
                     <div>
-                      <span className="text-slate-500">Метод:</span>
+                      <span className="text-muted-foreground">Метод:</span>
                       <span className="ml-2 font-medium text-blue-600">{test.method || '-'}</span>
                     </div>
                   </div>
                   {test.description && (
-                    <p className="mt-2 text-slate-600 italic">{test.description}</p>
+                    <p className="mt-2 text-muted-foreground italic">{test.description}</p>
                   )}
                 </div>
 
                 {existingResult ? (
                   <div className="grid grid-cols-3 gap-4 text-sm bg-green-100 p-3 rounded">
-                    <div><span className="text-slate-500">Результат:</span> <span className="font-mono">{existingResult.result_value || '-'}</span> {test.unit || ''}</div>
-                    <div><span className="text-slate-500">Дата:</span> {existingResult.tested_at ? new Date(existingResult.tested_at).toLocaleDateString('ru-RU') : '-'}</div>
+                    <div><span className="text-muted-foreground">Результат:</span> <span className="font-mono">{existingResult.result_value || '-'}</span> {test.unit || ''}</div>
+                    <div><span className="text-muted-foreground">Дата:</span> {existingResult.tested_at ? new Date(existingResult.tested_at).toLocaleDateString('ru-RU') : '-'}</div>
                     <div>
                       {existingResult.report_ref && (
                         <a href={existingResult.report_ref} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
@@ -1844,12 +1827,11 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                     <div className="grid grid-cols-3 gap-4">
                       <div>
                         <label className="block text-sm font-medium mb-1">Результат {test.unit ? `(${test.unit})` : ''}</label>
-                        <input
+                        <Input
                           type="text"
                           placeholder={test.input_format || 'Введите значение...'}
                           value={form.result_value || ''}
                           onChange={(e) => updateTestForm(test.code, 'result_value', e.target.value, test)}
-                          className="w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
                       <div>
@@ -1857,34 +1839,35 @@ function QcTab({ lot, qcRequests, qcResults, latestQcByTest, onRefresh }: any) {
                         <select
                           value={form.pass_fail || ''}
                           onChange={(e) => updateTestForm(test.code, 'pass_fail', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg"
+                          className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                         >
                           <option value="">Выберите...</option>
-                          <option value="Pass">✅ Pass</option>
-                          <option value="Fail">❌ Fail</option>
-                          <option value="NA">➖ N/A</option>
+                          <option value="Pass">Pass</option>
+                          <option value="Fail">Fail</option>
+                          <option value="NA">N/A</option>
                         </select>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">Дата теста</label>
-                        <input
+                        <Input
                           type="date"
                           value={form.tested_at || new Date().toISOString().split('T')[0]}
                           onChange={(e) => updateTestForm(test.code, 'tested_at', e.target.value)}
-                          className="w-full px-3 py-2 border rounded-lg"
                         />
                       </div>
                     </div>
-                    <button
+                    <Button
+                      variant="success"
+                      className="w-full"
                       onClick={() => saveTestResult(test)}
                       disabled={isSaving || !form.pass_fail}
-                      className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      loading={isSaving}
                     >
                       {isSaving ? 'Сохранение...' : 'Сохранить результат'}
-                    </button>
+                    </Button>
                   </div>
                 ) : (
-                  <p className="text-slate-500 italic p-3 bg-slate-50 rounded">Ожидает ввода результатов QC специалистом</p>
+                  <p className="text-muted-foreground italic p-3 bg-muted rounded">Ожидает ввода результатов QC специалистом</p>
                 )}
               </div>
             );
@@ -1935,7 +1918,7 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
     e.preventDefault();
     
     if (needsReason && !formData.reason.trim()) {
-      alert('При одобрении без полного QC обязателен комментарий');
+      showError('Ошибка', 'При одобрении без полного QC обязателен комментарий');
       return;
     }
 
@@ -1981,7 +1964,7 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
       setShowForm(false);
       onRefresh();
     } catch (error: any) {
-      alert('Ошибка: ' + error.message);
+      showError('Ошибка', error.message);
     }
   }
 
@@ -1990,8 +1973,8 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
   return (
     <div className="space-y-6">
       {/* QC Summary */}
-      <div className="p-4 bg-slate-50 rounded-lg">
-        <h4 className="font-medium mb-2">Сводка QC для решения</h4>
+      <div className="p-4 bg-muted rounded-lg">
+        <h4 className="font-medium mb-2 text-foreground">Сводка QC для решения</h4>
         <div className="flex flex-wrap gap-4">
           {(lot.frozen_spec?.qc?.raw || []).map((test: any) => {
             const result = latestQcByTest[test.code];
@@ -2021,12 +2004,9 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
       {canDecide && (
         <div>
           {!showForm ? (
-            <button
-              onClick={() => setShowForm(true)}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg"
-            >
+            <Button variant="success" onClick={() => setShowForm(true)}>
               Принять решение QA
-            </button>
+            </Button>
           ) : (
             <form onSubmit={handleDecision} className="p-4 bg-emerald-50 rounded-lg space-y-4">
               <h4 className="font-medium">Решение QA</h4>
@@ -2036,7 +2016,7 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
                   <select
                     value={formData.decision}
                     onChange={(e) => setFormData({ ...formData, decision: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                   >
                     <option value="Approved">QA одобрено</option>
                     <option value="Rejected">Брак</option>
@@ -2045,11 +2025,10 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Срок годности (дней) *</label>
-                  <input
+                  <Input
                     type="number"
                     value={formData.shelf_life_days}
                     onChange={(e) => setFormData({ ...formData, shelf_life_days: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border rounded-lg"
                     required
                   />
                 </div>
@@ -2060,19 +2039,19 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
                   <textarea
                     value={formData.reason}
                     onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-lg"
+                    className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                     rows={3}
                     required={needsReason}
                   />
                 </div>
               </div>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-lg">
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Отмена
-                </button>
-                <button type="submit" className="px-4 py-2 bg-emerald-600 text-white rounded-lg">
+                </Button>
+                <Button type="submit" variant="success">
                   Подтвердить решение
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -2083,7 +2062,7 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
       <div>
         <h4 className="font-medium mb-3">История решений</h4>
         {qaDecisions.length === 0 ? (
-          <p className="text-slate-500">Нет решений</p>
+          <p className="text-muted-foreground">Нет решений</p>
         ) : (
           <div className="space-y-2">
             {qaDecisions.map((d: CmQaReleaseDecision) => (
@@ -2096,12 +2075,12 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
                     {d.decision === 'Approved' ? 'QA одобрено' :
                      d.decision === 'Rejected' ? 'Брак' : 'На удержании'}
                   </span>
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-muted-foreground">
                     {d.decided_at ? new Date(d.decided_at).toLocaleString('ru-RU') : '-'}
                   </span>
                 </div>
                 {d.decided_by && (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-muted-foreground">
                     Кем: <span className="font-medium">{users[d.decided_by] || d.decided_by}</span>
                   </p>
                 )}
@@ -2109,7 +2088,7 @@ function QaTab({ lot, container, qaDecisions, latestQcByTest, onRefresh }: any) 
                 {d.expiry_date && (
                   <p className="text-sm">Годен до: {new Date(d.expiry_date).toLocaleDateString('ru-RU')}</p>
                 )}
-                {d.reason && <p className="text-sm text-slate-600 mt-1">Примечание: {d.reason}</p>}
+                {d.reason && <p className="text-sm text-muted-foreground mt-1">Примечание: {d.reason}</p>}
               </div>
             ))}
           </div>
@@ -2238,7 +2217,7 @@ function DocumentsTab({ lot }: any) {
       });
       loadDocuments();
     } catch (error: any) {
-      alert('Ошибка: ' + error.message);
+      showError('Ошибка', error.message);
     } finally {
       setGenerating(false);
     }
@@ -2262,7 +2241,7 @@ function DocumentsTab({ lot }: any) {
       });
       loadDocuments();
     } catch (error: any) {
-      alert('Ошибка: ' + error.message);
+      showError('Ошибка', error.message);
     } finally {
       setGenerating(false);
     }
@@ -2271,36 +2250,24 @@ function DocumentsTab({ lot }: any) {
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <button
-          onClick={() => generateDocument('COA')}
-          disabled={generating}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
-        >
+        <Button onClick={() => generateDocument('COA')} disabled={generating} loading={generating}>
           Генерировать COA
-        </button>
-        <button
-          onClick={() => generateDocument('SDS')}
-          disabled={generating}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
-        >
+        </Button>
+        <Button onClick={() => generateDocument('SDS')} disabled={generating} loading={generating}>
           Генерировать SDS
-        </button>
-        <button
-          onClick={() => generateDocument('Micro')}
-          disabled={generating}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
-        >
+        </Button>
+        <Button onClick={() => generateDocument('Micro')} disabled={generating} loading={generating}>
           Микробиологический отчет
-        </button>
+        </Button>
       </div>
 
       <table className="w-full">
-        <thead className="bg-slate-50">
+        <thead className="bg-muted">
           <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Тип</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Дата</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Версия</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Действия</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Тип</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Версия</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Действия</th>
           </tr>
         </thead>
         <tbody className="divide-y">
@@ -2312,7 +2279,9 @@ function DocumentsTab({ lot }: any) {
               </td>
               <td className="px-4 py-2 text-sm">{doc.template_version}</td>
               <td className="px-4 py-2">
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => {
                     const content = JSON.stringify(doc.snapshot_json || {}, null, 2);
                     const blob = new Blob([content], { type: 'application/json' });
@@ -2323,10 +2292,9 @@ function DocumentsTab({ lot }: any) {
                     a.click();
                     URL.revokeObjectURL(url);
                   }}
-                  className="px-2 py-1 text-sm bg-slate-100 hover:bg-slate-200 rounded"
                 >
                   Скачать
-                </button>
+                </Button>
               </td>
             </tr>
           ))}
@@ -2382,7 +2350,7 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
       setFormData({ method_id: '', started_at: new Date().toISOString().slice(0, 16), ended_at: '', notes: '' });
       loadSteps();
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
 
@@ -2428,7 +2396,7 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
               return (
                 <div 
                   key={idx} 
-                  className={`flex items-center justify-between p-3 rounded ${isMet ? 'bg-green-100 border border-green-300' : 'bg-white border border-orange-200'}`}
+                  className={`flex items-center justify-between p-3 rounded ${isMet ? 'bg-green-100 border border-green-300 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border border-orange-200 dark:border-orange-800'}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-orange-600 font-medium">{idx + 1}.</span>
@@ -2439,16 +2407,17 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
                       <CheckCircle size={16} /> Выполнено
                     </span>
                   ) : (
-                    <button
+                    <Button
+                      variant="warning"
+                      size="sm"
                       onClick={() => {
                         setFormData({ ...formData, method_id: req.method_id });
                         setShowForm(true);
                       }}
                       disabled={!canEdit}
-                      className="flex items-center gap-1 px-3 py-1 bg-orange-600 text-white rounded text-sm disabled:opacity-50"
                     >
-                      <Plus size={14} /> Выполнить
-                    </button>
+                      <Plus size={14} className="mr-1" /> Выполнить
+                    </Button>
                   )}
                 </div>
               );
@@ -2462,22 +2431,22 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
           )}
         </div>
       ) : (
-        <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-center text-slate-500">
+        <div className="p-4 bg-muted border border-border rounded-lg text-center text-muted-foreground">
           Нет требований к постпроцессингу. Переходите сразу к розливу.
         </div>
       )}
 
       {/* Add step form */}
       {showForm && canEdit && (
-        <form onSubmit={handleAddStep} className="p-4 bg-slate-50 rounded-lg space-y-4">
-          <h4 className="font-medium">Зафиксировать обработку</h4>
+        <form onSubmit={handleAddStep} className="p-4 bg-muted rounded-lg space-y-4">
+          <h4 className="font-medium text-foreground">Зафиксировать обработку</h4>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Метод</label>
               <select
                 value={formData.method_id}
                 onChange={(e) => setFormData({ ...formData, method_id: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                 required
               >
                 <option value="">Выберите</option>
@@ -2488,11 +2457,10 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Дата выполнения</label>
-              <input
+              <Input
                 type="datetime-local"
                 value={formData.started_at}
                 onChange={(e) => setFormData({ ...formData, started_at: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
                 required
               />
             </div>
@@ -2502,13 +2470,13 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
               rows={2}
             />
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 border rounded-lg">Отмена</button>
-            <button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded-lg">Сохранить</button>
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)}>Отмена</Button>
+            <Button type="submit" variant="warning">Сохранить</Button>
           </div>
         </form>
       )}
@@ -2518,11 +2486,11 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
         <div>
           <h4 className="font-medium mb-3">Выполненные обработки ({postprocessSteps.length})</h4>
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Метод</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Дата</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Примечания</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Метод</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Примечания</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -2532,7 +2500,7 @@ function PostprocessingTab({ lot, container, latestDecision, requestLine: propRe
                   <tr key={step.step_id}>
                     <td className="px-4 py-2 text-sm">{method?.name || step.method_id}</td>
                     <td className="px-4 py-2 text-sm">{step.started_at ? new Date(step.started_at).toLocaleString('ru-RU') : '-'}</td>
-                    <td className="px-4 py-2 text-sm text-slate-500">{step.notes || '-'}</td>
+                    <td className="px-4 py-2 text-sm text-muted-foreground">{step.notes || '-'}</td>
                   </tr>
                 );
               })}
@@ -2686,7 +2654,7 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
       loadData();
       onRefresh();
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
 
@@ -2782,10 +2750,10 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
         setShowCompleteModal(false);
         setCompleteData(null);
         loadData();
-        alert('Розлив сохранён. Вы можете продолжить позже.');
+        showSuccess('Успешно', 'Розлив сохранён. Вы можете продолжить позже.');
       }
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
 
@@ -2822,14 +2790,14 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
             const possibleUnits = format?.nominal_fill_volume_ml ? Math.floor(availableVolume / format.nominal_fill_volume_ml) : 0;
             
             return (
-              <div key={line.request_line_id} className={`p-4 rounded-lg border ${existingPL ? 'bg-green-50 border-green-200' : 'bg-white border-slate-200'}`}>
+              <div key={line.request_line_id} className={`p-4 rounded-lg border ${existingPL ? 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800' : 'bg-card border-border'}`}>
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-medium">{line.finished_product_code}</p>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-muted-foreground">
                       Заказано: <span className="font-bold">{line.qty_units}</span> фл. × {format?.nominal_fill_volume_ml || '?'} мл = {requiredVolume.toFixed(0)} мл
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       Доступно для розлива: ~{possibleUnits} фл.
                       {line.request?.due_date && ` | Срок: ${new Date(line.request.due_date).toLocaleDateString('ru-RU')}`}
                     </p>
@@ -2844,25 +2812,26 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
                           'bg-gray-100'
                         }`}>{existingPL.status}</span>
                         {existingPL.status === 'Filling' && (
-                          <button
+                          <Button
+                            variant="success"
+                            size="sm"
+                            className="mt-2"
                             onClick={() => openCompleteModal(existingPL, line)}
-                            className="block mt-2 px-3 py-1 bg-green-600 text-white rounded text-sm"
                           >
                             Завершить розлив
-                          </button>
+                          </Button>
                         )}
                         {existingPL.qty_produced > 0 && existingPL.status === 'Filling' && (
                           <p className="text-xs text-blue-600 mt-1">Разлито: {existingPL.qty_produced} фл.</p>
                         )}
                       </div>
                     ) : (
-                      <button
+                      <Button
                         onClick={() => startFilling(line)}
                         disabled={!canFill || requiredVolume > availableVolume}
-                        className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
                       >
                         Начать розлив ({line.qty_units} фл.)
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -2879,11 +2848,13 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
       )}
 
       {/* Модальное окно завершения розлива */}
-      {showCompleteModal && completeData && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md space-y-4">
-            <h3 className="text-lg font-semibold">Завершение розлива</h3>
-            
+      <Dialog open={showCompleteModal && !!completeData} onOpenChange={(open) => { if (!open) { setShowCompleteModal(false); setCompleteData(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Завершение розлива</DialogTitle>
+          </DialogHeader>
+          {completeData && (
+            <>
             {!showMismatchChoice ? (
               <>
                 <div className="p-4 bg-blue-50 rounded-lg">
@@ -2893,13 +2864,13 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Фактически разлито:</label>
-                  <input
+                  <Input
                     type="number"
-                    min="1"
+                    min={1}
                     max={completeData.qtyPlanned * 2}
                     value={completeData.qtyProduced}
                     onChange={(e) => handleQtyChange(Number(e.target.value))}
-                    className="w-full px-4 py-3 border-2 border-blue-500 rounded-lg text-2xl font-bold text-center"
+                    className="text-2xl font-bold text-center border-2 border-blue-500"
                   />
                 </div>
 
@@ -2915,19 +2886,21 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
                 )}
 
                 <div className="flex gap-2">
-                  <button
+                  <Button
+                    variant="outline"
+                    className="flex-1"
                     onClick={() => { setShowCompleteModal(false); setCompleteData(null); }}
-                    className="flex-1 px-4 py-2 border rounded-lg"
                   >
                     Отмена
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="success"
+                    className="flex-1"
                     onClick={handleConfirmQty}
                     disabled={completeData.qtyProduced < 1}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
                   >
                     Подтвердить
-                  </button>
+                  </Button>
                 </div>
               </>
             ) : (
@@ -2942,37 +2915,39 @@ function FillingTab({ lot, container, requestLine, onRefresh, onNavigate }: any)
                   </p>
                 </div>
 
-                <p className="text-sm text-slate-600">Выберите действие:</p>
+                <p className="text-sm text-muted-foreground">Выберите действие:</p>
 
                 <div className="space-y-2">
                   <button
                     onClick={() => finalizeFilling(true)}
-                    className="w-full p-4 text-left border-2 border-green-500 rounded-lg hover:bg-green-50 transition"
+                    className="w-full p-4 text-left border-2 border-green-500 rounded-lg hover:bg-green-50 dark:hover:bg-green-950/20 transition"
                   >
-                    <p className="font-medium text-green-800">✓ Закрыть с тем, что есть</p>
+                    <p className="font-medium text-green-800">Закрыть с тем, что есть</p>
                     <p className="text-sm text-green-600">Передать {completeData.qtyProduced} фл. на QC/QA продукта</p>
                   </button>
 
                   <button
                     onClick={() => finalizeFilling(false)}
-                    className="w-full p-4 text-left border-2 border-blue-500 rounded-lg hover:bg-blue-50 transition"
+                    className="w-full p-4 text-left border-2 border-blue-500 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/20 transition"
                   >
-                    <p className="font-medium text-blue-800">⏸ Продолжить позже</p>
+                    <p className="font-medium text-blue-800">Продолжить позже</p>
                     <p className="text-sm text-blue-600">Сохранить прогресс и вернуться к розливу</p>
                   </button>
                 </div>
 
-                <button
+                <Button
+                  variant="outline"
+                  className="w-full"
                   onClick={() => setShowMismatchChoice(false)}
-                  className="w-full px-4 py-2 border rounded-lg text-slate-600"
                 >
-                  ← Назад
-                </button>
+                  Назад
+                </Button>
               </>
             )}
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -3027,7 +3002,7 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
       setResultData({ test_code: '', result_value: '', pass_fail: 'Pass', tested_at: new Date().toISOString().split('T')[0] });
       loadData();
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
 
@@ -3042,7 +3017,7 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
         setTimeout(() => onNavigate('shipping'), 500);
       }
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
 
@@ -3066,7 +3041,7 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
           <h4 className="text-sm font-medium text-purple-800 mb-3">Требуемые тесты продукта</h4>
           <div className="grid grid-cols-3 gap-2">
             {productQcTests.map((test: any, idx: number) => (
-              <div key={idx} className="p-2 bg-white rounded border text-sm">
+              <div key={idx} className="p-2 bg-card rounded border border-border text-sm">
                 {test.name || test.code}
               </div>
             ))}
@@ -3085,31 +3060,32 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
                 <div className="flex justify-between items-center mb-3">
                   <div>
                     <p className="font-medium">QC Продукта — {pl?.pack_lot_id || 'N/A'}</p>
-                    <p className="text-sm text-slate-500">Статус: {req.status}</p>
+                    <p className="text-sm text-muted-foreground">Статус: {req.status}</p>
                   </div>
                   <div className="flex gap-2">
                     {canAddResult && req.status !== 'Completed' && (
-                      <button
+                      <Button
+                        variant="success"
+                        size="sm"
                         onClick={() => { setSelectedRequest(req.qc_request_id); setShowResultForm(true); }}
-                        className="px-3 py-1 bg-green-600 text-white rounded text-sm"
                       >
                         + Результат
-                      </button>
+                      </Button>
                     )}
                     {req.status !== 'Completed' && results.length > 0 && (
-                      <button
+                      <Button
+                        size="sm"
                         onClick={() => completeQc(req.qc_request_id, req.pack_lot_id)}
-                        className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
                       >
                         Завершить QC
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
                 {results.length > 0 && (
                   <div className="space-y-1">
                     {results.map((r: any) => (
-                      <div key={r.qc_result_id} className="p-2 bg-slate-50 rounded text-sm flex justify-between">
+                      <div key={r.qc_result_id} className="p-2 bg-muted rounded text-sm flex justify-between">
                         <span>{r.test_code}: {r.result_value || '-'}</span>
                         <span className={`px-2 py-0.5 rounded text-xs ${r.pass_fail === 'Pass' ? 'bg-green-200' : 'bg-red-200'}`}>
                           {r.pass_fail}
@@ -3123,22 +3099,22 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
           })}
         </div>
       ) : (
-        <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-500">
+        <div className="p-4 bg-muted rounded-lg text-center text-muted-foreground">
           Нет запросов QC продукта. Запрос создаётся автоматически после завершения розлива.
         </div>
       )}
 
       {/* Result form */}
       {showResultForm && (
-        <form onSubmit={addResult} className="p-4 bg-slate-50 rounded-lg space-y-4">
-          <h4 className="font-medium">Добавить результат QC</h4>
+        <form onSubmit={addResult} className="p-4 bg-muted rounded-lg space-y-4">
+          <h4 className="font-medium text-foreground">Добавить результат QC</h4>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Тест</label>
               <select
                 value={resultData.test_code}
                 onChange={(e) => setResultData({ ...resultData, test_code: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
                 required
               >
                 <option value="">Выберите</option>
@@ -3149,11 +3125,10 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Результат</label>
-              <input
+              <Input
                 type="text"
                 value={resultData.result_value}
                 onChange={(e) => setResultData({ ...resultData, result_value: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
               />
             </div>
             <div>
@@ -3161,7 +3136,7 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
               <select
                 value={resultData.pass_fail}
                 onChange={(e) => setResultData({ ...resultData, pass_fail: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg"
+                className="w-full px-3 py-2 border rounded-lg bg-background text-foreground border-input"
               >
                 <option value="Pass">Pass</option>
                 <option value="Fail">Fail</option>
@@ -3169,8 +3144,8 @@ function QcProductTab({ lot, requestLine, onRefresh, onNavigate }: any) {
             </div>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setShowResultForm(false)} className="px-4 py-2 border rounded-lg">Отмена</button>
-            <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded-lg">Сохранить</button>
+            <Button type="button" variant="outline" onClick={() => setShowResultForm(false)}>Отмена</Button>
+            <Button type="submit" variant="success">Сохранить</Button>
           </div>
         </form>
       )}
@@ -3218,7 +3193,7 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
       loadData();
       onRefresh();
     } catch (err: any) {
-      alert('Ошибка: ' + err.message);
+      showError('Ошибка', err.message);
     }
   }
 
@@ -3231,7 +3206,7 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
       printed_at: new Date().toISOString(),
       printed_by: user?.user_id,
     });
-    alert(`Печать ${qty} круглых этикеток 1x1 на флаконы`);
+    showSuccess('Печать', `Печать ${qty} круглых этикеток 1x1 на флаконы`);
     window.print();
   }
 
@@ -3263,33 +3238,35 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="font-medium">{pl.pack_lot_id}</p>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-muted-foreground">
                       {format?.name || pl.pack_format_code} × {pl.qty_produced || pl.qty_planned} фл.
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => printVialLabels(pl.pack_lot_id, pl.qty_produced || pl.qty_planned)}
-                      className="px-3 py-2 border border-slate-300 rounded flex items-center gap-1 text-sm"
                     >
-                      <Printer size={16} />
-                      Этикетки 1×1
-                    </button>
-                    <button
+                      <Printer size={16} className="mr-1" />
+                      Этикетки 1x1
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => window.print()}
-                      className="px-3 py-2 border border-slate-300 rounded flex items-center gap-1 text-sm"
                     >
-                      <Printer size={16} />
-                      Этикетка 5×7
-                    </button>
+                      <Printer size={16} className="mr-1" />
+                      Этикетка 5x7
+                    </Button>
                     {canShip && (
-                      <button
+                      <Button
+                        variant="success"
                         onClick={() => releaseToWarehouse(pl.pack_lot_id)}
-                        className="px-4 py-2 bg-green-600 text-white rounded flex items-center gap-2"
                       >
-                        <Truck size={16} />
+                        <Truck size={16} className="mr-2" />
                         На склад
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -3302,14 +3279,14 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
       {/* Already shipped */}
       {shipped.length > 0 && (
         <div className="space-y-3">
-          <h4 className="font-semibold text-slate-600">Отгружено ({shipped.length})</h4>
+          <h4 className="font-semibold text-muted-foreground">Отгружено ({shipped.length})</h4>
           {shipped.map((pl: any) => {
             const format = packFormats.find(f => f.pack_format_code === pl.pack_format_code);
             return (
-              <div key={pl.pack_lot_id} className="p-3 bg-slate-50 border rounded-lg flex justify-between items-center">
+              <div key={pl.pack_lot_id} className="p-3 bg-muted border border-border rounded-lg flex justify-between items-center">
                 <div>
-                  <p className="font-medium text-slate-700">{pl.pack_lot_id}</p>
-                  <p className="text-sm text-slate-500">{format?.name} × {pl.qty_produced || pl.qty_planned} фл.</p>
+                  <p className="font-medium text-foreground">{pl.pack_lot_id}</p>
+                  <p className="text-sm text-muted-foreground">{format?.name} × {pl.qty_produced || pl.qty_planned} фл.</p>
                 </div>
                 <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Released</span>
               </div>
@@ -3319,7 +3296,7 @@ function ShippingTab({ lot, onRefresh, onNavigate }: any) {
       )}
 
       {readyForShipping.length === 0 && shipped.length === 0 && (
-        <div className="p-4 bg-slate-50 rounded-lg text-center text-slate-500">
+        <div className="p-4 bg-muted rounded-lg text-center text-muted-foreground">
           Нет продуктов для отгрузки. Сначала завершите розлив и QC продукта.
         </div>
       )}
@@ -3365,7 +3342,7 @@ function UsageTab({ lot }: { lot: CmLot }) {
     QC_Pending: 'Ожидает QC', Released: 'Выпущен', Shipped: 'Отгружен'
   };
   const statusColors: Record<string, string> = {
-    Planned: 'bg-slate-100 text-slate-700', Filling: 'bg-blue-100 text-blue-700',
+    Planned: 'bg-muted text-muted-foreground', Filling: 'bg-blue-100 text-blue-700',
     Processing: 'bg-purple-100 text-purple-700', QC_Pending: 'bg-yellow-100 text-yellow-700',
     Released: 'bg-green-100 text-green-700', Shipped: 'bg-emerald-100 text-emerald-700'
   };
@@ -3377,68 +3354,74 @@ function UsageTab({ lot }: { lot: CmLot }) {
   return (
     <div className="space-y-6">
       {/* Остаток сырья */}
-      <div className="bg-white border rounded-lg p-4">
-        <h3 className="font-semibold text-lg mb-3">Остаток сырья</h3>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center p-3 bg-blue-50 rounded">
-            <p className="text-2xl font-bold text-blue-700">{container?.current_volume_ml?.toFixed(1) || 0} мл</p>
-            <p className="text-xs text-slate-500">Текущий остаток</p>
+      <Card>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-3">Остаток сырья</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/20 rounded">
+              <p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{container?.current_volume_ml?.toFixed(1) || 0} мл</p>
+              <p className="text-xs text-muted-foreground">Текущий остаток</p>
+            </div>
+            <div className="text-center p-3 bg-amber-50 dark:bg-amber-950/20 rounded">
+              <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{totalUsed.toFixed(1)} мл</p>
+              <p className="text-xs text-muted-foreground">Использовано</p>
+            </div>
+            <div className="text-center p-3 bg-muted rounded">
+              <p className="text-2xl font-bold text-foreground">{packLots.length}</p>
+              <p className="text-xs text-muted-foreground">Партий продукта</p>
+            </div>
           </div>
-          <div className="text-center p-3 bg-amber-50 rounded">
-            <p className="text-2xl font-bold text-amber-700">{totalUsed.toFixed(1)} мл</p>
-            <p className="text-xs text-slate-500">Использовано</p>
-          </div>
-          <div className="text-center p-3 bg-slate-50 rounded">
-            <p className="text-2xl font-bold text-slate-700">{packLots.length}</p>
-            <p className="text-xs text-slate-500">Партий продукта</p>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Продукты */}
-      <div className="bg-white border rounded-lg p-4">
-        <h3 className="font-semibold text-lg mb-3">Продукты из этого сырья</h3>
-        {packLots.length === 0 ? (
-          <p className="text-slate-500 text-center py-4">Продукты ещё не созданы</p>
-        ) : (
-          <div className="space-y-2">
-            {packLots.map((pl: any) => (
-              <Link key={pl.pack_lot_id} to={`/packlot/${pl.pack_lot_id}`}
-                className="flex items-center justify-between p-3 bg-slate-50 rounded hover:bg-slate-100">
-                <div>
-                  <p className="font-mono text-sm font-medium">{pl.pack_lot_id}</p>
-                  <p className="text-xs text-slate-500">
-                    {(pl.pack_format as any)?.name} • {pl.qty_produced || pl.qty_planned} шт • {pl.total_filled_volume_ml?.toFixed(1) || 0} мл
-                  </p>
-                </div>
-                <span className={`px-2 py-1 rounded text-xs ${statusColors[pl.status] || 'bg-gray-100'}`}>
-                  {statusLabels[pl.status] || pl.status}
-                </span>
-              </Link>
-            ))}
-          </div>
-        )}
-      </div>
+      <Card>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-3">Продукты из этого сырья</h3>
+          {packLots.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">Продукты ещё не созданы</p>
+          ) : (
+            <div className="space-y-2">
+              {packLots.map((pl: any) => (
+                <Link key={pl.pack_lot_id} to={`/packlot/${pl.pack_lot_id}`}
+                  className="flex items-center justify-between p-3 bg-muted rounded hover:bg-muted/80">
+                  <div>
+                    <p className="font-mono text-sm font-medium">{pl.pack_lot_id}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(pl.pack_format as any)?.name} • {pl.qty_produced || pl.qty_planned} шт • {pl.total_filled_volume_ml?.toFixed(1) || 0} мл
+                    </p>
+                  </div>
+                  <span className={`px-2 py-1 rounded text-xs ${statusColors[pl.status] || 'bg-gray-100'}`}>
+                    {statusLabels[pl.status] || pl.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* История движений */}
-      <div className="bg-white border rounded-lg p-4">
-        <h3 className="font-semibold text-lg mb-3">История движений</h3>
-        {movements.length === 0 ? (
-          <p className="text-slate-500 text-center py-4">Нет записей</p>
-        ) : (
-          <div className="space-y-1 text-sm">
-            {movements.map((m: any, i: number) => (
-              <div key={i} className="flex justify-between py-2 border-b last:border-0">
-                <span className={m.direction === 'In' ? 'text-green-600' : 'text-red-600'}>
-                  {m.direction === 'In' ? '+' : '-'}{m.qty} {m.item_type === 'Bulk' ? 'мл' : 'шт'}
-                </span>
-                <span className="text-slate-500">{m.reason_code}</span>
-                <span className="text-slate-400">{new Date(m.moved_at).toLocaleDateString('ru')}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <Card>
+        <CardContent className="p-4">
+          <h3 className="font-semibold text-lg mb-3">История движений</h3>
+          {movements.length === 0 ? (
+            <p className="text-muted-foreground text-center py-4">Нет записей</p>
+          ) : (
+            <div className="space-y-1 text-sm">
+              {movements.map((m: any, i: number) => (
+                <div key={i} className="flex justify-between py-2 border-b border-border last:border-0">
+                  <span className={m.direction === 'In' ? 'text-green-600' : 'text-red-600'}>
+                    {m.direction === 'In' ? '+' : '-'}{m.qty} {m.item_type === 'Bulk' ? 'мл' : 'шт'}
+                  </span>
+                  <span className="text-muted-foreground">{m.reason_code}</span>
+                  <span className="text-muted-foreground/70">{new Date(m.moved_at).toLocaleDateString('ru')}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

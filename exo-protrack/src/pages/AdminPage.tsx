@@ -1,5 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Plus, Trash2, Edit2, Save, Users, Info, GripVertical, FileText, Beaker, FlaskConical, ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Input } from '../components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { showError, showConfirm } from '../lib/toast';
 
 // Типы для сортировки
 type SortDirection = 'asc' | 'desc' | null;
@@ -12,7 +19,7 @@ function SortableHeader({ label, field, sort, onSort, className = '' }: {
   const isActive = sort.field === field;
   return (
     <th 
-      className={`px-4 py-2 text-xs font-medium text-slate-500 uppercase cursor-pointer hover:bg-slate-100 select-none ${className}`}
+      className={`px-4 py-2 text-xs font-medium text-muted-foreground uppercase cursor-pointer hover:bg-muted select-none ${className}`}
       onClick={() => onSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -106,16 +113,16 @@ export function MediaFormulaDisplay({
   linkedAdditives.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ru'));
 
   if (!baseMedia && linkedAdditives.length === 0) {
-    return <span className="text-slate-400">-</span>;
+    return <span className="text-muted-foreground">-</span>;
   }
 
   return (
     <div className="text-sm">
       {baseMedia && (
-        <span className="font-medium text-slate-800">{baseMedia.name}</span>
+        <span className="font-medium text-foreground">{baseMedia.name}</span>
       )}
       {linkedAdditives.length > 0 && (
-        <span className="text-slate-600">
+        <span className="text-muted-foreground">
           {baseMedia ? ' + ' : ''}
           {linkedAdditives.map((a, i) => (
             <span key={a.additive_id}>
@@ -268,7 +275,7 @@ const PRODUCT_TYPE_LABELS: Record<string, string> = {
 function Tooltip({ text }: { text: string }) {
   return (
     <div className="group relative inline-block ml-1">
-      <Info size={14} className="text-slate-400 cursor-help" />
+      <Info size={14} className="text-muted-foreground cursor-help" />
       <div className="absolute z-10 invisible group-hover:visible bg-slate-800 text-white text-xs rounded py-1 px-2 -top-8 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
         {text}
       </div>
@@ -280,7 +287,7 @@ function Tooltip({ text }: { text: string }) {
 function FormField({ label, tooltip, children, required }: { label: string; tooltip?: string; children: React.ReactNode; required?: boolean }) {
   return (
     <div>
-      <label className="flex items-center text-sm font-medium text-slate-700 mb-1">
+      <label className="flex items-center text-sm font-medium text-foreground mb-1">
         {label} {required && <span className="text-red-500 ml-0.5">*</span>}
         {tooltip && <Tooltip text={tooltip} />}
       </label>
@@ -398,7 +405,7 @@ function DataCleanupTab() {
       setDeleteModal({ open: false, item: null, relations: [], deleting: false });
       loadItems();
     } catch (err: any) {
-      alert('Ошибка удаления: ' + err.message);
+      showError('Ошибка удаления', err.message);
       setDeleteModal(prev => ({ ...prev, deleting: false }));
     }
   };
@@ -415,47 +422,48 @@ function DataCleanupTab() {
           { id: 'requests', label: 'Заявки' },
           { id: 'cmLots', label: 'Сырьё (CM)' },
         ].map(t => (
-          <button key={t.id} onClick={() => setDataType(t.id as any)} className={`px-4 py-2 rounded-lg ${dataType === t.id ? 'bg-red-600 text-white' : 'bg-slate-100 hover:bg-slate-200'}`}>{t.label}</button>
+          <button key={t.id} onClick={() => setDataType(t.id as any)} className={`px-4 py-2 rounded-lg ${dataType === t.id ? 'bg-red-600 text-white' : 'bg-muted hover:bg-muted'}`}>{t.label}</button>
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border p-6">
+      <Card><CardContent className="p-6">
         <h3 className="font-semibold mb-4">
           {dataType === 'requests' && `Заявки (${items.length})`}
           {dataType === 'cmLots' && `Партии сырья (${items.length})`}
         </h3>
-        
-        {loading ? <p className="text-slate-500">Загрузка...</p> : (
+
+        {loading ? <p className="text-muted-foreground">Загрузка...</p> : (
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
-                {dataType === 'requests' && <><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">ID</th><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Продукт</th><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Статус</th><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Создана</th></>}
-                {dataType === 'cmLots' && <><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">ID</th><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Продукт</th><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Статус</th><th className="px-4 py-2 text-left text-xs font-medium text-slate-500">Создана</th></>}
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500">Удалить</th>
+                {dataType === 'requests' && <><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">ID</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Продукт</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Статус</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Создана</th></>}
+                {dataType === 'cmLots' && <><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">ID</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Продукт</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Статус</th><th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Создана</th></>}
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground">Удалить</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {items.map((item, idx) => (
-                <tr key={idx} className="hover:bg-slate-50">
-                  {dataType === 'requests' && <><td className="px-4 py-2 font-mono">{item.request_id}</td><td className="px-4 py-2">{item.product_code || '-'}</td><td className="px-4 py-2"><span className={`px-2 py-0.5 rounded text-xs ${item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-slate-100'}`}>{item.status}</span></td><td className="px-4 py-2 text-sm">{item.created_at ? new Date(item.created_at).toLocaleDateString('ru-RU') : '-'}</td></>}
-                  {dataType === 'cmLots' && <><td className="px-4 py-2 font-mono">{item.cm_lot_id}</td><td className="px-4 py-2">{item.base_product_code}</td><td className="px-4 py-2"><span className={`px-2 py-0.5 rounded text-xs ${item.status === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-slate-100'}`}>{item.status}</span></td><td className="px-4 py-2 text-sm">{item.created_at ? new Date(item.created_at).toLocaleDateString('ru-RU') : '-'}</td></>}
+                <tr key={idx} className="hover:bg-muted/50">
+                  {dataType === 'requests' && <><td className="px-4 py-2 font-mono">{item.request_id}</td><td className="px-4 py-2">{item.product_code || '-'}</td><td className="px-4 py-2"><Badge variant={item.status === 'Completed' ? 'success' : 'muted'}>{item.status}</Badge></td><td className="px-4 py-2 text-sm">{item.created_at ? new Date(item.created_at).toLocaleDateString('ru-RU') : '-'}</td></>}
+                  {dataType === 'cmLots' && <><td className="px-4 py-2 font-mono">{item.cm_lot_id}</td><td className="px-4 py-2">{item.base_product_code}</td><td className="px-4 py-2"><Badge variant={item.status === 'Approved' ? 'success' : 'muted'}>{item.status}</Badge></td><td className="px-4 py-2 text-sm">{item.created_at ? new Date(item.created_at).toLocaleDateString('ru-RU') : '-'}</td></>}
                   <td className="px-4 py-2 text-center">
-                    <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-800 p-1"><Trash2 size={18}/></button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDeleteClick(item)}><Trash2 size={18}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-      </div>
+      </CardContent></Card>
 
       {/* Delete Confirmation Modal */}
-      {deleteModal.open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-            <h3 className="text-lg font-semibold text-red-600 mb-4">⚠️ Подтверждение удаления</h3>
+      <Dialog open={deleteModal.open} onOpenChange={(open) => { if (!open) setDeleteModal({ open: false, item: null, relations: [], deleting: false }); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">⚠️ Подтверждение удаления</DialogTitle>
+          </DialogHeader>
             <p className="mb-4">Вы собираетесь удалить: <strong className="font-mono">{(dataType as any) === 'products' ? deleteModal.item?.product_code : dataType === 'requests' ? deleteModal.item?.request_id : deleteModal.item?.cm_lot_id}</strong></p>
-            
+
             {deleteModal.relations.length > 0 ? (
               <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                 <p className="font-medium text-amber-800 mb-2">Найдены связанные записи:</p>
@@ -472,22 +480,21 @@ function DataCleanupTab() {
               <p className="mb-4 text-green-600">✓ Связанных записей не найдено.</p>
             )}
 
-            <div className="flex gap-2 mt-6">
+          <DialogFooter className="flex gap-2">
               {deleteModal.relations.length > 0 && (
-                <button onClick={() => confirmDelete(true)} disabled={deleteModal.deleting} className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50">
+                <Button variant="destructive" size="sm" onClick={() => confirmDelete(true)} disabled={deleteModal.deleting}>
                   {deleteModal.deleting ? 'Удаление...' : 'Удалить всё'}
-                </button>
+                </Button>
               )}
-              <button onClick={() => confirmDelete(false)} disabled={deleteModal.deleting} className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50">
+              <Button variant="warning" size="sm" onClick={() => confirmDelete(false)} disabled={deleteModal.deleting}>
                 {deleteModal.deleting ? 'Удаление...' : deleteModal.relations.length > 0 ? 'Только эту запись' : 'Удалить'}
-              </button>
-              <button onClick={() => setDeleteModal({ open: false, item: null, relations: [], deleting: false })} className="px-4 py-2 border rounded hover:bg-slate-100">
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setDeleteModal({ open: false, item: null, relations: [], deleting: false })}>
                 Отмена
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+              </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -728,7 +735,7 @@ export default function AdminPage() {
   }
 
   async function handleDelete(table: string, pkField: string, pkValue: string) {
-    if (!confirm('Архивировать запись? Запись можно будет восстановить из архива.')) return;
+    const ok = await showConfirm('Архивировать запись?', { description: 'Запись можно будет восстановить из архива.' }); if (!ok) return;
     // Soft-delete: set archived_at instead of deleting
     await (supabase.from(table as any) as any).update({ archived_at: new Date().toISOString() }).eq(pkField, pkValue);
     loadData();
@@ -779,38 +786,25 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Администрирование</h1>
+      <h1 className="text-2xl font-bold text-foreground">Администрирование</h1>
 
       {/* Tabs */}
-      <div className="border-b border-slate-200 overflow-x-auto">
-        <nav className="flex gap-2">
-          {[
-            { id: 'users', label: 'Пользователи' },
-            { id: 'cellTypes', label: 'Типы клеток' },
-            { id: 'products', label: 'Продукты' },
-            { id: 'packFormats', label: 'Форматы упаковки' },
-            { id: 'mediaManagement', label: 'Управление средами' },
-            { id: 'processMethods', label: 'Методы обработки' },
-            { id: 'qcTests', label: 'QC тесты' },
-            { id: 'infections', label: 'Инфекции' },
-            { id: 'dataCleanup', label: '🗑️ Управление данными' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => { setActiveTab(tab.id as Tab); setShowAddForm(false); setEditingId(null); }}
-              className={`px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap ${
-                activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-      </div>
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as Tab); setShowAddForm(false); setEditingId(null); }}>
+        <TabsList className="overflow-x-auto">
+          <TabsTrigger value="users">Пользователи</TabsTrigger>
+          <TabsTrigger value="cellTypes">Типы клеток</TabsTrigger>
+          <TabsTrigger value="products">Продукты</TabsTrigger>
+          <TabsTrigger value="packFormats">Форматы упаковки</TabsTrigger>
+          <TabsTrigger value="mediaManagement">Управление средами</TabsTrigger>
+          <TabsTrigger value="processMethods">Методы обработки</TabsTrigger>
+          <TabsTrigger value="qcTests">QC тесты</TabsTrigger>
+          <TabsTrigger value="infections">Инфекции</TabsTrigger>
+          <TabsTrigger value="dataCleanup">Управление данными</TabsTrigger>
+        </TabsList>
 
       {/* Users Tab */}
-      {activeTab === 'users' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+      <TabsContent value="users">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold flex items-center gap-2">
               <Users size={20} />
@@ -818,13 +812,13 @@ export default function AdminPage() {
             </h3>
           </div>
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Email" field="email" sort={sortUsers} onSort={toggleSortUsers} className="text-left" />
                 <SortableHeader label="ФИО" field="full_name" sort={sortUsers} onSort={toggleSortUsers} className="text-left" />
                 <SortableHeader label="Роль" field="role" sort={sortUsers} onSort={toggleSortUsers} className="text-left" />
                 <SortableHeader label="Активен" field="is_active" sort={sortUsers} onSort={toggleSortUsers} className="text-center" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -836,7 +830,7 @@ export default function AdminPage() {
                     <select
                       value={u.role}
                       onChange={(e) => updateUserRole(u.user_id, e.target.value)}
-                      className="px-2 py-1 border rounded text-sm"
+                      className="px-2 py-1 border border-input bg-background text-foreground rounded text-sm"
                     >
                       {['Production', 'QC', 'QA', 'Manager', 'Admin'].map(r => (
                         <option key={r} value={r}>{r}</option>
@@ -844,61 +838,60 @@ export default function AdminPage() {
                     </select>
                   </td>
                   <td className="px-4 py-2 text-center">
-                    <span className={`px-2 py-0.5 rounded text-xs ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    <Badge variant={u.is_active ? 'success' : 'destructive'}>
                       {u.is_active ? 'Да' : 'Нет'}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-4 py-2 text-center">
-                    <button
+                    <Button variant="link" size="sm"
                       onClick={() => toggleUserActive(u.user_id, u.is_active || false)}
-                      className="text-sm text-blue-600 hover:underline"
                     >
                       {u.is_active ? 'Деактивировать' : 'Активировать'}
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CardContent></Card>
+      </TabsContent>
 
       {/* Cell Types */}
-      {activeTab === 'cellTypes' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+      <TabsContent value="cellTypes">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold">Типы клеток ({cellTypes.length})</h3>
-            <button onClick={() => { setShowAddForm(true); setFormData({ cell_type_code: '', name: '', description: '', is_active: true }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setFormData({ cell_type_code: '', name: '', description: '', is_active: true }); }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
               <div className="grid grid-cols-3 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код типа клеток (например, MSC, Fibroblast)">
-                  <input value={formData.cell_type_code || ''} onChange={e => setFormData({...formData, cell_type_code: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.cell_type_code || ''} onChange={e => setFormData({...formData, cell_type_code: e.target.value})} />
                 </FormField>
                 <FormField label="Название" required tooltip="Полное наименование типа клеток">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </FormField>
                 <FormField label="Описание" tooltip="Дополнительная информация о типе клеток">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </FormField>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleSave('cell_type', 'cell_type_code', formData.cell_type_code, formData)} className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => handleSave('cell_type', 'cell_type_code', formData.cell_type_code, formData)}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="cell_type_code" sort={sortCellTypes} onSort={toggleSortCellTypes} className="text-left" />
                 <SortableHeader label="Название" field="name" sort={sortCellTypes} onSort={toggleSortCellTypes} className="text-left" />
                 <SortableHeader label="Описание" field="description" sort={sortCellTypes} onSort={toggleSortCellTypes} className="text-left" />
                 <SortableHeader label="Активен" field="is_active" sort={sortCellTypes} onSort={toggleSortCellTypes} className="text-center" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -906,76 +899,75 @@ export default function AdminPage() {
                 <tr key={ct.cell_type_code}>
                   <td className="px-4 py-2 font-mono">{ct.cell_type_code}</td>
                   <td className="px-4 py-2">{ct.name}</td>
-                  <td className="px-4 py-2 text-sm text-slate-500">{ct.description || '-'}</td>
+                  <td className="px-4 py-2 text-sm text-muted-foreground">{ct.description || '-'}</td>
                   <td className="px-4 py-2 text-center">{ct.is_active ? 'Да' : '-'}</td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button onClick={() => { setEditingId(ct.cell_type_code); setShowAddForm(true); setFormData({ ...ct }); }} className="text-blue-600 hover:text-blue-800"><Edit2 size={16}/></button>
-                    <button onClick={() => handleDelete('cell_type', 'cell_type_code', ct.cell_type_code)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingId(ct.cell_type_code); setShowAddForm(true); setFormData({ ...ct }); }}><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('cell_type', 'cell_type_code', ct.cell_type_code)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CardContent></Card>
+      </TabsContent>
 
       {/* Products - Enhanced Form */}
-      {activeTab === 'products' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+      <TabsContent value="products">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-4">
               <h3 className="font-semibold">Продукты ({products.filter(p => showArchivedProducts || !p.archived_at).length})</h3>
-              <label className="flex items-center gap-2 text-sm text-slate-600">
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
                 <input type="checkbox" checked={showArchivedProducts} onChange={e => setShowArchivedProducts(e.target.checked)} className="rounded" />
                 Показать архив
               </label>
             </div>
-            <button onClick={() => { 
-              setShowAddForm(true); 
+            <Button variant="default" size="sm" onClick={() => {
+              setShowAddForm(true);
               setEditingId(null);
-              setFormData({ 
-                product_code: '', 
-                product_name: '', 
-                product_type: 'BaseBulk', 
-                shelf_life_days_default: 365, 
-                media_spec_id: '', 
-                default_primary_qc: [], 
+              setFormData({
+                product_code: '',
+                product_name: '',
+                product_type: 'BaseBulk',
+                shelf_life_days_default: 365,
+                media_spec_id: '',
+                default_primary_qc: [],
                 default_raw_processing: [],
-                default_postprocess_methods: [], 
-                default_product_qc: [], 
-                is_active: true 
-              }); 
-            }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+                default_postprocess_methods: [],
+                default_product_qc: [],
+                is_active: true
+              });
+            }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-6">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-6">
               {/* Основные поля */}
               <div className="grid grid-cols-5 gap-4">
                 <FormField label="Код продукта" required tooltip="Уникальный код для идентификации продукта">
-                  <input 
-                    value={formData.product_code || ''} 
-                    onChange={e => setFormData({...formData, product_code: e.target.value})} 
-                    className="w-full px-3 py-2 border rounded"
+                  <Input
+                    value={formData.product_code || ''}
+                    onChange={e => setFormData({...formData, product_code: e.target.value})}
                     disabled={!!editingId}
                   />
                 </FormField>
                 <FormField label="Название" required tooltip="Полное наименование продукта">
-                  <input value={formData.product_name || ''} onChange={e => setFormData({...formData, product_name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.product_name || ''} onChange={e => setFormData({...formData, product_name: e.target.value})} />
                 </FormField>
                 <FormField label="Тип" required tooltip="Сток - промежуточное сырье, Продукт - готовая продукция">
-                  <select value={formData.product_type || 'BaseBulk'} onChange={e => setFormData({...formData, product_type: e.target.value})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.product_type || 'BaseBulk'} onChange={e => setFormData({...formData, product_type: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="BaseBulk">Сток</option>
                     <option value="Finished">Продукт</option>
                   </select>
                 </FormField>
                 <FormField label="Срок годности (дней)" tooltip="Стандартный срок годности после QA одобрения">
-                  <input type="number" value={formData.shelf_life_days_default || ''} onChange={e => setFormData({...formData, shelf_life_days_default: Number(e.target.value)})} className="w-full px-3 py-2 border rounded" />
+                  <Input type="number" value={formData.shelf_life_days_default || ''} onChange={e => setFormData({...formData, shelf_life_days_default: Number(e.target.value)})} />
                 </FormField>
                 <FormField label="Спецификация среды" tooltip="Требования к культуральной среде">
-                  <select value={formData.media_spec_id || ''} onChange={e => setFormData({...formData, media_spec_id: e.target.value || null})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.media_spec_id || ''} onChange={e => setFormData({...formData, media_spec_id: e.target.value || null})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="">Не выбрана</option>
                     {mediaSpecs.map(ms => (
                         <option key={ms.media_spec_id} value={ms.media_spec_id}>
@@ -995,15 +987,15 @@ export default function AdminPage() {
                       })
                       .filter(Boolean);
                     return (
-                      <div className="mt-2 p-3 bg-slate-50 rounded border text-xs space-y-1">
-                        <div className="font-medium text-slate-700">📋 Детали спецификации:</div>
-                        <div><span className="text-slate-500">Базовая среда:</span> {bm?.name || bm?.code || '-'}</div>
-                        <div><span className="text-slate-500">Класс сыворотки:</span> {selectedSpec.serum_class}</div>
-                        <div><span className="text-slate-500">Феноловый красный:</span> {selectedSpec.phenol_red_flag ? '✅ Да' : '❌ Нет'}</div>
+                      <div className="mt-2 p-3 bg-muted rounded border text-xs space-y-1">
+                        <div className="font-medium text-foreground">📋 Детали спецификации:</div>
+                        <div><span className="text-muted-foreground">Базовая среда:</span> {bm?.name || bm?.code || '-'}</div>
+                        <div><span className="text-muted-foreground">Класс сыворотки:</span> {selectedSpec.serum_class}</div>
+                        <div><span className="text-muted-foreground">Феноловый красный:</span> {selectedSpec.phenol_red_flag ? '✅ Да' : '❌ Нет'}</div>
                         {linkedAdditives.length > 0 && (
-                          <div><span className="text-slate-500">Добавки:</span> {linkedAdditives.join(', ')}</div>
+                          <div><span className="text-muted-foreground">Добавки:</span> {linkedAdditives.join(', ')}</div>
                         )}
-                        {selectedSpec.notes && <div><span className="text-slate-500">Примечания:</span> {selectedSpec.notes}</div>}
+                        {selectedSpec.notes && <div><span className="text-muted-foreground">Примечания:</span> {selectedSpec.notes}</div>}
                       </div>
                     );
                   })()}
@@ -1013,7 +1005,7 @@ export default function AdminPage() {
               {/* Дополнительные поля */}
               <div className="grid grid-cols-3 gap-4">
                 <FormField label="Формат упаковки по умолчанию" tooltip="Если выбран - фиксируется на всех циклах">
-                  <select value={formData.default_pack_format_code || ''} onChange={e => setFormData({...formData, default_pack_format_code: e.target.value || null})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.default_pack_format_code || ''} onChange={e => setFormData({...formData, default_pack_format_code: e.target.value || null})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="">Не выбран (менеджер выбирает)</option>
                     {packFormats.map(pf => (
                       <option key={pf.pack_format_code} value={pf.pack_format_code}>{pf.name} ({pf.nominal_fill_volume_ml} мл)</option>
@@ -1021,10 +1013,10 @@ export default function AdminPage() {
                   </select>
                 </FormField>
                 <FormField label="Описание" tooltip="Краткое описание продукта">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </FormField>
                 <FormField label="Механизм действия" tooltip="Описание механизма действия продукта">
-                  <input value={formData.mechanism_of_action || ''} onChange={e => setFormData({...formData, mechanism_of_action: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.mechanism_of_action || ''} onChange={e => setFormData({...formData, mechanism_of_action: e.target.value})} />
                 </FormField>
               </div>
               
@@ -1041,7 +1033,7 @@ export default function AdminPage() {
                     const isSelected = (formData.default_primary_qc || []).some((t: any) => t.code === test.code);
                     const selectedTest = (formData.default_primary_qc || []).find((t: any) => t.code === test.code);
                     return (
-                      <div key={test.code} className={`p-3 rounded border ${isSelected ? 'bg-white border-blue-300' : 'bg-slate-50 border-slate-200'}`}>
+                      <div key={test.code} className={`p-3 rounded border ${isSelected ? 'bg-card border-blue-300' : 'bg-muted border-border'}`}>
                         <div className="flex items-start gap-3">
                           <input
                             type="checkbox"
@@ -1066,9 +1058,9 @@ export default function AdminPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{test.name}</span>
-                              <span className="text-xs text-slate-500">({test.code})</span>
+                              <span className="text-xs text-muted-foreground">({test.code})</span>
                             </div>
-                            <div className="text-xs text-slate-600 mt-1 grid grid-cols-4 gap-2">
+                            <div className="text-xs text-muted-foreground mt-1 grid grid-cols-4 gap-2">
                               <span>Ед.: <strong>{test.unit || '-'}</strong></span>
                               <span>Мин: <strong>{test.norm_min || '-'}</strong></span>
                               <span>Макс: <strong>{test.norm_max || '-'}</strong></span>
@@ -1104,7 +1096,7 @@ export default function AdminPage() {
                               order: arr.length + 1
                             }]});
                           }}
-                          className="w-full text-left px-3 py-2 bg-white border rounded hover:bg-purple-100 text-sm flex items-center justify-between"
+                          className="w-full text-left px-3 py-2 bg-card border rounded hover:bg-purple-100 text-sm flex items-center justify-between"
                         >
                           <span>{pm.name}</span>
                           <Plus size={14} className="text-purple-600" />
@@ -1116,19 +1108,19 @@ export default function AdminPage() {
                     <p className="text-sm text-purple-700 mb-2">Выбранные (в порядке выполнения):</p>
                     <div className="space-y-1">
                       {(formData.default_raw_processing || []).map((m: any, i: number) => (
-                        <div key={m.method_id} className="flex items-center gap-2 px-3 py-2 bg-white border rounded">
+                        <div key={m.method_id} className="flex items-center gap-2 px-3 py-2 bg-card border rounded">
                           <div className="flex flex-col">
                             <button 
                               onClick={() => moveRawMethod(i, 'up')} 
                               disabled={i === 0}
-                              className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              className="text-muted-foreground hover:text-muted-foreground disabled:opacity-30"
                             >
                               <GripVertical size={12} />
                             </button>
                             <button 
                               onClick={() => moveRawMethod(i, 'down')} 
                               disabled={i === (formData.default_raw_processing || []).length - 1}
-                              className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              className="text-muted-foreground hover:text-muted-foreground disabled:opacity-30"
                             >
                               <GripVertical size={12} />
                             </button>
@@ -1144,9 +1136,9 @@ export default function AdminPage() {
                               arr[i] = { ...arr[i], cycles: Number(e.target.value) };
                               setFormData({...formData, default_raw_processing: arr});
                             }}
-                            className="w-12 px-1 py-0.5 border rounded text-center text-sm"
+                            className="w-12 px-1 py-0.5 border border-input bg-background text-foreground rounded text-center text-sm"
                           />
-                          <span className="text-xs text-slate-500">цикл.</span>
+                          <span className="text-xs text-muted-foreground">цикл.</span>
                           <button
                             onClick={() => {
                               const arr = formData.default_raw_processing.filter((_: any, idx: number) => idx !== i);
@@ -1160,7 +1152,7 @@ export default function AdminPage() {
                         </div>
                       ))}
                       {(formData.default_raw_processing || []).length === 0 && (
-                        <p className="text-sm text-slate-400 italic">Нет выбранных методов</p>
+                        <p className="text-sm text-muted-foreground italic">Нет выбранных методов</p>
                       )}
                     </div>
                   </div>
@@ -1193,7 +1185,7 @@ export default function AdminPage() {
                               order: arr.length + 1
                             }]});
                           }}
-                          className="w-full text-left px-3 py-2 bg-white border rounded hover:bg-amber-100 text-sm flex items-center justify-between"
+                          className="w-full text-left px-3 py-2 bg-card border rounded hover:bg-amber-100 text-sm flex items-center justify-between"
                         >
                           <span>{pm.name}</span>
                           <Plus size={14} className="text-amber-600" />
@@ -1206,19 +1198,19 @@ export default function AdminPage() {
                     <p className="text-sm text-amber-700 mb-2">Выбранные (в порядке выполнения):</p>
                     <div className="space-y-1">
                       {(formData.default_postprocess_methods || []).map((m: any, i: number) => (
-                        <div key={m.method_id} className="flex items-center gap-2 px-3 py-2 bg-white border rounded">
+                        <div key={m.method_id} className="flex items-center gap-2 px-3 py-2 bg-card border rounded">
                           <div className="flex flex-col">
                             <button 
                               onClick={() => moveMethod(i, 'up')} 
                               disabled={i === 0}
-                              className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              className="text-muted-foreground hover:text-muted-foreground disabled:opacity-30"
                             >
                               <GripVertical size={12} />
                             </button>
                             <button 
                               onClick={() => moveMethod(i, 'down')} 
                               disabled={i === (formData.default_postprocess_methods || []).length - 1}
-                              className="text-slate-400 hover:text-slate-600 disabled:opacity-30"
+                              className="text-muted-foreground hover:text-muted-foreground disabled:opacity-30"
                             >
                               <GripVertical size={12} />
                             </button>
@@ -1234,9 +1226,9 @@ export default function AdminPage() {
                               arr[i] = { ...arr[i], cycles: Number(e.target.value) };
                               setFormData({...formData, default_postprocess_methods: arr});
                             }}
-                            className="w-12 px-1 py-0.5 border rounded text-center text-sm"
+                            className="w-12 px-1 py-0.5 border border-input bg-background text-foreground rounded text-center text-sm"
                           />
-                          <span className="text-xs text-slate-500">цикл.</span>
+                          <span className="text-xs text-muted-foreground">цикл.</span>
                           <button
                             onClick={() => {
                               const arr = formData.default_postprocess_methods.filter((_: any, idx: number) => idx !== i);
@@ -1250,7 +1242,7 @@ export default function AdminPage() {
                         </div>
                       ))}
                       {(formData.default_postprocess_methods || []).length === 0 && (
-                        <p className="text-sm text-slate-400 italic">Нет выбранных методов</p>
+                        <p className="text-sm text-muted-foreground italic">Нет выбранных методов</p>
                       )}
                     </div>
                   </div>
@@ -1268,7 +1260,7 @@ export default function AdminPage() {
                     const isSelected = (formData.default_product_qc || []).some((t: any) => t.code === test.code);
                     const selectedTest = (formData.default_product_qc || []).find((t: any) => t.code === test.code);
                     return (
-                      <div key={test.code} className={`p-3 rounded border ${isSelected ? 'bg-white border-green-300' : 'bg-slate-50 border-slate-200'}`}>
+                      <div key={test.code} className={`p-3 rounded border ${isSelected ? 'bg-card border-green-300' : 'bg-muted border-border'}`}>
                         <div className="flex items-start gap-3">
                           <input
                             type="checkbox"
@@ -1294,9 +1286,9 @@ export default function AdminPage() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <span className="font-medium">{test.name}</span>
-                              <span className="text-xs text-slate-500">({test.code})</span>
+                              <span className="text-xs text-muted-foreground">({test.code})</span>
                             </div>
-                            <div className="text-xs text-slate-600 mt-1 grid grid-cols-4 gap-2">
+                            <div className="text-xs text-muted-foreground mt-1 grid grid-cols-4 gap-2">
                               <span>Ед.: <strong>{test.unit || '-'}</strong></span>
                               <span>Мин: <strong>{test.norm_min || '-'}</strong></span>
                               <span>Макс: <strong>{test.norm_max || '-'}</strong></span>
@@ -1318,7 +1310,7 @@ export default function AdminPage() {
                                       setFormData({...formData, default_product_qc: arr});
                                     }
                                   }}
-                                  className="w-20 px-2 py-1 border rounded text-sm"
+                                  className="w-20 px-2 py-1 border border-input bg-background text-foreground rounded text-sm"
                                 />
                               </div>
                             )}
@@ -1332,24 +1324,24 @@ export default function AdminPage() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={() => { handleSave('product', 'product_code', formData.product_code, formData); }} className="px-4 py-2 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }} className="px-4 py-2 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => { handleSave('product', 'product_code', formData.product_code, formData); }}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }}>Отмена</Button>
               </div>
             </div>
           )}
           
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="product_code" sort={sortProducts} onSort={toggleSortProducts} className="text-left" />
                 <SortableHeader label="Название" field="product_name" sort={sortProducts} onSort={toggleSortProducts} className="text-left" />
                 <SortableHeader label="Тип" field="product_type" sort={sortProducts} onSort={toggleSortProducts} className="text-left" />
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Спец. среды</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">QC первичн.</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Проц. сырья</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Постпроц.</th>
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">QC продукт</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Спец. среды</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">QC первичн.</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Проц. сырья</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Постпроц.</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">QC продукт</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -1358,11 +1350,11 @@ export default function AdminPage() {
                   <td className="px-4 py-2 font-mono">{p.product_code}</td>
                   <td className="px-4 py-2">{p.product_name}</td>
                   <td className="px-4 py-2 text-sm">
-                    <span className={`px-2 py-0.5 rounded text-xs ${p.product_type === 'BaseBulk' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                    <Badge variant={p.product_type === 'BaseBulk' ? 'info' : 'success'}>
                       {PRODUCT_TYPE_LABELS[p.product_type] || p.product_type}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="px-4 py-2 text-xs text-slate-600">
+                  <td className="px-4 py-2 text-xs text-muted-foreground">
                     {p.media_spec_id ? (mediaSpecs.find(m => m.media_spec_id === p.media_spec_id)?.name || '-') : '-'}
                   </td>
                   <td className="px-4 py-2 text-xs">
@@ -1386,69 +1378,67 @@ export default function AdminPage() {
                       : '-'}
                   </td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button 
-                      onClick={() => { 
-                        setEditingId(p.product_code); 
-                        setShowAddForm(true); 
-                        setFormData({ 
-                          ...p, 
+                    <Button variant="ghost" size="icon"
+                      onClick={() => {
+                        setEditingId(p.product_code);
+                        setShowAddForm(true);
+                        setFormData({
+                          ...p,
                           default_primary_qc: p.default_primary_qc || [],
                           default_raw_processing: (p as any).default_raw_processing || [],
                           default_postprocess_methods: p.default_postprocess_methods || [],
                           default_product_qc: p.default_product_qc || []
-                        }); 
-                      }} 
-                      className="text-blue-600 hover:text-blue-800"
+                        });
+                      }}
                       title="Редактировать"
                     >
                       <Edit2 size={16}/>
-                    </button>
-                    <button 
-                      onClick={() => generateSDSPdf(p, mediaSpecs, sdsComponents)} 
-                      className="text-green-600 hover:text-green-800"
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-800"
+                      onClick={() => generateSDSPdf(p, mediaSpecs, sdsComponents)}
                       title="Скачать SDS"
                     >
                       <FileText size={16}/>
-                    </button>
+                    </Button>
                     {p.archived_at ? (
-                      <button onClick={() => handleRestore('product', 'product_code', p.product_code)} className="text-green-600 hover:text-green-800" title="Восстановить">Восстановить</button>
+                      <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-800" onClick={() => handleRestore('product', 'product_code', p.product_code)} title="Восстановить">Восстановить</Button>
                     ) : (
-                      <button onClick={() => handleDelete('product', 'product_code', p.product_code)} className="text-red-600 hover:text-red-800" title="Архивировать"><Trash2 size={16}/></button>
+                      <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('product', 'product_code', p.product_code)} title="Архивировать"><Trash2 size={16}/></Button>
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CardContent></Card>
+      </TabsContent>
 
       {/* Pack Formats */}
-      {activeTab === 'packFormats' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+      <TabsContent value="packFormats">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold">Форматы упаковки ({packFormats.length})</h3>
-            <button onClick={() => { setShowAddForm(true); setFormData({ pack_format_code: '', name: '', nominal_fill_volume_ml: 1, container_type: 'Vial', purpose: '', is_active: true }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setFormData({ pack_format_code: '', name: '', nominal_fill_volume_ml: 1, container_type: 'Vial', purpose: '', is_active: true }); }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
               <div className="grid grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код формата (например, V4, V10, B250)">
-                  <input value={formData.pack_format_code || ''} onChange={e => setFormData({...formData, pack_format_code: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.pack_format_code || ''} onChange={e => setFormData({...formData, pack_format_code: e.target.value})} />
                 </FormField>
                 <FormField label="Название" required tooltip="Описательное название формата">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </FormField>
                 <FormField label="Объем (мл)" required tooltip="Номинальный объем заполнения">
-                  <input type="number" step="0.1" value={formData.nominal_fill_volume_ml || ''} onChange={e => setFormData({...formData, nominal_fill_volume_ml: Number(e.target.value)})} className="w-full px-3 py-2 border rounded" />
+                  <Input type="number" step="0.1" value={formData.nominal_fill_volume_ml || ''} onChange={e => setFormData({...formData, nominal_fill_volume_ml: Number(e.target.value)})} />
                 </FormField>
                 <FormField label="Тип контейнера" tooltip="Тип физического контейнера">
-                  <input value={formData.container_type || ''} onChange={e => setFormData({...formData, container_type: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.container_type || ''} onChange={e => setFormData({...formData, container_type: e.target.value})} />
                 </FormField>
                 <FormField label="Назначение" required tooltip="Сырьё / Продукт">
-                  <select value={formData.purpose || ''} onChange={e => setFormData({...formData, purpose: e.target.value})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.purpose || ''} onChange={e => setFormData({...formData, purpose: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="">Выберите</option>
                     <option value="raw">Сырьё</option>
                     <option value="product">Продукт</option>
@@ -1456,13 +1446,13 @@ export default function AdminPage() {
                 </FormField>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleSave('pack_format', 'pack_format_code', formData.pack_format_code, formData)} className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => handleSave('pack_format', 'pack_format_code', formData.pack_format_code, formData)}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="pack_format_code" sort={sortPackFormats} onSort={toggleSortPackFormats} className="text-left" />
                 <SortableHeader label="Название" field="name" sort={sortPackFormats} onSort={toggleSortPackFormats} className="text-left" />
@@ -1470,7 +1460,7 @@ export default function AdminPage() {
                 <SortableHeader label="Тип контейнера" field="container_type" sort={sortPackFormats} onSort={toggleSortPackFormats} className="text-left" />
                 <SortableHeader label="Назначение" field="purpose" sort={sortPackFormats} onSort={toggleSortPackFormats} className="text-left" />
                 <SortableHeader label="Активен" field="is_active" sort={sortPackFormats} onSort={toggleSortPackFormats} className="text-center" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -1483,18 +1473,18 @@ export default function AdminPage() {
                   <td className="px-4 py-2 text-sm">{(pf as any).purpose === 'raw' ? 'Сырьё' : (pf as any).purpose === 'product' ? 'Продукт' : '-'}</td>
                   <td className="px-4 py-2 text-center">{pf.is_active ? 'Да' : '-'}</td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button onClick={() => { setEditingId(pf.pack_format_code); setShowAddForm(true); setFormData({ ...pf }); }} className="text-blue-600 hover:text-blue-800"><Edit2 size={16}/></button>
-                    <button onClick={() => handleDelete('pack_format', 'pack_format_code', pf.pack_format_code)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingId(pf.pack_format_code); setShowAddForm(true); setFormData({ ...pf }); }}><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('pack_format', 'pack_format_code', pf.pack_format_code)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CardContent></Card>
+      </TabsContent>
 
       {/* Media Management Section */}
-      {activeTab === 'mediaManagement' && (
+      <TabsContent value="mediaManagement">
         <div className="space-y-4">
           {/* Sub-tabs */}
           <div className="flex gap-2 border-b pb-2">
@@ -1507,7 +1497,7 @@ export default function AdminPage() {
                 key={st.id}
                 onClick={() => { setMediaSubTab(st.id as MediaSubTab); setShowAddForm(false); setEditingId(null); }}
                 className={`px-4 py-2 text-sm rounded-t ${
-                  mediaSubTab === st.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  mediaSubTab === st.id ? 'bg-blue-600 text-white' : 'bg-muted text-muted-foreground hover:bg-muted'
                 }`}
               >
                 {st.label}
@@ -1517,24 +1507,24 @@ export default function AdminPage() {
 
           {/* Base Media Sub-tab */}
           {mediaSubTab === 'baseMedia' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold flex items-center gap-2">
               <Beaker size={20} />
               Базовые среды ({baseMediaList.length})
             </h3>
-            <button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', phenol_red_flag: true, description: '', is_active: true }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', phenol_red_flag: true, description: '', is_active: true }); }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
               <div className="grid grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код среды (DMEM-HG, RPMI, etc.)">
-                  <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full px-3 py-2 border rounded" disabled={!!editingId} />
+                  <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
                 <FormField label="Название" required tooltip="Полное название среды">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </FormField>
                 <FormField label="Фенол. красный" tooltip="Содержит ли среда индикатор pH">
                   <label className="flex items-center gap-2 px-3 py-2">
@@ -1543,23 +1533,23 @@ export default function AdminPage() {
                   </label>
                 </FormField>
                 <FormField label="Описание" tooltip="Дополнительная информация">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </FormField>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleSave('base_media', 'base_media_id', editingId || crypto.randomUUID(), formData)} className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => handleSave('base_media', 'base_media_id', editingId || crypto.randomUUID(), formData)}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="code" sort={sortBaseMedia} onSort={toggleSortBaseMedia} className="text-left" />
                 <SortableHeader label="Название" field="name" sort={sortBaseMedia} onSort={toggleSortBaseMedia} className="text-left" />
                 <SortableHeader label="Фенол. красный" field="phenol_red_flag" sort={sortBaseMedia} onSort={toggleSortBaseMedia} className="text-center" />
                 <SortableHeader label="Описание" field="description" sort={sortBaseMedia} onSort={toggleSortBaseMedia} className="text-left" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -1568,9 +1558,9 @@ export default function AdminPage() {
                   <td className="px-4 py-2 font-mono">{bm.code}</td>
                   <td className="px-4 py-2">{bm.name}</td>
                   <td className="px-4 py-2 text-center">{bm.phenol_red_flag ? 'Да' : 'Нет'}</td>
-                  <td className="px-4 py-2 text-sm text-slate-500">{bm.description || '-'}</td>
+                  <td className="px-4 py-2 text-sm text-muted-foreground">{bm.description || '-'}</td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button 
+                    <Button variant="ghost" size="icon" className="text-purple-600 hover:text-purple-800"
                       onClick={async () => {
                         const existingSds = sdsComponents.find((s: any) => s.sds_component_id === (bm as any).sds_component_id);
                         setSdsModal({
@@ -1580,48 +1570,47 @@ export default function AdminPage() {
                           entityName: bm.name,
                           sdsData: existingSds || {}
                         });
-                      }} 
-                      className="text-purple-600 hover:text-purple-800" 
+                      }}
                       title="SDS"
                     >
                       <FileText size={16}/>
-                    </button>
-                    <button onClick={() => { setEditingId(bm.base_media_id); setShowAddForm(true); setFormData({ ...bm }); }} className="text-blue-600 hover:text-blue-800"><Edit2 size={16}/></button>
-                    <button onClick={() => handleDelete('base_media', 'base_media_id', bm.base_media_id)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingId(bm.base_media_id); setShowAddForm(true); setFormData({ ...bm }); }}><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('base_media', 'base_media_id', bm.base_media_id)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </CardContent></Card>
           )}
 
           {/* Additives Sub-tab */}
           {mediaSubTab === 'additives' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold flex items-center gap-2">
               <FlaskConical size={20} />
               Добавки к среде ({mediaAdditives.length})
             </h3>
-            <button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', default_concentration: null, unit: '%', additive_type: 'supplement', description: '', is_active: true }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', default_concentration: null, unit: '%', additive_type: 'supplement', description: '', is_active: true }); }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
               <div className="grid grid-cols-6 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код добавки">
-                  <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full px-3 py-2 border rounded" disabled={!!editingId} />
+                  <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
                 <FormField label="Название" required tooltip="Полное название добавки">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </FormField>
                 <FormField label="Концентр. по умолч." tooltip="Стандартная концентрация">
-                  <input type="number" step="0.01" value={formData.default_concentration ?? ''} onChange={e => setFormData({...formData, default_concentration: e.target.value ? Number(e.target.value) : null})} className="w-full px-3 py-2 border rounded" />
+                  <Input type="number" step="0.01" value={formData.default_concentration ?? ''} onChange={e => setFormData({...formData, default_concentration: e.target.value ? Number(e.target.value) : null})} />
                 </FormField>
                 <FormField label="Ед. изм." tooltip="Единица измерения">
-                  <select value={formData.unit || '%'} onChange={e => setFormData({...formData, unit: e.target.value})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.unit || '%'} onChange={e => setFormData({...formData, unit: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="%">%</option>
                     <option value="mM">mM</option>
                     <option value="ug/mL">ug/mL</option>
@@ -1629,7 +1618,7 @@ export default function AdminPage() {
                   </select>
                 </FormField>
                 <FormField label="Тип" tooltip="Категория добавки">
-                  <select value={formData.additive_type || 'supplement'} onChange={e => setFormData({...formData, additive_type: e.target.value})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.additive_type || 'supplement'} onChange={e => setFormData({...formData, additive_type: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="serum">Сыворотка</option>
                     <option value="supplement">Добавка</option>
                     <option value="antibiotic">Антибиотик</option>
@@ -1637,24 +1626,24 @@ export default function AdminPage() {
                   </select>
                 </FormField>
                 <FormField label="Описание" tooltip="Дополнительная информация">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </FormField>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleSave('media_additive', 'additive_id', editingId || crypto.randomUUID(), formData)} className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => handleSave('media_additive', 'additive_id', editingId || crypto.randomUUID(), formData)}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="code" sort={sortAdditives} onSort={toggleSortAdditives} className="text-left" />
                 <SortableHeader label="Название" field="name" sort={sortAdditives} onSort={toggleSortAdditives} className="text-left" />
                 <SortableHeader label="Концентр." field="default_concentration" sort={sortAdditives} onSort={toggleSortAdditives} className="text-right" />
                 <SortableHeader label="Ед." field="unit" sort={sortAdditives} onSort={toggleSortAdditives} className="text-left" />
                 <SortableHeader label="Тип" field="additive_type" sort={sortAdditives} onSort={toggleSortAdditives} className="text-left" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -1665,19 +1654,19 @@ export default function AdminPage() {
                   <td className="px-4 py-2 text-right">{ma.default_concentration ?? '-'}</td>
                   <td className="px-4 py-2 text-sm">{ma.unit}</td>
                   <td className="px-4 py-2 text-sm">
-                    <span className={`px-2 py-0.5 rounded text-xs ${
-                      ma.additive_type === 'serum' ? 'bg-amber-100 text-amber-800' :
-                      ma.additive_type === 'antibiotic' ? 'bg-red-100 text-red-800' :
-                      ma.additive_type === 'growth_factor' ? 'bg-purple-100 text-purple-800' :
-                      'bg-blue-100 text-blue-800'
-                    }`}>
-                      {ma.additive_type === 'serum' ? 'Сыворотка' : 
-                       ma.additive_type === 'antibiotic' ? 'Антибиотик' : 
+                    <Badge variant={
+                      ma.additive_type === 'serum' ? 'warning' :
+                      ma.additive_type === 'antibiotic' ? 'destructive' :
+                      ma.additive_type === 'growth_factor' ? 'secondary' :
+                      'info'
+                    }>
+                      {ma.additive_type === 'serum' ? 'Сыворотка' :
+                       ma.additive_type === 'antibiotic' ? 'Антибиотик' :
                        ma.additive_type === 'growth_factor' ? 'Фактор роста' : 'Добавка'}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button 
+                    <Button variant="ghost" size="icon" className="text-purple-600 hover:text-purple-800"
                       onClick={async () => {
                         const existingSds = sdsComponents.find((s: any) => s.sds_component_id === (ma as any).sds_component_id);
                         setSdsModal({
@@ -1687,33 +1676,32 @@ export default function AdminPage() {
                           entityName: ma.name,
                           sdsData: existingSds || {}
                         });
-                      }} 
-                      className="text-purple-600 hover:text-purple-800" 
+                      }}
                       title="SDS"
                     >
                       <FileText size={16}/>
-                    </button>
-                    <button onClick={() => { setEditingId(ma.additive_id); setShowAddForm(true); setFormData({ ...ma }); }} className="text-blue-600 hover:text-blue-800"><Edit2 size={16}/></button>
-                    <button onClick={() => handleDelete('media_additive', 'additive_id', ma.additive_id)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingId(ma.additive_id); setShowAddForm(true); setFormData({ ...ma }); }}><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('media_additive', 'additive_id', ma.additive_id)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </CardContent></Card>
           )}
 
           {/* Specs Sub-tab */}
           {mediaSubTab === 'specs' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold">Спецификации среды ({mediaSpecs.length})</h3>
-            <button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ name: '', description: '', serum_class: 'SerumFree', phenol_red_flag: false, notes: '', base_media_id: '', additives: [] }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ name: '', description: '', serum_class: 'SerumFree', phenol_red_flag: false, notes: '', base_media_id: '', additives: [] }); }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-4">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-4">
               <div className="grid grid-cols-4 gap-3">
                 <FormField label="Базовая среда" required tooltip="Выберите базовую культуральную среду">
                   <select 
@@ -1726,7 +1714,7 @@ export default function AdminPage() {
                         phenol_red_flag: bm?.phenol_red_flag ?? formData.phenol_red_flag
                       });
                     }} 
-                    className="w-full px-3 py-2 border rounded"
+                    className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg"
                   >
                     <option value="">Выберите среду</option>
                     {baseMediaList.filter(b => b.is_active).map(bm => (
@@ -1735,20 +1723,20 @@ export default function AdminPage() {
                   </select>
                 </FormField>
                 <FormField label="Название" required tooltip="Название спецификации среды">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" placeholder="Например: DMEM + 10% FBS" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Например: DMEM + 10% FBS" />
                 </FormField>
                 <FormField label="Описание" tooltip="Краткое описание спецификации">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" placeholder="Описание назначения" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Описание назначения" />
                 </FormField>
                 <FormField label="Класс сыворотки" tooltip="Тип сыворотки в среде">
-                  <select value={formData.serum_class || 'SerumFree'} onChange={e => setFormData({...formData, serum_class: e.target.value})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.serum_class || 'SerumFree'} onChange={e => setFormData({...formData, serum_class: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="SerumFree">SerumFree</option>
                     <option value="FBS">FBS</option>
                     <option value="PRP">PRP</option>
                   </select>
                 </FormField>
                 <FormField label="Примечания" tooltip="Дополнительная информация">
-                  <input value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.notes || ''} onChange={e => setFormData({...formData, notes: e.target.value})} />
                 </FormField>
               </div>
 
@@ -1764,7 +1752,7 @@ export default function AdminPage() {
                     const selectedAdditive = (formData.additives || []).find((a: any) => a.additive_id === additive.additive_id);
                     const isSelected = !!selectedAdditive;
                     return (
-                      <div key={additive.additive_id} className={`p-3 rounded border ${isSelected ? 'bg-white border-teal-300' : 'bg-slate-50 border-slate-200'}`}>
+                      <div key={additive.additive_id} className={`p-3 rounded border ${isSelected ? 'bg-card border-teal-300' : 'bg-muted border-border'}`}>
                         <div className="flex items-center gap-3">
                           <input
                             type="checkbox"
@@ -1793,7 +1781,7 @@ export default function AdminPage() {
                           />
                           <div className="flex-1">
                             <span className="font-medium">{additive.name}</span>
-                            <span className="text-xs text-slate-500 ml-2">({additive.code})</span>
+                            <span className="text-xs text-muted-foreground ml-2">({additive.code})</span>
                           </div>
                           {isSelected && (
                             <div className="flex items-center gap-2">
@@ -1809,10 +1797,10 @@ export default function AdminPage() {
                                     setFormData({...formData, additives: arr});
                                   }
                                 }}
-                                className="w-20 px-2 py-1 border rounded text-sm"
+                                className="w-20 px-2 py-1 border border-input bg-background text-foreground rounded text-sm"
                                 placeholder="Конц."
                               />
-                              <span className="text-sm text-slate-600">{additive.unit}</span>
+                              <span className="text-sm text-muted-foreground">{additive.unit}</span>
                             </div>
                           )}
                         </div>
@@ -1823,7 +1811,7 @@ export default function AdminPage() {
               </div>
 
               <div className="flex gap-2">
-                <button 
+                <Button variant="success" size="sm"
                   onClick={async () => {
                     const specId = editingId || crypto.randomUUID();
                     // Save spec
@@ -1856,24 +1844,23 @@ export default function AdminPage() {
                     setShowAddForm(false);
                     setFormData({});
                     loadData();
-                  }} 
-                  className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"
+                  }}
                 >
                   <Save size={14}/> Сохранить
-                </button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Название" field="name" sort={sortMediaSpecs} onSort={toggleSortMediaSpecs} className="text-left" />
-                <th className="px-4 py-2 text-left text-xs font-medium text-slate-500 uppercase">Формула среды</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground uppercase">Формула среды</th>
                 <SortableHeader label="Класс сыворотки" field="serum_class" sort={sortMediaSpecs} onSort={toggleSortMediaSpecs} className="text-left" />
                 <SortableHeader label="Фенол" field="phenol_red_flag" sort={sortMediaSpecs} onSort={toggleSortMediaSpecs} className="text-center" />
                 <SortableHeader label="Примечания" field="notes" sort={sortMediaSpecs} onSort={toggleSortMediaSpecs} className="text-left" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -1889,19 +1876,19 @@ export default function AdminPage() {
                     />
                   </td>
                   <td className="px-4 py-2">
-                    <span className={`px-2 py-0.5 rounded text-xs ${
-                      ms.serum_class === 'PRP' ? 'bg-purple-100 text-purple-800' :
-                      ms.serum_class === 'FBS' ? 'bg-amber-100 text-amber-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
+                    <Badge variant={
+                      ms.serum_class === 'PRP' ? 'secondary' :
+                      ms.serum_class === 'FBS' ? 'warning' :
+                      'success'
+                    }>
                       {ms.serum_class}
-                    </span>
+                    </Badge>
                   </td>
                   <td className="px-4 py-2 text-center">{ms.phenol_red_flag ? 'Да' : 'Нет'}</td>
-                  <td className="px-4 py-2 text-sm text-slate-500">{ms.notes || '-'}</td>
+                  <td className="px-4 py-2 text-sm text-muted-foreground">{ms.notes || '-'}</td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button 
-                      onClick={() => { 
+                    <Button variant="ghost" size="icon"
+                      onClick={() => {
                         const linkedAdditives = specAdditives
                           .filter(sa => sa.media_spec_id === ms.media_spec_id)
                           .map(sa => {
@@ -1909,45 +1896,44 @@ export default function AdminPage() {
                             return additive ? { additive_id: sa.additive_id, name: additive.name, concentration: sa.concentration, unit: additive.unit } : null;
                           })
                           .filter(Boolean);
-                        setEditingId(ms.media_spec_id); 
-                        setShowAddForm(true); 
-                        setFormData({ ...ms, additives: linkedAdditives }); 
-                      }} 
-                      className="text-blue-600 hover:text-blue-800"
+                        setEditingId(ms.media_spec_id);
+                        setShowAddForm(true);
+                        setFormData({ ...ms, additives: linkedAdditives });
+                      }}
                     >
                       <Edit2 size={16}/>
-                    </button>
-                    <button onClick={() => handleDelete('media_compatibility_spec', 'media_spec_id', ms.media_spec_id)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('media_compatibility_spec', 'media_spec_id', ms.media_spec_id)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+        </CardContent></Card>
           )}
         </div>
-      )}
+      </TabsContent>
 
       {/* Process Methods */}
-      {activeTab === 'processMethods' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+      <TabsContent value="processMethods">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold">Методы обработки CM ({processMethods.length})</h3>
-            <button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', method_type: 'Filtration', description: '', is_active: true }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', method_type: 'Filtration', description: '', is_active: true }); }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
               <div className="grid grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код метода">
-                  <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full px-3 py-2 border rounded" disabled={!!editingId} />
+                  <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
                 <FormField label="Название" required tooltip="Название метода обработки">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </FormField>
                 <FormField label="Тип" required tooltip="Категория метода обработки">
-                  <select value={formData.method_type || 'Filtration'} onChange={e => setFormData({...formData, method_type: e.target.value, steps_count: e.target.value === 'Modification' ? 1 : null, step_definitions: e.target.value === 'Modification' ? [{step_number: 1, description: '', expected_results: ''}] : null})} className="w-full px-3 py-2 border rounded">
+                  <select value={formData.method_type || 'Filtration'} onChange={e => setFormData({...formData, method_type: e.target.value, steps_count: e.target.value === 'Modification' ? 1 : null, step_definitions: e.target.value === 'Modification' ? [{step_number: 1, description: '', expected_results: ''}] : null})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                     <option value="Filtration">Фильтрация</option>
                     <option value="TFF">TFF</option>
                     <option value="Diafiltration">Диафильтрация</option>
@@ -1958,28 +1944,28 @@ export default function AdminPage() {
                   </select>
                 </FormField>
                 <FormField label="Описание" tooltip="Дополнительное описание метода">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </FormField>
               </div>
               <div className="flex items-center gap-2 mt-2">
                 <input type="checkbox" id="requires_time_tracking" checked={!!formData.requires_time_tracking} onChange={e => setFormData({...formData, requires_time_tracking: e.target.checked})} className="w-4 h-4" />
-                <label htmlFor="requires_time_tracking" className="text-sm text-slate-700">Требуется фиксация времени процедуры</label>
+                <label htmlFor="requires_time_tracking" className="text-sm text-foreground">Требуется фиксация времени процедуры</label>
               </div>
               
               {/* Modification type specific fields */}
               {formData.method_type === 'Modification' && (
                 <div className="border-t pt-4 mt-4 space-y-4">
-                  <h4 className="font-medium text-slate-700">Настройки модификации</h4>
+                  <h4 className="font-medium text-foreground">Настройки модификации</h4>
                   <div className="grid grid-cols-3 gap-3">
                     <FormField label="Применимость" required tooltip="Где применяется метод">
-                      <select value={formData.applicability || 'both'} onChange={e => setFormData({...formData, applicability: e.target.value})} className="w-full px-3 py-2 border rounded">
+                      <select value={formData.applicability || 'both'} onChange={e => setFormData({...formData, applicability: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                         <option value="product">Продукт</option>
                         <option value="raw">Сырьё</option>
                         <option value="both">Оба</option>
                       </select>
                     </FormField>
                     <FormField label="Этап вызова" required tooltip="На каком этапе БП вызывать форму">
-                      <select value={formData.trigger_stage || 'Processing'} onChange={e => setFormData({...formData, trigger_stage: e.target.value})} className="w-full px-3 py-2 border rounded">
+                      <select value={formData.trigger_stage || 'Processing'} onChange={e => setFormData({...formData, trigger_stage: e.target.value})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg">
                         <option value="Processing">Процессинг</option>
                         <option value="PostProcessing">Пост-процессинг</option>
                         <option value="Filling">Розлив</option>
@@ -1992,30 +1978,30 @@ export default function AdminPage() {
                         const currentSteps = formData.step_definitions || [];
                         const newSteps = Array.from({length: count}, (_, i) => currentSteps[i] || {step_number: i+1, description: '', expected_results: ''});
                         setFormData({...formData, steps_count: count, step_definitions: newSteps});
-                      }} className="w-full px-3 py-2 border rounded" />
+                      }} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg" />
                     </FormField>
                   </div>
                   
                   <div className="space-y-3">
-                    <h5 className="text-sm font-medium text-slate-600">Описание шагов</h5>
+                    <h5 className="text-sm font-medium text-muted-foreground">Описание шагов</h5>
                     {(formData.step_definitions || []).map((step: any, idx: number) => (
-                      <div key={idx} className="grid grid-cols-12 gap-2 items-start p-3 bg-white rounded border">
-                        <div className="col-span-1 text-center font-bold text-slate-500 pt-2">{idx + 1}</div>
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-start p-3 bg-card rounded border">
+                        <div className="col-span-1 text-center font-bold text-muted-foreground pt-2">{idx + 1}</div>
                         <div className="col-span-5">
-                          <label className="text-xs text-slate-500">Описание шага</label>
+                          <label className="text-xs text-muted-foreground">Описание шага</label>
                           <textarea value={step.description || ''} onChange={e => {
                             const newSteps = [...(formData.step_definitions || [])];
                             newSteps[idx] = {...newSteps[idx], description: e.target.value};
                             setFormData({...formData, step_definitions: newSteps});
-                          }} className="w-full px-2 py-1 border rounded text-sm" rows={2} />
+                          }} className="w-full px-2 py-1 border border-input bg-background text-foreground rounded text-sm" rows={2} />
                         </div>
                         <div className="col-span-6">
-                          <label className="text-xs text-slate-500">Ожидаемые результаты</label>
+                          <label className="text-xs text-muted-foreground">Ожидаемые результаты</label>
                           <textarea value={step.expected_results || ''} onChange={e => {
                             const newSteps = [...(formData.step_definitions || [])];
                             newSteps[idx] = {...newSteps[idx], expected_results: e.target.value};
                             setFormData({...formData, step_definitions: newSteps});
-                          }} className="w-full px-2 py-1 border rounded text-sm" rows={2} />
+                          }} className="w-full px-2 py-1 border border-input bg-background text-foreground rounded text-sm" rows={2} />
                         </div>
                       </div>
                     ))}
@@ -2023,21 +2009,21 @@ export default function AdminPage() {
                 </div>
               )}
               <div className="flex gap-2">
-                <button onClick={() => handleSave('cm_process_method', 'method_id', editingId || crypto.randomUUID(), formData)} className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => handleSave('cm_process_method', 'method_id', editingId || crypto.randomUUID(), formData)}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="code" sort={sortProcessMethods} onSort={toggleSortProcessMethods} className="text-left" />
                 <SortableHeader label="Название" field="name" sort={sortProcessMethods} onSort={toggleSortProcessMethods} className="text-left" />
                 <SortableHeader label="Тип" field="method_type" sort={sortProcessMethods} onSort={toggleSortProcessMethods} className="text-left" />
                 <SortableHeader label="Описание" field="description" sort={sortProcessMethods} onSort={toggleSortProcessMethods} className="text-left" />
                 <SortableHeader label="Активен" field="is_active" sort={sortProcessMethods} onSort={toggleSortProcessMethods} className="text-center" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Время</th>
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Время</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -2046,67 +2032,67 @@ export default function AdminPage() {
                   <td className="px-4 py-2 font-mono text-sm">{pm.code || '-'}</td>
                   <td className="px-4 py-2">{pm.name}</td>
                   <td className="px-4 py-2 text-sm">{pm.method_type}</td>
-                  <td className="px-4 py-2 text-sm text-slate-500">{pm.description || '-'}</td>
+                  <td className="px-4 py-2 text-sm text-muted-foreground">{pm.description || '-'}</td>
                   <td className="px-4 py-2 text-center">{pm.is_active ? 'Да' : '-'}</td>
                   <td className="px-4 py-2 text-center">{pm.requires_time_tracking ? '✓' : '-'}</td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button onClick={() => { setEditingId(pm.method_id); setShowAddForm(true); setFormData({ ...pm }); }} className="text-blue-600 hover:text-blue-800"><Edit2 size={16}/></button>
-                    <button onClick={() => handleDelete('cm_process_method', 'method_id', pm.method_id)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingId(pm.method_id); setShowAddForm(true); setFormData({ ...pm }); }}><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('cm_process_method', 'method_id', pm.method_id)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CardContent></Card>
+      </TabsContent>
 
       {/* QC Tests */}
-      {activeTab === 'qcTests' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+      <TabsContent value="qcTests">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold">Справочник QC тестов ({qcTestTypes.length})</h3>
-            <button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', description: '', unit: '', norm_min: '', norm_max: '', norm_text: '', method: '', is_active: true }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', description: '', unit: '', norm_min: '', norm_max: '', norm_text: '', method: '', is_active: true }); }}>
               <Plus size={16} /> Добавить тест
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
               <div className="grid grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код теста (например, Sterility, LAL)">
-                  <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full px-3 py-2 border rounded" disabled={!!editingId} />
+                  <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
                 <FormField label="Название" required tooltip="Полное название теста">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </FormField>
                 <FormField label="Ед. изм." tooltip="Единица измерения результата">
-                  <input value={formData.unit || ''} onChange={e => setFormData({...formData, unit: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.unit || ''} onChange={e => setFormData({...formData, unit: e.target.value})} />
                 </FormField>
                 <FormField label="Метод" tooltip="Метод проведения теста">
-                  <input value={formData.method || ''} onChange={e => setFormData({...formData, method: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.method || ''} onChange={e => setFormData({...formData, method: e.target.value})} />
                 </FormField>
               </div>
               <div className="grid grid-cols-4 gap-3">
                 <FormField label="Норма мин" tooltip="Минимальное допустимое значение (число)">
-                  <input type="number" step="any" value={formData.norm_min || ''} onChange={e => setFormData({...formData, norm_min: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input type="number" step="any" value={formData.norm_min || ''} onChange={e => setFormData({...formData, norm_min: e.target.value})} />
                 </FormField>
                 <FormField label="Норма макс" tooltip="Максимальное допустимое значение (число)">
-                  <input type="number" step="any" value={formData.norm_max || ''} onChange={e => setFormData({...formData, norm_max: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input type="number" step="any" value={formData.norm_max || ''} onChange={e => setFormData({...formData, norm_max: e.target.value})} />
                 </FormField>
                 <FormField label="Норма (текст)" tooltip="Текстовая норма, напр. 'не обнаружено'">
-                  <input value={formData.norm_text || ''} onChange={e => setFormData({...formData, norm_text: e.target.value})} className="w-full px-3 py-2 border rounded" placeholder="не обнаружено" />
+                  <Input value={formData.norm_text || ''} onChange={e => setFormData({...formData, norm_text: e.target.value})} placeholder="не обнаружено" />
                 </FormField>
                 <FormField label="Описание" tooltip="Дополнительная информация о тесте">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </FormField>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleSave('qc_test_type', 'code', formData.code, formData)} className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => handleSave('qc_test_type', 'code', formData.code, formData)}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="code" sort={sortQcTests} onSort={toggleSortQcTests} className="text-left" />
                 <SortableHeader label="Название" field="name" sort={sortQcTests} onSort={toggleSortQcTests} className="text-left" />
@@ -2114,7 +2100,7 @@ export default function AdminPage() {
                 <SortableHeader label="Ед. изм." field="unit" sort={sortQcTests} onSort={toggleSortQcTests} className="text-left" />
                 <SortableHeader label="Норма" field="norm_text" sort={sortQcTests} onSort={toggleSortQcTests} className="text-left" />
                 <SortableHeader label="Метод" field="method" sort={sortQcTests} onSort={toggleSortQcTests} className="text-left" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -2122,60 +2108,60 @@ export default function AdminPage() {
                 <tr key={t.code}>
                   <td className="px-4 py-2 font-mono">{t.code}</td>
                   <td className="px-4 py-2 font-medium">{t.name}</td>
-                  <td className="px-4 py-2 text-sm text-slate-500">{t.description || '-'}</td>
+                  <td className="px-4 py-2 text-sm text-muted-foreground">{t.description || '-'}</td>
                   <td className="px-4 py-2 text-sm">{t.unit || '-'}</td>
                   <td className="px-4 py-2 text-sm">{t.norm_text || (t.norm_min != null || t.norm_max != null ? `${t.norm_min ?? ''} - ${t.norm_max ?? ''}` : '-')}</td>
                   <td className="px-4 py-2 text-sm">{t.method || '-'}</td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button onClick={() => { setEditingId(t.code); setShowAddForm(true); setFormData({ ...t }); }} className="text-blue-600 hover:text-blue-800"><Edit2 size={16}/></button>
-                    <button onClick={() => handleDelete('qc_test_type', 'code', t.code)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingId(t.code); setShowAddForm(true); setFormData({ ...t }); }}><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('qc_test_type', 'code', t.code)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CardContent></Card>
+      </TabsContent>
 
       {/* Infections */}
-      {activeTab === 'infections' && (
-        <div className="bg-white rounded-lg shadow-sm border p-6">
+      <TabsContent value="infections">
+        <Card><CardContent className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold">Справочник инфекций ({infectionTypes.length})</h3>
-            <button onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', description: '', test_method: '', is_active: true }); }} className="flex items-center gap-1 px-3 py-1 bg-blue-600 text-white rounded text-sm">
+            <Button variant="default" size="sm" onClick={() => { setShowAddForm(true); setEditingId(null); setFormData({ code: '', name: '', description: '', test_method: '', is_active: true }); }}>
               <Plus size={16} /> Добавить
-            </button>
+            </Button>
           </div>
           {showAddForm && (
-            <div className="mb-4 p-4 bg-slate-50 rounded-lg space-y-3">
+            <div className="mb-4 p-4 bg-muted rounded-lg space-y-3">
               <div className="grid grid-cols-4 gap-3">
                 <FormField label="Код" required tooltip="Уникальный код инфекции (например, HBsAg, HIV)">
-                  <input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} className="w-full px-3 py-2 border rounded" disabled={!!editingId} />
+                  <Input value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} disabled={!!editingId} />
                 </FormField>
                 <FormField label="Название" required tooltip="Полное название инфекции">
-                  <input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} />
                 </FormField>
                 <FormField label="Описание" tooltip="Дополнительная информация">
-                  <input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} />
                 </FormField>
                 <FormField label="Метод теста" tooltip="Метод лабораторного исследования">
-                  <input value={formData.test_method || ''} onChange={e => setFormData({...formData, test_method: e.target.value})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={formData.test_method || ''} onChange={e => setFormData({...formData, test_method: e.target.value})} />
                 </FormField>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => handleSave('infection_type', 'infection_type_id', editingId || crypto.randomUUID(), formData)} className="px-3 py-1 bg-green-600 text-white rounded text-sm flex items-center gap-1"><Save size={14}/> Сохранить</button>
-                <button onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }} className="px-3 py-1 border rounded text-sm">Отмена</button>
+                <Button variant="success" size="sm" onClick={() => handleSave('infection_type', 'infection_type_id', editingId || crypto.randomUUID(), formData)}><Save size={14}/> Сохранить</Button>
+                <Button variant="outline" size="sm" onClick={() => { setShowAddForm(false); setFormData({}); setEditingId(null); }}>Отмена</Button>
               </div>
             </div>
           )}
           <table className="w-full">
-            <thead className="bg-slate-50">
+            <thead className="bg-muted">
               <tr>
                 <SortableHeader label="Код" field="code" sort={sortInfections} onSort={toggleSortInfections} className="text-left" />
                 <SortableHeader label="Название" field="name" sort={sortInfections} onSort={toggleSortInfections} className="text-left" />
                 <SortableHeader label="Описание" field="description" sort={sortInfections} onSort={toggleSortInfections} className="text-left" />
                 <SortableHeader label="Метод теста" field="test_method" sort={sortInfections} onSort={toggleSortInfections} className="text-left" />
-                <th className="px-4 py-2 text-center text-xs font-medium text-slate-500 uppercase">Действия</th>
+                <th className="px-4 py-2 text-center text-xs font-medium text-muted-foreground uppercase">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -2183,107 +2169,103 @@ export default function AdminPage() {
                 <tr key={inf.infection_type_id}>
                   <td className="px-4 py-2 font-mono">{inf.code}</td>
                   <td className="px-4 py-2 font-medium">{inf.name}</td>
-                  <td className="px-4 py-2 text-sm text-slate-500">{inf.description || '-'}</td>
+                  <td className="px-4 py-2 text-sm text-muted-foreground">{inf.description || '-'}</td>
                   <td className="px-4 py-2 text-sm">{inf.test_method || '-'}</td>
                   <td className="px-4 py-2 text-center flex gap-1 justify-center">
-                    <button onClick={() => { setEditingId(inf.infection_type_id); setShowAddForm(true); setFormData({ ...inf }); }} className="text-blue-600 hover:text-blue-800"><Edit2 size={16}/></button>
-                    <button onClick={() => handleDelete('infection_type', 'infection_type_id', inf.infection_type_id)} className="text-red-600 hover:text-red-800"><Trash2 size={16}/></button>
+                    <Button variant="ghost" size="icon" onClick={() => { setEditingId(inf.infection_type_id); setShowAddForm(true); setFormData({ ...inf }); }}><Edit2 size={16}/></Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800" onClick={() => handleDelete('infection_type', 'infection_type_id', inf.infection_type_id)}><Trash2 size={16}/></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+        </CardContent></Card>
+      </TabsContent>
 
       {/* Data Cleanup Tab */}
-      {activeTab === 'dataCleanup' && (
+      <TabsContent value="dataCleanup">
         <DataCleanupTab />
-      )}
+      </TabsContent>
+
+      </Tabs>
 
       {/* SDS Modal */}
-      {sdsModal.open && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white">
-              <h3 className="font-semibold text-lg">SDS: {sdsModal.entityName}</h3>
-              <button onClick={() => setSdsModal({ open: false, entityType: null, entityId: null, entityName: '', sdsData: {} })} className="text-slate-400 hover:text-slate-600">
-                X
-              </button>
-            </div>
+      <Dialog open={sdsModal.open} onOpenChange={(open) => { if (!open) setSdsModal({ open: false, entityType: null, entityId: null, entityName: '', sdsData: {} }); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>SDS: {sdsModal.entityName}</DialogTitle>
+          </DialogHeader>
             <div className="p-4 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <FormField label="Название компонента">
-                  <input value={sdsModal.sdsData.component_name || sdsModal.entityName} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, component_name: e.target.value}})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={sdsModal.sdsData.component_name || sdsModal.entityName} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, component_name: e.target.value}})} />
                 </FormField>
                 <FormField label="CAS номер">
-                  <input value={sdsModal.sdsData.cas_number || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, cas_number: e.target.value}})} className="w-full px-3 py-2 border rounded" placeholder="например, 7732-18-5" />
+                  <Input value={sdsModal.sdsData.cas_number || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, cas_number: e.target.value}})} placeholder="например, 7732-18-5" />
                 </FormField>
                 <FormField label="Поставщик">
-                  <textarea value={sdsModal.sdsData.supplier_details || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, supplier_details: e.target.value}})} className="w-full px-3 py-2 border rounded" rows={2} />
+                  <textarea value={sdsModal.sdsData.supplier_details || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, supplier_details: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg" rows={2} />
                 </FormField>
                 <FormField label="Телефон экстренной связи">
-                  <input value={sdsModal.sdsData.emergency_phone || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, emergency_phone: e.target.value}})} className="w-full px-3 py-2 border rounded" />
+                  <Input value={sdsModal.sdsData.emergency_phone || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, emergency_phone: e.target.value}})} />
                 </FormField>
               </div>
               <div className="border-t pt-3">
-                <p className="text-sm font-medium text-slate-700 mb-2">Секции SDS</p>
+                <p className="text-sm font-medium text-foreground mb-2">Секции SDS</p>
                 <div className="grid grid-cols-2 gap-3">
                   <FormField label="2. Классификация опасности">
-                    <textarea value={sdsModal.sdsData.hazard_classification || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, hazard_classification: e.target.value}})} className="w-full px-3 py-2 border rounded text-sm" rows={2} />
+                    <textarea value={sdsModal.sdsData.hazard_classification || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, hazard_classification: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg text-sm" rows={2} />
                   </FormField>
                   <FormField label="3. Состав/информация">
-                    <textarea value={sdsModal.sdsData.composition_info || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, composition_info: e.target.value}})} className="w-full px-3 py-2 border rounded text-sm" rows={2} />
+                    <textarea value={sdsModal.sdsData.composition_info || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, composition_info: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg text-sm" rows={2} />
                   </FormField>
                   <FormField label="4. Первая помощь">
-                    <textarea value={sdsModal.sdsData.first_aid_measures || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, first_aid_measures: e.target.value}})} className="w-full px-3 py-2 border rounded text-sm" rows={2} />
+                    <textarea value={sdsModal.sdsData.first_aid_measures || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, first_aid_measures: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg text-sm" rows={2} />
                   </FormField>
                   <FormField label="7. Обращение и хранение">
-                    <textarea value={sdsModal.sdsData.storage_conditions || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, storage_conditions: e.target.value}})} className="w-full px-3 py-2 border rounded text-sm" rows={2} />
+                    <textarea value={sdsModal.sdsData.storage_conditions || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, storage_conditions: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg text-sm" rows={2} />
                   </FormField>
                   <FormField label="8. Контроль воздействия/СИЗ">
-                    <textarea value={sdsModal.sdsData.personal_protection || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, personal_protection: e.target.value}})} className="w-full px-3 py-2 border rounded text-sm" rows={2} />
+                    <textarea value={sdsModal.sdsData.personal_protection || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, personal_protection: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg text-sm" rows={2} />
                   </FormField>
                   <FormField label="13. Утилизация">
-                    <textarea value={sdsModal.sdsData.disposal_methods || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, disposal_methods: e.target.value}})} className="w-full px-3 py-2 border rounded text-sm" rows={2} />
+                    <textarea value={sdsModal.sdsData.disposal_methods || ''} onChange={e => setSdsModal({...sdsModal, sdsData: {...sdsModal.sdsData, disposal_methods: e.target.value}})} className="w-full px-3 py-2 border border-input bg-background text-foreground rounded-lg text-sm" rows={2} />
                   </FormField>
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t flex gap-2 sticky bottom-0 bg-white">
-              <button 
+          <DialogFooter>
+              <Button variant="success" size="sm"
                 onClick={async () => {
                   const sdsId = sdsModal.sdsData.sds_component_id || crypto.randomUUID();
                   const sdsPayload = {
                     ...sdsModal.sdsData,
                     component_name: sdsModal.sdsData.component_name || sdsModal.entityName,
                   };
-                  
+
                   if (sdsModal.sdsData.sds_component_id) {
                     await (supabase.from('sds_component' as any) as any).update(sdsPayload).eq('sds_component_id', sdsId);
                   } else {
                     await (supabase.from('sds_component' as any) as any).insert({ ...sdsPayload, sds_component_id: sdsId });
                   }
-                  
+
                   // Link to entity
                   if (sdsModal.entityType === 'base_media') {
                     await (supabase.from('base_media' as any) as any).update({ sds_component_id: sdsId }).eq('base_media_id', sdsModal.entityId);
                   } else if (sdsModal.entityType === 'additive') {
                     await (supabase.from('media_additive' as any) as any).update({ sds_component_id: sdsId }).eq('additive_id', sdsModal.entityId);
                   }
-                  
+
                   setSdsModal({ open: false, entityType: null, entityId: null, entityName: '', sdsData: {} });
                   loadData();
-                }} 
-                className="px-4 py-2 bg-green-600 text-white rounded text-sm flex items-center gap-1"
+                }}
               >
                 <Save size={14}/> Сохранить SDS
-              </button>
-              <button onClick={() => setSdsModal({ open: false, entityType: null, entityId: null, entityName: '', sdsData: {} })} className="px-4 py-2 border rounded text-sm">Отмена</button>
-            </div>
-          </div>
-        </div>
-      )}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setSdsModal({ open: false, entityType: null, entityId: null, entityName: '', sdsData: {} })}>Отмена</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

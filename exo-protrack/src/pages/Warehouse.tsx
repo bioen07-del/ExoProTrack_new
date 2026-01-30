@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Truck, AlertTriangle, Plus } from 'lucide-react';
+import { Package, Truck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase, CmLot, PackLot, Container, StockMovement, Reservation } from '../lib/supabase';
-
-type Tab = 'raw' | 'finished' | 'movements';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Badge } from '../components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { showError } from '../lib/toast';
 
 export default function Warehouse() {
   const { user, hasRole } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('raw');
   const [showShipmentModal, setShowShipmentModal] = useState(false);
   const [selectedPackLot, setSelectedPackLot] = useState<PackLot | null>(null);
   const [shipQty, setShipQty] = useState(0);
@@ -43,7 +47,7 @@ export default function Warehouse() {
         const reserved_ml = lotReservations.reduce((sum, r) => sum + r.reserved_volume_ml, 0);
         const current_ml = container?.current_volume_ml || 0;
         const decision = decisions.find(d => d.cm_lot_id === lot.cm_lot_id);
-        
+
         return {
           ...lot,
           container,
@@ -76,13 +80,13 @@ export default function Warehouse() {
   // Check for expiry alerts (within 30 days)
   const now = new Date();
   const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-  const expiryAlerts = cmLots.filter(lot => 
+  const expiryAlerts = cmLots.filter(lot =>
     lot.expiry_date && new Date(lot.expiry_date) <= thirtyDaysFromNow
   );
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Склад</h1>
+      <h1 className="text-2xl font-bold text-foreground">Склад</h1>
 
       {/* Expiry Alerts */}
       {expiryAlerts.length > 0 && (
@@ -106,268 +110,264 @@ export default function Warehouse() {
       )}
 
       {/* Tabs */}
-      <div className="border-b border-slate-200">
-        <nav className="flex gap-4">
-          <button
-            onClick={() => setActiveTab('raw')}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'raw' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'
-            }`}
-          >
+      <Tabs defaultValue="raw">
+        <TabsList>
+          <TabsTrigger value="raw" className="gap-2">
             <Package size={18} />
             Сырье (CM) ({cmLots.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('finished')}
-            className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'finished' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'
-            }`}
-          >
+          </TabsTrigger>
+          <TabsTrigger value="finished" className="gap-2">
             <Truck size={18} />
             Готовая продукция ({packLots.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('movements')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 ${
-              activeTab === 'movements' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'
-            }`}
-          >
+          </TabsTrigger>
+          <TabsTrigger value="movements">
             Движения
-          </button>
-        </nav>
-      </div>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Raw Materials */}
-      {activeTab === 'raw' && (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">CM Lot</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Продукт</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Объем (мл)</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Резерв (мл)</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Доступно (мл)</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Годен до</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {cmLots.map((lot) => {
-                const isExpiringSoon = lot.expiry_date && new Date(lot.expiry_date) <= thirtyDaysFromNow;
-                return (
-                  <tr key={lot.cm_lot_id} className={`hover:bg-slate-50 ${isExpiringSoon ? 'bg-amber-50' : ''}`}>
-                    <td className="px-4 py-3">
-                      <Link to={`/cm/${lot.cm_lot_id}`} className="font-mono text-blue-600 hover:underline">
-                        {lot.cm_lot_id}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-sm">{lot.base_product_code}</td>
-                    <td className="px-4 py-3 text-sm text-right font-mono">
-                      {lot.container?.current_volume_ml?.toFixed(1) || '0.0'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right font-mono text-amber-600">
-                      {lot.reserved_ml?.toFixed(1) || '0.0'}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right font-mono text-emerald-600">
-                      {lot.available_ml?.toFixed(1) || '0.0'}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {lot.expiry_date ? (
-                        <span className={isExpiringSoon ? 'text-amber-600 font-medium' : ''}>
-                          {new Date(lot.expiry_date).toLocaleDateString('ru-RU')}
-                        </span>
-                      ) : '-'}
-                    </td>
+        {/* Raw Materials */}
+        <TabsContent value="raw">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">CM Lot</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Продукт</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Объем (мл)</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Резерв (мл)</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Доступно (мл)</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Годен до</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-          {cmLots.length === 0 && (
-            <p className="text-center py-8 text-slate-500">Нет сырья на складе</p>
-          )}
-        </div>
-      )}
+                </thead>
+                <tbody className="divide-y">
+                  {cmLots.map((lot) => {
+                    const isExpiringSoon = lot.expiry_date && new Date(lot.expiry_date) <= thirtyDaysFromNow;
+                    return (
+                      <tr key={lot.cm_lot_id} className={`hover:bg-muted/50 ${isExpiringSoon ? 'bg-amber-50' : ''}`}>
+                        <td className="px-4 py-3">
+                          <Link to={`/cm/${lot.cm_lot_id}`} className="font-mono text-blue-600 hover:underline">
+                            {lot.cm_lot_id}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-sm">{lot.base_product_code}</td>
+                        <td className="px-4 py-3 text-sm text-right font-mono">
+                          {lot.container?.current_volume_ml?.toFixed(1) || '0.0'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right font-mono text-amber-600">
+                          {lot.reserved_ml?.toFixed(1) || '0.0'}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-right font-mono text-emerald-600">
+                          {lot.available_ml?.toFixed(1) || '0.0'}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {lot.expiry_date ? (
+                            <span className={isExpiringSoon ? 'text-amber-600 font-medium' : ''}>
+                              {new Date(lot.expiry_date).toLocaleDateString('ru-RU')}
+                            </span>
+                          ) : '-'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {cmLots.length === 0 && (
+                <p className="text-center py-8 text-muted-foreground">Нет сырья на складе</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Finished Products */}
-      {activeTab === 'finished' && (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Pack Lot</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Формат</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Количество</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Источник CM</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Упаковано</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Действия</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {packLots.map((pack) => (
-                <tr key={pack.pack_lot_id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <Link to={`/packlot/${pack.pack_lot_id}`} className="font-mono text-blue-600 hover:underline">
-                      {pack.pack_lot_id}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-sm">{pack.pack_format_code}</td>
-                  <td className="px-4 py-3 text-sm text-right font-mono">
-                    {pack.qty_produced || pack.qty_planned}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    <Link to={`/cm/${pack.source_cm_lot_id}`} className="text-blue-600 hover:underline">
-                      {pack.source_cm_lot_id}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-slate-500">
-                    {pack.packed_at ? new Date(pack.packed_at).toLocaleDateString('ru-RU') : '-'}
-                  </td>
-                  <td className="px-4 py-3">
-                    {hasRole(['Manager', 'Admin']) && (
-                      <button
-                        onClick={() => {
-                          setSelectedPackLot(pack);
-                          setShipQty(pack.qty_produced || pack.qty_planned);
-                          setShowShipmentModal(true);
-                        }}
-                        className="px-2 py-1 bg-emerald-600 text-white rounded text-xs"
-                      >
-                        Отгрузить
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {packLots.length === 0 && (
-            <p className="text-center py-8 text-slate-500">Нет готовой продукции на складе</p>
-          )}
-        </div>
-      )}
+        {/* Finished Products */}
+        <TabsContent value="finished">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Pack Lot</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Формат</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Количество</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Источник CM</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Упаковано</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Действия</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {packLots.map((pack) => (
+                    <tr key={pack.pack_lot_id} className="hover:bg-muted/50">
+                      <td className="px-4 py-3">
+                        <Link to={`/packlot/${pack.pack_lot_id}`} className="font-mono text-blue-600 hover:underline">
+                          {pack.pack_lot_id}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-sm">{pack.pack_format_code}</td>
+                      <td className="px-4 py-3 text-sm text-right font-mono">
+                        {pack.qty_produced || pack.qty_planned}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        <Link to={`/cm/${pack.source_cm_lot_id}`} className="text-blue-600 hover:underline">
+                          {pack.source_cm_lot_id}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {pack.packed_at ? new Date(pack.packed_at).toLocaleDateString('ru-RU') : '-'}
+                      </td>
+                      <td className="px-4 py-3">
+                        {hasRole(['Manager', 'Admin']) && (
+                          <Button
+                            variant="success"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPackLot(pack);
+                              setShipQty(pack.qty_produced || pack.qty_planned);
+                              setShowShipmentModal(true);
+                            }}
+                          >
+                            Отгрузить
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {packLots.length === 0 && (
+                <p className="text-center py-8 text-muted-foreground">Нет готовой продукции на складе</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      {/* Movements */}
-      {activeTab === 'movements' && (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Дата</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Тип</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Направление</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 uppercase">Кол-во</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase">Причина</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {movements.map((m) => (
-                <tr key={m.movement_id} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 text-sm">
-                    {m.moved_at ? new Date(m.moved_at).toLocaleString('ru-RU') : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-sm">{m.item_type}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                      m.direction === 'In' ? 'bg-green-100 text-green-800' :
-                      m.direction === 'Out' ? 'bg-red-100 text-red-800' :
-                      'bg-gray-100'
-                    }`}>
-                      {m.direction === 'In' ? 'Приход' : m.direction === 'Out' ? 'Расход' : 'Корректировка'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-right font-mono">{m.qty}</td>
-                  <td className="px-4 py-3 text-sm">{m.reason_code}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+        {/* Movements */}
+        <TabsContent value="movements">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Дата</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Тип</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Направление</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase">Кол-во</th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Причина</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {movements.map((m) => (
+                    <tr key={m.movement_id} className="hover:bg-muted/50">
+                      <td className="px-4 py-3 text-sm">
+                        {m.moved_at ? new Date(m.moved_at).toLocaleString('ru-RU') : '-'}
+                      </td>
+                      <td className="px-4 py-3 text-sm">{m.item_type}</td>
+                      <td className="px-4 py-3">
+                        {m.direction === 'In' ? (
+                          <Badge variant="success">Приход</Badge>
+                        ) : m.direction === 'Out' ? (
+                          <Badge variant="destructive">Расход</Badge>
+                        ) : (
+                          <Badge variant="muted">Корректировка</Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-mono">{m.qty}</td>
+                      <td className="px-4 py-3 text-sm">{m.reason_code}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Shipment Modal */}
-      {showShipmentModal && selectedPackLot && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">Создать отгрузку</h3>
-            
-            <p className="text-sm text-slate-500 mb-4">
-              Продукт: <span className="font-mono">{selectedPackLot.pack_lot_id}</span><br/>
-              Доступно: {selectedPackLot.qty_produced || selectedPackLot.qty_planned} шт
-            </p>
+      <Dialog open={showShipmentModal} onOpenChange={setShowShipmentModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Создать отгрузку</DialogTitle>
+          </DialogHeader>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Количество к отгрузке</label>
-              <input
-                type="number"
-                min="1"
-                max={selectedPackLot.qty_produced || selectedPackLot.qty_planned}
-                value={shipQty}
-                onChange={(e) => setShipQty(Number(e.target.value))}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-            </div>
+          {selectedPackLot && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                Продукт: <span className="font-mono">{selectedPackLot.pack_lot_id}</span><br/>
+                Доступно: {selectedPackLot.qty_produced || selectedPackLot.qty_planned} шт
+              </p>
 
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowShipmentModal(false)}
-                className="px-4 py-2 border rounded-lg"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={async () => {
-                  if (!selectedPackLot) return;
-                  try {
-                    // Generate shipment ID
-                    const today = new Date();
-                    const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
-                    const shipmentId = `SHIP-${dateStr}-${Date.now().toString().slice(-4)}`;
+              <div>
+                <label className="block text-sm font-medium mb-1">Количество к отгрузке</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={selectedPackLot.qty_produced || selectedPackLot.qty_planned}
+                  value={shipQty}
+                  onChange={(e) => setShipQty(Number(e.target.value))}
+                />
+              </div>
 
-                    // Create shipment
-                    await supabase.from('shipment').insert({
-                      shipment_id: shipmentId,
-                      pack_lot_id: selectedPackLot.pack_lot_id,
-                      qty_shipped: shipQty,
-                      shipped_at: new Date().toISOString(),
-                      shipped_by: user?.user_id,
-                      status: 'Shipped',
-                    });
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowShipmentModal(false)}
+                >
+                  Отмена
+                </Button>
+                <Button
+                  variant="success"
+                  className="flex-1"
+                  onClick={async () => {
+                    if (!selectedPackLot) return;
+                    try {
+                      // Generate shipment ID
+                      const today = new Date();
+                      const dateStr = today.toISOString().split('T')[0].replace(/-/g, '');
+                      const shipmentId = `SHIP-${dateStr}-${Date.now().toString().slice(-4)}`;
 
-                    // Update pack lot status
-                    await supabase.from('pack_lot')
-                      .update({ status: 'Shipped' })
-                      .eq('pack_lot_id', selectedPackLot.pack_lot_id);
-
-                    // Get container and create stock movement
-                    const container = (selectedPackLot as any).container;
-                    if (container) {
-                      await supabase.from('stock_movement').insert({
-                        item_type: 'Finished',
-                        container_id: container.container_id,
-                        direction: 'Out',
-                        qty: shipQty,
-                        reason_code: 'Ship',
-                        moved_at: new Date().toISOString(),
-                        user_id: user?.user_id,
+                      // Create shipment
+                      await supabase.from('shipment').insert({
+                        shipment_id: shipmentId,
+                        pack_lot_id: selectedPackLot.pack_lot_id,
+                        qty_shipped: shipQty,
+                        shipped_at: new Date().toISOString(),
+                        shipped_by: user?.user_id,
+                        status: 'Shipped',
                       });
-                    }
 
-                    setShowShipmentModal(false);
-                    setSelectedPackLot(null);
-                    loadData();
-                  } catch (err: any) {
-                    alert('Ошибка: ' + err.message);
-                  }
-                }}
-                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg"
-              >
-                Создать отгрузку
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                      // Update pack lot status
+                      await supabase.from('pack_lot')
+                        .update({ status: 'Shipped' })
+                        .eq('pack_lot_id', selectedPackLot.pack_lot_id);
+
+                      // Get container and create stock movement
+                      const container = (selectedPackLot as any).container;
+                      if (container) {
+                        await supabase.from('stock_movement').insert({
+                          item_type: 'Finished',
+                          container_id: container.container_id,
+                          direction: 'Out',
+                          qty: shipQty,
+                          reason_code: 'Ship',
+                          moved_at: new Date().toISOString(),
+                          user_id: user?.user_id,
+                        });
+                      }
+
+                      setShowShipmentModal(false);
+                      setSelectedPackLot(null);
+                      loadData();
+                    } catch (err: any) {
+                      showError('Ошибка', err.message);
+                    }
+                  }}
+                >
+                  Создать отгрузку
+                </Button>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
